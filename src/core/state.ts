@@ -66,6 +66,8 @@ export const state = {
   focus: 0,
   /** 0..1 contact overlay amount */
   overlay: 0,
+  /** 0..1 how far an open chapter's veil steps aside so the garden shows (wish, finale) */
+  veilThin: 0,
   /** 0..1 intro reveal after preload */
   reveal: 0,
   audioLevel: 0,
@@ -135,6 +137,10 @@ type Events = {
   navigate: Route;
   jumpToProject: string;
   openCage: void;
+  /** the wish in chapter 11: light climbs the whole garden */
+  wishLight: void;
+  /** the finale's pull‑back reveal of the whole garden */
+  gardenReveal: boolean;
   filter: string | null;
   toggleAudio: void;
   scrollTo: number;

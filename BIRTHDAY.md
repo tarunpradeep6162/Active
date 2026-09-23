@@ -82,3 +82,34 @@ When she touches the cage or the cake, or presses **Open the cage**:
 4. The candles light one by one and sparkles burst.
 
 The unlock sequence lives in `Lab.update()`. Check it with `node qa/cake.mjs 1280 800`.
+
+## The tulip garden (Work)
+
+The old central column is gone. In its place stands a living tulip garden, built
+procedurally in `src/scenes/TulipGarden.ts`. It takes over the column's role in the
+same world: the measured camera still orbits and descends around it, and scrolling feels
+exactly as before.
+
+- **25 significant blooms, for 25 · 11:**
+  - 14 chapter tulips standing where the chapters are, each with its name glowing beneath
+    it. Tap a tulip to open its chapter.
+  - 11 blooms along a central stem that weaves left, centre and right through depth.
+  - The last chapter tulip is the largest and stays closed until the end.
+- **Scroll means blooming:**
+  - Every flower starts as a closed bud and opens petal by petal as the camera arrives. It
+    closes again if she scrolls back.
+  - At the entry the garden grows up from the bottom. At the exit everything dissolves
+    except the final tulip.
+- **Light:** it shifts from midnight blue at the top to sunset amber at the bottom.
+- **Also in the garden:** buds, arching stems out to every chapter, leaves, a translucent
+  silk ribbon, drifting petals and gold light.
+- **Make a Wish:** when the candle goes out, the veil steps aside and a light climbs the
+  whole plant. Chapters she has already opened glow a little brighter.
+- **Finale:** after "HAPPY BIRTHDAY, DHEEPIKA." the camera pulls far back to show the whole
+  garden at once, every flower open.
+
+Check it with:
+- `node qa/garden.mjs 1280 800` (frames through the garden);
+- `node qa/moments.mjs 1280 800` (the wish and the finale reveal).
+
+The old column (`WorkSpine.ts`) remains in git history if you ever need to roll back.

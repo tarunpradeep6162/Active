@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Emblem } from '../scenes/Emblem';
-import { WorkSpine } from '../scenes/WorkSpine';
+import { TulipGarden } from '../scenes/TulipGarden';
+import { getProgress } from '../birthday/progress';
 import { ProjectCards } from '../scenes/ProjectCards';
 import { Lab } from '../scenes/Lab';
 import { HexPortal } from '../scenes/HexPortal';
@@ -44,11 +45,15 @@ const PALETTES: Record<SectionId, Palette> = {
   intro: pal('#0c1317', '#06080a', '#1a5e5b', '#090d10', 0.028, 0, '#1f6d68', '#10363d'),
   // headline: measured near‑black frame with a teal corner glow (clean‑settle captures)
   manifesto: pal('#0d1a1f', '#05070b', '#1f5f5a', '#080c12', 0.03, 0.35, '#2f8f8a', '#1c2c4a'),
-  work: pal('#0e1520', '#1a0f30', '#4a3490', '#0d0b18', 0.02, 0, '#237a74', '#4a2c88'),
+  // the garden at night (top of Work) …
+  work: pal('#0b0d1f', '#07060f', '#2a2458', '#0a0b16', 0.02, 0, '#2a3a6a', '#4a2a5a'),
   lab: pal('#07090b', '#040506', '#3c0a16', '#060708', 0.06, 0, '#15403f', '#2a0b12'),
   portal: pal('#061110', '#030707', '#0f4a47', '#041010', 0.05, 0, '#16605a', '#0b2d2e'),
   outro: pal('#0c1317', '#06080a', '#1a5e5b', '#090d10', 0.028, 0, '#1f6d68', '#10363d'),
 };
+/** … and at sunset (bottom of Work): the light warms as she descends through the garden */
+const WORK_SUNSET = pal('#2a1622', '#0d0708', '#9a4a2a', '#170c12', 0.02, 0, '#c8844a', '#b04a66');
+const WORK_NOW = pal('#000', '#000', '#000', '#000', 0, 0, '#000', '#000');
 const ORDER: SectionId[] = ['intro', 'manifesto', 'work', 'lab', 'portal', 'outro'];
 
 interface Piece {
@@ -63,7 +68,10 @@ export class World {
   readonly backdrop = new Backdrop();
   readonly emblem = new Emblem(false);
   readonly outroEmblem = new Emblem(true);
-  readonly spine = new WorkSpine();
+  /** the living tulip garden at the heart of the Work world (replaced the old column) */
+  readonly garden: TulipGarden;
+  /** 0…1 final pull‑back: every flower in bloom (driven by the finale) */
+  gardenReveal = 0;
   readonly cards: ProjectCards;
   readonly lab = new Lab();
   readonly portal: HexPortal;
@@ -85,11 +93,13 @@ export class World {
   private tmpB = new THREE.Color();
 
   private nebulaScale: number;
+  private visited: boolean[] = [];
 
   constructor(particles: ParticleResult[], titles: Map<string, THREE.Texture>, settings: TierSettings) {
     this.nebulaScale = Math.max(0.35, settings.particleScale);
     this.scene.add(this.backdrop.mesh, this.root);
     this.cards = new ProjectCards(titles);
+    this.garden = new TulipGarden(titles, PROJECTS.map((p) => p.slug), settings.particleScale < 0.7);
     this.portal = new HexPortal(settings.hexCount);
 
     // intro emblem
@@ -106,8 +116,12 @@ export class World {
     this.manifestoRing.frustumCulled = false;
     this.root.add(this.manifestoRing);
 
-    this.add(this.spine.group, ANCHOR.workTop + 10, ANCHOR.workBottom - 8);
-    this.add(this.cards.group, ANCHOR.workTop + 2, ANCHOR.workBottom - 4);
+    this.add(this.garden.group, ANCHOR.workTop + 10, ANCHOR.workBottom - 8);
+    // the chapter cards stay as invisible anchors (camera framing, hover, taps); the chapter
+    // tulips stand in their place
+    this.root.add(this.cards.group);
+    this.cards.group.visible = false;
+    this.layoutGarden();
     this.add(this.lab.group, ANCHOR.lab + 4, ANCHOR.lab - 3);
     this.add(this.portal.group, ANCHOR.portal + 4, ANCHOR.portal - 4);
 
@@ -125,7 +139,8 @@ export class World {
     };
     field('embers', { colors: ['#ff6a1f', '#ff2b3d', '#ffc36b'], size: 3.4, turbulence: 0.25, speed: 0.35, drift: [0, 0.35, 0], puff: 0.06 }, 4, -8);
     field('storm', { colors: ['#ff4a1a', '#ff9a2e', '#ff2a5a'], size: 9, turbulence: 0.45, speed: 0.4, twinkle: 0.3, puff: 0.12 }, 4, -8);
-    field('glitter', { colors: ['#e07ad8', '#9a82f0', '#d9a0e8'], size: 1.9, turbulence: 0.05, speed: 0.2, twinkle: 0.35 }, ANCHOR.workTop + 8, ANCHOR.workBottom - 8);
+    // golden motes and dew light drifting through the garden
+    field('glitter', { colors: ['#ffd9a0', '#ffb7c5', '#fff1d6'], size: 1.5, turbulence: 0.05, speed: 0.2, twinkle: 0.45, opacity: 0.8 }, ANCHOR.workTop + 8, ANCHOR.workBottom - 8);
     // the red mass inside the cage is now a faint aura behind the cake
     field('blob', { colors: ['#ff1f4b', '#ff4a6a', '#ff8a5a'], size: 1.4, turbulence: 0.08, speed: 0.3, opacity: 0.35 }, ANCHOR.lab + 4, ANCHOR.lab - 4);
     field('bubbles', { colors: ['#bfe8e6', '#ffffff', '#7fd6d0'], size: 2.2, turbulence: 0.08, speed: 0.2, drift: [0, 1.2, 0], opacity: 0.5 }, ANCHOR.portal + 4, ANCHOR.portal - 8);
@@ -152,7 +167,7 @@ export class World {
     };
     const warm = ['#ff1840', '#ff3a1c', '#ff2a8a', '#c0102c'];
         neb('storm', { count: 60, seed: 12, center: V(0, -2.2, -0.8), spread: V(9, 2.8, 3), size: [2.5, 7], colors: warm, intensity: 0 }, 4, -8);
-    neb('glitter', { count: 70, seed: 13, center: V(0, (ANCHOR.workTop + ANCHOR.workBottom) / 2, 0), spread: V(2.6, 52, 1.6), size: [1.5, 4], colors: ['#6a2bb0', '#a8327f', '#2a3aa6', '#1a6e84'], intensity: 0.14 }, ANCHOR.workTop + 8, ANCHOR.workBottom - 8);
+    neb('glitter', { count: 70, seed: 13, center: V(0, (ANCHOR.workTop + ANCHOR.workBottom) / 2, 0), spread: V(2.6, 52, 1.6), size: [1.5, 4], colors: ['#3a2a6a', '#8a3a5a', '#b0683a', '#2a2a5a'], intensity: 0.12 }, ANCHOR.workTop + 8, ANCHOR.workBottom - 8);
     neb('lab', { count: 22, seed: 14, center: V(0, ANCHOR.lab + 0.6, -1.2), spread: V(1.6, 1.4, 0.8), size: [1.5, 3.5], colors: warm, intensity: 0.18 }, ANCHOR.lab + 4, ANCHOR.lab - 4);
     neb('outroStorm', { count: 50, seed: 15, center: V(0, ANCHOR.outro - 1.8, -0.8), spread: V(5.5, 2.8, 2.5), size: [2.5, 7], colors: warm, intensity: 0 }, ANCHOR.outro + 4, ANCHOR.outro - 8);
   }
@@ -169,6 +184,14 @@ export class World {
 
   layout() {
     this.cards.layout();
+    this.layoutGarden();
+  }
+
+  private restM: THREE.Matrix4[] = [];
+  private layoutGarden() {
+    this.restM = this.cards.cards.map((c, i) => (this.restM[i] ?? new THREE.Matrix4()).compose(c.base.position, c.base.quaternion, c.base.scale));
+    this.garden.layoutChapters(this.restM);
+    this.garden.setHeightMap((y) => workTimeline.progressAtHeight(y));
   }
 
   private ringQ = new THREE.Quaternion();
@@ -213,7 +236,14 @@ export class World {
 
   private blendPalettes(dt: number, post: THREE.ShaderMaterial) {
     const i = ORDER.indexOf(state.section);
-    const cur = PALETTES[state.section];
+    let cur = PALETTES[state.section];
+    if (state.section === 'work') {
+      const w = smoothstep(0.05, 0.9, state.sectionProgress);
+      for (const k of ['top', 'bottom', 'accent', 'fog', 'glowA', 'glowB'] as const) WORK_NOW[k].copy(PALETTES.work[k]).lerp(WORK_SUNSET[k], w);
+      WORK_NOW.density = PALETTES.work.density;
+      WORK_NOW.streaks = 0;
+      cur = WORK_NOW;
+    }
     const prev = PALETTES[ORDER[Math.max(0, i - 1)]];
     const next = PALETTES[ORDER[Math.min(ORDER.length - 1, i + 1)]];
     const lp = state.sectionProgress;
@@ -336,13 +366,20 @@ export class World {
     // measured entry seam: column sweep + card 0 rise, both pure functions of work progress
     const wr = rangeOf('work');
     const wt = (state.scroll.progress - wr.start) / (wr.end - wr.start);
-    this.spine.setReveal(workTimeline.spineFront(wt));
+    this.garden.setReveal(workTimeline.spineFront(wt));
     this.cards.setEntry(workTimeline.card0Entry(wt));
-    this.spine.setCrumble(workTimeline.spineDissolve(wt));
-    this.spine.update(t);
+    // an open chapter (and the finale's reveal) always sees the whole garden
+    this.garden.setCrumble(workTimeline.spineDissolve(wt) * (1 - clamp(state.focus + this.gardenReveal)));
     this.lab.update(t, state.viewport.dpr);
     if (++this.rayFrame % 2 === 0) this.raycast(camera);
     this.cards.update(dt, this.activeSlug, this.highlight, this.hovered, this.hitUv);
+    // chapter tulips follow their anchors (hover tilt, chapter‑1 entry rise)
+    this.cards.group.updateMatrixWorld();
+    this.cards.cards.forEach((c, i) => this.garden.syncChapter(i, c.mesh.matrixWorld));
+    const done = getProgress().done;
+    for (let i = 0; i < PROJECTS.length; i++) this.visited[i] = done.includes(PROJECTS[i].slug);
+    const active = this.activeSlug ? PROJECTS.findIndex((p) => p.slug === this.activeSlug) : -1;
+    this.garden.update(t, wt, (i) => workTimeline.cardCentre(i), state.focus > 0.5 ? active : -1, this.visited, this.gardenReveal);
   }
 
   private setStorm(id: 'storm' | 'outroStorm', streak: number, amount: number) {

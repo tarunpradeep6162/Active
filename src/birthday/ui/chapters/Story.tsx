@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { events } from '../../../core/state';
 import { PROJECTS } from '../../../app/projects';
 import { HiddenHeart, Media, ParticleText, reducedMotion, useContent, useProgress, useTypewriter } from '../shared';
 import type { ChapterProps } from '../ChapterView';
@@ -131,7 +132,13 @@ export function Finale({ slug, onDone }: ChapterProps) {
     at(c.finale.voice ? 9000 : 2500, 2); // darkness (+ voice) → memories
     at(c.finale.voice ? 14000 : 7500, 3); // → 25 · 11
     at(c.finale.voice ? 19000 : 12500, 4); // → headline
+    at(c.finale.voice ? 24000 : 17500, 5); // → pull back: the whole garden, every flower in bloom
   };
+  useEffect(() => {
+    if (stage >= 5) events.emit('gardenReveal', true);
+  }, [stage]);
+  // leaving the finale always returns the camera to the chapter
+  useEffect(() => () => events.emit('gardenReveal', false), []);
   useEffect(() => {
     if (stage >= 4) onDone();
   }, [stage]);

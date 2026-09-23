@@ -9,6 +9,10 @@ and are never committed or served. Everything shipped here, including the geomet
 cards, copy and media, is original. What was taken from the reference is its *motion*:
 numbers that describe where the camera is and when things happen.
 
+> **Update:** the central column is now the tulip garden (`src/scenes/TulipGarden.ts`; see
+> BIRTHDAY.md). It occupies the same axis and extent, and uses the same entry-reveal and
+> exit-dissolve hooks. Everything measured below still drives the camera unchanged.
+
 ## 1. Method
 
 | Step | Tool | Notes |

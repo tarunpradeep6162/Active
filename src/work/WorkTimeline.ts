@@ -202,6 +202,13 @@ export class WorkTimeline {
     return this.config.fov;
   }
 
+  /** Work progress at which the camera has descended to local height y (+ a little lead). */
+  progressAtHeight(y: number) {
+    const rows = this.config.rows;
+    for (const r of rows) if (r[0] >= 0 && r[2] <= y + 0.6) return r[0];
+    return rows[rows.length - 1][0];
+  }
+
   cardCentre(i: number) {
     const c = this.config.cardCentres;
     return c[Math.max(0, Math.min(c.length - 1, i))];

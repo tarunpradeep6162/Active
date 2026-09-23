@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { events } from '../../../core/state';
 import { HiddenHeart, ParticleText, useContent, useTypewriter } from '../shared';
 import type { ChapterProps } from '../ChapterView';
 
@@ -106,6 +107,8 @@ export function Wish({ slug, onDone }: ChapterProps) {
   const blowOut = () => {
     stopMicRef.current();
     setStage('out');
+    // the wish's light climbs the whole garden; every flower already visited glows as it passes
+    events.emit('wishLight', undefined);
     onDone();
   };
   const startHold = () => {

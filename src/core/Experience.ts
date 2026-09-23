@@ -1,5 +1,6 @@
 import { workTimeline } from '../work/WorkTimeline';
 import * as THREE from 'three';
+import { WORK_ORIGIN } from '../work/WorkLayout';
 import { state, store, events, type Route } from './state';
 import { createRenderer, readViewport } from '../renderer/Renderer';
 import { PostFX } from '../post/PostFX';
@@ -107,6 +108,17 @@ export class Experience {
     events.on('navigate', (r: Route) => this.transition?.request(r, true));
     events.on('toggleAudio', () => this.audio.toggle());
     events.on('openCage', () => this.world?.lab.open());
+    events.on('wishLight', () => {
+      this.world?.garden.pulse(state.time);
+      this.thinUntil = state.time + 5.5;
+    });
+    events.on('gardenReveal', (on) => {
+      this.revealTarget = on ? 1 : 0;
+      if (on) {
+        this.revealFromPos.copy(this.rig.focusPos);
+        this.revealFromTgt.copy(this.rig.focusTgt);
+      }
+    });
     events.on('filter', (cat) => {
       if (!this.world) return;
       this.world.highlight = cat;
@@ -153,6 +165,33 @@ export class Experience {
   private recoverContext() {
     this.post.rebuildAfterContextLoss();
     this.resize();
+  }
+
+  // ── garden moments: the wish's light and the finale's pull‑back
+  private thinUntil = -1;
+  private revealTarget = 0;
+  private revealFromPos = new THREE.Vector3();
+  private revealFromTgt = new THREE.Vector3();
+  private revealFar = new THREE.Vector3();
+  private revealMid = new THREE.Vector3();
+  private updateGardenMoments(dt: number) {
+    const w = this.world;
+    if (!w) return;
+    const thin = state.time < this.thinUntil || this.revealTarget > 0 ? 1 : 0;
+    state.veilThin += (thin - state.veilThin) * Math.min(1, dt * 2.5);
+    // the reveal eases in slowly (≈4 s) and out quickly when the chapter closes
+    const k = this.revealTarget > w.gardenReveal ? dt * 0.35 : dt * 2;
+    w.gardenReveal = Math.abs(this.revealTarget - w.gardenReveal) < 0.002 ? this.revealTarget : w.gardenReveal + Math.sign(this.revealTarget - w.gardenReveal) * k;
+    if (w.gardenReveal > 0 && state.route.name === 'project') {
+      // pull far back along the current heading until the whole garden is in frame
+      const e = easeInOutCubic(clamp(w.gardenReveal));
+      this.revealMid.set(WORK_ORIGIN.x, WORK_ORIGIN.y - 3.8, WORK_ORIGIN.z);
+      this.revealFar.set(this.revealFromPos.x - WORK_ORIGIN.x, 0, this.revealFromPos.z - WORK_ORIGIN.z).normalize();
+      const dist = state.viewport.aspect < 0.9 ? 44 : 31;
+      this.revealFar.multiplyScalar(dist).add(this.revealMid);
+      this.rig.focusPos.lerpVectors(this.revealFromPos, this.revealFar, e);
+      this.rig.focusTgt.lerpVectors(this.revealFromTgt, this.revealMid, e);
+    }
   }
 
   private onClick(e: MouseEvent) {
@@ -298,6 +337,7 @@ export class Experience {
       globalUniforms.uReveal.value = clamp(t * 1.8);
     }
 
+    this.updateGardenMoments(dt);
     this.rig.update(dt);
     const cam = this.rig.camera;
     if (this.trails && this.world) {
@@ -318,8 +358,9 @@ export class Experience {
 
     const cu = this.post.composite.uniforms;
     // an open birthday chapter sits over a softened, darker world so its text never competes
-    cu.uBlur.value = Math.max(state.overlay * 0.92, state.focus * 0.85);
-    cu.uDim.value = state.overlay * 0.35 + state.focus * 0.3;
+    const veil = state.focus * (1 - state.veilThin);
+    cu.uBlur.value = Math.max(state.overlay * 0.92, veil * 0.85);
+    cu.uDim.value = state.overlay * 0.35 + veil * 0.3;
     cu.uBloomStrength.value = 0.85 + Math.min(Math.abs(state.scroll.velocity), 3) * 0.12 + this.rig.warp * 0.8;
     if (!this.world) cu.uGlowA.value.setRGB(0, 0, 0), cu.uGlowB.value.setRGB(0, 0, 0);
 

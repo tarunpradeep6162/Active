@@ -72,8 +72,8 @@ const measure = () => page.evaluate(({ isRef, W, H }) => {
     for (const k of __exp.world.cards.cards) { const m = k.mesh; m.updateMatrixWorld(); const e = m.matrixWorld.elements;
       cards.push({ world: [e[12], e[13], e[14]].map((n) => +n.toFixed(2)), ...toScreen(view, pe, e[12], e[13], e[14]),
         corners: [[-1.52, -0.99], [1.52, -0.99], [1.52, 0.99], [-1.52, 0.99]].map(([a, b]) => { const x = e[0] * a + e[4] * b + e[12], y = e[1] * a + e[5] * b + e[13], z = e[2] * a + e[6] * b + e[14]; const s = toScreen(view, pe, x, y, z); return [s.x, s.y]; }) }); }
-    const sg = __exp.world.spine.group; sg.updateMatrixWorld(); const se = sg.matrixWorld.elements;
-    for (let y = __exp.world.spine.axisTop ?? -40; y >= (__exp.world.spine.axisBottom ?? -130); y -= 3) axis.push({ wy: y, ...toScreen(view, pe, se[12], y, se[14]) });
+    const sg = __exp.world.garden.group; sg.updateMatrixWorld(); const se = sg.matrixWorld.elements;
+    for (let y = __exp.world.garden.axisTop ?? -40; y >= (__exp.world.garden.axisBottom ?? -130); y -= 3) axis.push({ wy: y, ...toScreen(view, pe, se[12], y, se[14]) });
   }
   const onScreen = cards.filter((k) => k.depth > 0 && k.x > -W * 0.3 && k.x < W * 1.3 && k.y > -H * 0.3 && k.y < H * 1.3);
   const vis = axis.filter((a) => a.depth > 0 && a.y >= 0 && a.y <= H);
