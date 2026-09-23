@@ -43,7 +43,9 @@
 * { box-sizing: border-box; }
 html { background: #000; -webkit-text-size-adjust: 100%; }
 html.scroll-locked, html.scroll-locked body { overflow: hidden; }
-html.hovering-card, html.hovering-card body { cursor: pointer; }
+html.hovering-card, html.hovering-card body, html.hovering-cage, html.hovering-cage body { cursor: pointer; }
+.lab-label__open { margin-top: 14px; background: none; border: 1px solid rgba(255, 216, 154, .4); color: #ffe6c0; border-radius: 999px; padding: 8px 16px; font: 11px var(--mono); letter-spacing: .14em; text-transform: uppercase; cursor: pointer; pointer-events: auto; }
+.lab-label__open:hover, .lab-label__open:focus-visible { border-color: #ffd89a; background: rgba(255, 216, 154, .1); }
 body {
   margin: 0;
   background: #000;

@@ -134,6 +134,7 @@ export const store = {
 type Events = {
   navigate: Route;
   jumpToProject: string;
+  openCage: void;
   filter: string | null;
   toggleAudio: void;
   scrollTo: number;

@@ -148,11 +148,14 @@ export function LabLabel() {
   return (
     <section className="lab-label" aria-labelledby="lab-title">
       <h2 className="lab-label__title" id="lab-title">
-        // The
+        // Locked
         <br />
-        Lab -&gt;
+        inside -&gt;
       </h2>
-      <p className="lab-label__copy">Where experiments are born, break, and occasionally become production.</p>
+      <p className="lab-label__copy">Something sweet is waiting behind these bars. Touch the cage to open it.</p>
+      <button type="button" className="lab-label__open" onClick={() => events.emit('openCage', undefined)}>
+        Open the cage
+      </button>
     </section>
   );
 }

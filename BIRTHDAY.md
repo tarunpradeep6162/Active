@@ -68,3 +68,17 @@ Nothing personal is ever committed.
   passcode gate appears first.
 - `RECREATION_URL=http://localhost:4173/ node qa/bdtour.mjs 1280 800` (or `390 844`)
   screenshots every chapter to `qa/out/`.
+
+## The cake in the lab
+
+After Work, the lab's cage now holds a 3D birthday cake. It's procedural, in
+`src/scenes/BirthdayCake.ts`: a gold stand, three rose tiers, berry glaze drips, pearls,
+berries, spiral candles and a gold heart topper.
+
+When she touches the cage or the cake, or presses **Open the cage**:
+1. The padlock pops.
+2. The bars and cables slide up into the housing.
+3. The cake rises and comes forward, turning.
+4. The candles light one by one and sparkles burst.
+
+The unlock sequence lives in `Lab.update()`. Check it with `node qa/cake.mjs 1280 800`.

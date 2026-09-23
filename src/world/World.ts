@@ -125,7 +125,8 @@ export class World {
     field('embers', { colors: ['#ff6a1f', '#ff2b3d', '#ffc36b'], size: 3.4, turbulence: 0.25, speed: 0.35, drift: [0, 0.35, 0], puff: 0.06 }, 4, -8);
     field('storm', { colors: ['#ff4a1a', '#ff9a2e', '#ff2a5a'], size: 9, turbulence: 0.45, speed: 0.4, twinkle: 0.3, puff: 0.12 }, 4, -8);
     field('glitter', { colors: ['#e07ad8', '#9a82f0', '#d9a0e8'], size: 1.9, turbulence: 0.05, speed: 0.2, twinkle: 0.35 }, ANCHOR.workTop + 8, ANCHOR.workBottom - 8);
-    field('blob', { colors: ['#ff1f4b', '#ff4a6a', '#ff8a5a'], size: 2.6, turbulence: 0.08, speed: 0.3 }, ANCHOR.lab + 4, ANCHOR.lab - 4);
+    // the red mass inside the cage is now a faint aura behind the cake
+    field('blob', { colors: ['#ff1f4b', '#ff4a6a', '#ff8a5a'], size: 1.4, turbulence: 0.08, speed: 0.3, opacity: 0.35 }, ANCHOR.lab + 4, ANCHOR.lab - 4);
     field('bubbles', { colors: ['#bfe8e6', '#ffffff', '#7fd6d0'], size: 2.2, turbulence: 0.08, speed: 0.2, drift: [0, 1.2, 0], opacity: 0.5 }, ANCHOR.portal + 4, ANCHOR.portal - 8);
     field('outroStorm', { colors: ['#ff4a1a', '#ff9a2e', '#ff2a5a'], size: 5.6, turbulence: 0.45, speed: 0.4, twinkle: 0.3, puff: 0.12 }, ANCHOR.outro + 4, ANCHOR.outro - 8);
     field('outroEmbers', { colors: ['#ff6a1f', '#ff2b3d', '#ffc36b'], size: 3.2, turbulence: 0.25, speed: 0.35, drift: [0, 0.35, 0] }, ANCHOR.outro + 4, ANCHOR.outro - 8);
@@ -151,7 +152,7 @@ export class World {
     const warm = ['#ff1840', '#ff3a1c', '#ff2a8a', '#c0102c'];
         neb('storm', { count: 60, seed: 12, center: V(0, -2.2, -0.8), spread: V(9, 2.8, 3), size: [2.5, 7], colors: warm, intensity: 0 }, 4, -8);
     neb('glitter', { count: 70, seed: 13, center: V(0, (ANCHOR.workTop + ANCHOR.workBottom) / 2, 0), spread: V(2.6, 52, 1.6), size: [1.5, 4], colors: ['#6a2bb0', '#a8327f', '#2a3aa6', '#1a6e84'], intensity: 0.14 }, ANCHOR.workTop + 8, ANCHOR.workBottom - 8);
-    neb('lab', { count: 22, seed: 14, center: V(0, ANCHOR.lab + 0.2, 0), spread: V(1.1, 1.2, 1.1), size: [1.5, 3.5], colors: warm, intensity: 0.4 }, ANCHOR.lab + 4, ANCHOR.lab - 4);
+    neb('lab', { count: 22, seed: 14, center: V(0, ANCHOR.lab + 0.6, -1.2), spread: V(1.6, 1.4, 0.8), size: [1.5, 3.5], colors: warm, intensity: 0.18 }, ANCHOR.lab + 4, ANCHOR.lab - 4);
     neb('outroStorm', { count: 50, seed: 15, center: V(0, ANCHOR.outro - 1.8, -0.8), spread: V(5.5, 2.8, 2.5), size: [2.5, 7], colors: warm, intensity: 0 }, ANCHOR.outro + 4, ANCHOR.outro - 8);
   }
 
@@ -255,11 +256,28 @@ export class World {
         this.hitUv.set(this.localHit.x / 4.4 + 0.5, this.localHit.y / 3.4 + 0.5);
       }
     }
+    // the locked cage is touchable too
+    const cageHover = !p.isTouch && p.active && !this.lab.isOpen && state.section === 'lab' && state.focus < 0.01 && this.pickCageAt(p.x, p.y, camera);
+    document.documentElement.classList.toggle('hovering-cage', cageHover);
     if (hit !== this.hovered) {
       this.hovered = hit;
       store.set({ hoveredProject: hit });
       document.documentElement.classList.toggle('hovering-card', !!hit);
     }
+  }
+
+  private pickCageAt(nx: number, ny: number, camera: THREE.Camera) {
+    this.ndc.set(nx, ny);
+    this.raycaster.setFromCamera(this.ndc, camera);
+    return this.raycaster.intersectObjects(this.lab.pickables, false).length > 0;
+  }
+
+  /** True when a tap at this point hits the locked cage or the cake inside it. */
+  pickCage(clientX: number, clientY: number, camera: THREE.Camera) {
+    if (this.lab.isOpen || (state.section !== 'lab' && state.section !== 'portal')) return false;
+    this.ndc.set((clientX / state.viewport.width) * 2 - 1, -(clientY / state.viewport.height) * 2 + 1);
+    this.raycaster.setFromCamera(this.ndc, camera);
+    return this.raycaster.intersectObjects(this.lab.pickables, false).length > 0;
   }
 
   /** Tap / click picking (touch has no hover). */
@@ -321,7 +339,7 @@ export class World {
     this.cards.setEntry(workTimeline.card0Entry(wt));
     this.spine.setCrumble(workTimeline.spineDissolve(wt));
     this.spine.update(t);
-    this.lab.update(t);
+    this.lab.update(t, state.viewport.dpr);
     if (++this.rayFrame % 2 === 0) this.raycast(camera);
     this.cards.update(dt, this.activeSlug, this.highlight, this.hovered, this.hitUv);
   }

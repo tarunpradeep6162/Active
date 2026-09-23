@@ -106,6 +106,7 @@ export class Experience {
     });
     events.on('navigate', (r: Route) => this.transition?.request(r, true));
     events.on('toggleAudio', () => this.audio.toggle());
+    events.on('openCage', () => this.world?.lab.open());
     events.on('filter', (cat) => {
       if (!this.world) return;
       this.world.highlight = cat;
@@ -158,6 +159,7 @@ export class Experience {
     const t = e.target as Element | null;
     if (t && t.closest('a,button,input,textarea,select,[data-ui]')) return;
     if (!this.world || state.route.name === 'project' || state.route.name === 'contact' || state.transition.phase !== 'IDLE') return;
+    if (this.world.pickCage(e.clientX, e.clientY, this.rig.camera)) return this.world.lab.open();
     const slug = this.world.hovered ?? this.world.pick(e.clientX, e.clientY, this.rig.camera);
     if (slug) events.emit('navigate', { name: 'project', slug });
   }
