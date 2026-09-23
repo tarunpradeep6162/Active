@@ -5,3 +5,4 @@ dist
 # QA captures (reference frames are third-party imagery — never commit or ship)
 qa/out/
 qa/cache/
+sheet.html
