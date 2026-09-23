@@ -22,7 +22,8 @@ const expect = { '/work': 'work', '/contact': 'contact', '/': 'home' };
 const arrive = async (want) => {
   const t0 = Date.now();
   const ok = await page.waitForFunction((w) => __state.route.name === w && __state.transition.phase === 'IDLE', want, { timeout: 180000 }).then(() => true, () => false);
-  return `${want}: ${ok ? 'arrived' : 'NEVER ARRIVED'} in ${Math.round((Date.now() - t0) / 1000)}s`;
+  const st = ok ? '' : ' (' + (await page.evaluate(() => `path ${location.pathname}, route ${__state.route.name}, phase ${__state.transition.phase}`)) + ')';
+  return `${want}: ${ok ? 'arrived' : 'NEVER ARRIVED'} in ${Math.round((Date.now() - t0) / 1000)}s${st}`;
 };
 for (const path of ['/work', '/work/music-room', '/contact', '/', '/work/for-dheepika', '/work']) {
   await page.evaluate((p) => { history.pushState({}, '', p); dispatchEvent(new PopStateEvent('popstate')); }, path);

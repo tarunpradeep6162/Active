@@ -52,6 +52,10 @@ export async function openSite(site, { width, height, mobile = false, dpr = 1, q
     if (req.method() !== 'GET' || /localhost|127\.0\.0\.1/.test(url)) return route.continue();
     const f = path.join(CACHE, crypto.createHash('md5').update(url).digest('hex'));
     let status = 200, ct = mime(url);
+    // only content‑hashed build assets are safe to cache forever; pages, JSON and anything else
+    // must be fetched fresh or a redeploy is tested against a stale document
+    const immutable = /\/assets\/[^/]+-[A-Za-z0-9_-]{6,}\.[a-z0-9]+(\?|$)/.test(url) || !/vercel\.app/.test(url);
+    if (!immutable) fs.rmSync(f, { force: true });
     if (!fs.existsSync(f)) {
       const [s, c] = (await curl(url, f)).split(' ');
       status = +s || 500; if (c) ct = c;
