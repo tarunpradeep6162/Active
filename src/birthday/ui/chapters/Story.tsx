@@ -157,6 +157,8 @@ export function Finale({ slug, onDone }: ChapterProps) {
   }
   return (
     <div className="bd-finale" data-stage={stage}>
+      {/* the 14th heart must be findable whether or not the door was ever seen locked */}
+      <HiddenHeart slug={slug} style={{ left: '3%', bottom: '3%' }} />
       {stage === 0 && (
         <button type="button" className="bd-btn bd-btn--big" onClick={begin}>
           Open Door 25

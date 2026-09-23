@@ -13,11 +13,12 @@
   position: fixed; inset: 0; z-index: 30; display: grid; grid-template-rows: auto 1fr auto;
   padding: calc(92px + var(--safe-top)) max(var(--gutter), 20px) calc(18px + var(--safe-bottom));
   background: radial-gradient(120% 90% at 50% 40%, rgba(20, 12, 34, 0.8), var(--bd-glass));
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   color: var(--ink); font-family: var(--mono); letter-spacing: .06em;
-  opacity: 0; pointer-events: none; transition: opacity 700ms ease 250ms;
+  /* closed = invisible AND unclickable: #interface re-enables pointer events on every button,
+     so opacity alone would leave invisible footer buttons catching clicks all over the page */
+  opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 700ms ease, visibility 0s linear 700ms;
 }
-.bd-chapter.is-open { opacity: 1; pointer-events: auto; }
+.bd-chapter.is-open { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity 700ms ease 250ms, visibility 0s; }
 .bd-chapter__head { text-align: center; }
 .bd-chapter__title { font: 480 clamp(28px, 5vw, 64px)/1 var(--display); font-stretch: 112%; text-transform: uppercase; margin: 6px 0 0; text-shadow: 0 0 24px rgba(255, 216, 154, .25); }
 .bd-chapter__stage { position: relative; min-height: 0; overflow: auto; display: grid; place-items: center; padding: 12px 0; }
@@ -110,11 +111,13 @@
 .bd-reasons__lines { position: absolute; inset: 0; width: 100%; height: 100%; }
 .bd-reasons__lines line { stroke: rgba(255, 216, 154, .45); stroke-width: .25; stroke-dasharray: 40; stroke-dashoffset: 40; animation: bd-draw 1.2s forwards; }
 @keyframes bd-draw { to { stroke-dashoffset: 0; } }
-.bd-reason-star { position: absolute; translate: -50% -50%; background: none; border: 0; color: rgba(255, 241, 201, .75); font-size: 22px; cursor: pointer; text-shadow: 0 0 12px rgba(255, 216, 154, .7); animation: bd-twinkle 3s ease-in-out infinite; }
+.bd-reason-star { position: absolute; z-index: 2; translate: -50% -50%; background: none; border: 0; color: rgba(255, 241, 201, .75); font-size: 22px; cursor: pointer; text-shadow: 0 0 12px rgba(255, 216, 154, .7); animation: bd-twinkle 3s ease-in-out infinite; }
 .bd-reason-star:nth-child(3n) { animation-delay: -1s; }
 .bd-reason-star.is-seen { color: var(--bd-rose); text-shadow: 0 0 16px var(--bd-rose); }
 @keyframes bd-twinkle { 50% { opacity: .55; transform: scale(.85); } }
-.bd-reasons__centre { position: absolute; left: 50%; top: 50%; translate: -50% -50%; width: min(56%, 380px); text-align: center; display: grid; gap: 10px; }
+/* the centre text must never swallow taps meant for a star (on phones the name spans the ring) */
+.bd-reasons__centre { position: absolute; left: 50%; top: 50%; translate: -50% -50%; width: min(56%, 380px); text-align: center; display: grid; gap: 10px; pointer-events: none; }
+.bd-reasons__centre button { pointer-events: auto; position: relative; z-index: 3; }
 .bd-reasons__name { font: 480 clamp(28px, 6vw, 60px)/1 var(--display); font-stretch: 112%; text-transform: uppercase; margin: 0; }
 .bd-reasons__name button { background: none; border: 0; color: inherit; font: inherit; cursor: pointer; padding: 0 .02em; text-shadow: 0 0 20px rgba(255,216,154,.5); }
 .bd-reasons__text { min-height: 3.2em; color: var(--bd-cream); font-size: 14px; line-height: 1.6; margin: 0; }
@@ -256,7 +259,8 @@
   .bd-orb { width: 118px; min-height: 118px; }
   .bd-choice--big { min-width: 100%; }
   .bd-reasons { aspect-ratio: .8; }
-  .bd-reasons__centre { width: 70%; }
+  .bd-reasons__centre { width: 62%; }
+  .bd-reasons__name { font-size: clamp(22px, 7.4vw, 40px); }
 }
 @media (prefers-reduced-motion: reduce) {
   .bd-chapter *, .bd-chapter *::before { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }

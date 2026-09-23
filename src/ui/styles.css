@@ -215,6 +215,7 @@ body {
 /* ------------------------------------------------------------------ lab */
 .lab-label { position: fixed; left: 0; right: 0; top: 79vh; opacity: var(--v-lab); display: flex; justify-content: center; gap: clamp(20px, 13vw, 190px); align-items: flex-start; }
 .lab-label__title { font-family: var(--display); font-weight: 480; font-stretch: 112%; font-size: clamp(26px, 2.9vw, 48px); line-height: 1.05; letter-spacing: .02em; text-transform: uppercase; margin: 0; text-shadow: 0 0 14px rgba(255,255,255,.35); }
+.lab-label[data-hidden='true'] { visibility: hidden; }
 .lab-label__copy { font-size: 11px; line-height: 2.1; letter-spacing: .1em; text-transform: uppercase; max-width: 230px; margin: 0; }
 
 /* ------------------------------------------------------------------ end */

@@ -17,6 +17,7 @@ import { state, store, type SectionId } from '../core/state';
 import { smoothstep, clamp, dampFactor } from '../utils/math';
 import type { TierSettings } from '../core/Performance';
 import { PROJECTS } from '../app/projects';
+import { CARD_W, CARD_H } from '../scenes/ProjectCards';
 
 interface Palette {
   top: THREE.Color;
@@ -253,7 +254,7 @@ export class World {
         hit = hits[0].object.userData.slug as string;
         this.invMat.copy(hits[0].object.matrixWorld).invert();
         this.localHit.copy(hits[0].point).applyMatrix4(this.invMat);
-        this.hitUv.set(this.localHit.x / 4.4 + 0.5, this.localHit.y / 3.4 + 0.5);
+        this.hitUv.set(this.localHit.x / CARD_W + 0.5, this.localHit.y / CARD_H + 0.5);
       }
     }
     // the locked cage is touchable too

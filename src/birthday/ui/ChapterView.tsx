@@ -16,7 +16,7 @@ export interface ChapterProps {
   onDone: () => void;
 }
 
-const CHAPTERS: Record<string, (p: ChapterProps) => React.ReactElement> = {
+const CHAPTERS: Record<string, (p: ChapterProps) => React.ReactElement | null> = {
   'the-beginning': Beginning,
   'memory-universe': MemoryUniverse,
   'the-letter': Letter,

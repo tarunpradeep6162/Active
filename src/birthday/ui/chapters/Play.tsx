@@ -15,7 +15,7 @@ export function CatchGame({ slug, onDone }: ChapterProps) {
     const cv = ref.current!;
     const g = cv.getContext('2d')!;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
-    const W = (cv.width = cv.clientWidth * dpr), H = (cv.height = cv.clientHeight * dpr);
+    const W = (cv.width = Math.max(1, Math.round(cv.clientWidth * dpr))), H = (cv.height = Math.max(1, Math.round(cv.clientHeight * dpr)));
     let px = W / 2, target = W / 2, caught = 0, stun = 0, raf = 0, last = performance.now(), spawn = 0;
     type Item = { x: number; y: number; v: number; kind: 'heart' | 'star' | 'cloud'; r: number };
     const items: Item[] = [];
@@ -123,6 +123,11 @@ export function Quiz({ slug, onDone }: ChapterProps) {
   const [picked, setPicked] = useState<number | null>(null);
   const [part, setPart] = useState<'quiz' | 'tot' | 'card'>('quiz');
   const q = c.quiz[i];
+  useEffect(() => {
+    // nothing to ask: go straight on (content may leave the quiz empty)
+    if (part === 'quiz' && !c.quiz.length) setPart(c.thisOrThat.length ? 'tot' : 'card');
+  }, [part, c.quiz.length]);
+  if (part === 'quiz' && !q) return null;
   if (part === 'tot') return <ThisOrThat slug={slug} onFinish={() => { setPart('card'); onDone(); }} />;
   if (part === 'card') return <NextDateCard slug={slug} />;
   return (
@@ -163,6 +168,10 @@ export function Quiz({ slug, onDone }: ChapterProps) {
 function ThisOrThat({ slug, onFinish }: { slug: string; onFinish: () => void }) {
   const c = useContent();
   const [i, setI] = useState(0);
+  useEffect(() => {
+    if (!c.thisOrThat.length) onFinish();
+  }, []);
+  if (!c.thisOrThat[i]) return null;
   const [a, b] = c.thisOrThat[i];
   const pick = (k: 0 | 1) => {
     chooseThisOrThat(i, k);

@@ -102,12 +102,14 @@ export function Wish({ slug, onDone }: ChapterProps) {
   const [stage, setStage] = useState<'ready' | 'holding' | 'out'>('ready');
   const [hold, setHold] = useState(0);
   const raf = useRef(0);
+  const stopMicRef = useRef<() => void>(() => {});
   const blowOut = () => {
+    stopMicRef.current();
     setStage('out');
     onDone();
   };
   const startHold = () => {
-    if (stage === 'out') return;
+    if (stage !== 'ready') return; // key repeat / double pointerdown must not start a second loop
     setStage('holding');
     const t0 = performance.now();
     const tick = () => {
@@ -128,11 +130,24 @@ export function Wish({ slug, onDone }: ChapterProps) {
   useEffect(() => () => cancelAnimationFrame(raf.current), []);
   // optional: blow into the microphone (only if she chooses to allow it)
   const [mic, setMic] = useState<'off' | 'on' | 'denied'>('off');
+  const micRef = useRef<{ stream: MediaStream; ctx: AudioContext; raf: number } | null>(null);
+  const stopMic = () => {
+    const m = micRef.current;
+    if (!m) return;
+    cancelAnimationFrame(m.raf);
+    m.stream.getTracks().forEach((t) => t.stop());
+    m.ctx.close().catch(() => {});
+    micRef.current = null;
+  };
+  stopMicRef.current = stopMic;
+  // leaving the chapter must always release the microphone
+  useEffect(() => () => stopMicRef.current(), []);
   const useMic = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setMic('on');
       const ctx = new AudioContext();
+      micRef.current = { stream, ctx, raf: 0 };
       const an = ctx.createAnalyser();
       an.fftSize = 512;
       ctx.createMediaStreamSource(stream).connect(an);
@@ -144,11 +159,10 @@ export function Wish({ slug, onDone }: ChapterProps) {
         for (const v of buf) s += ((v - 128) / 128) ** 2;
         loud = Math.sqrt(s / buf.length) > 0.18 ? loud + 1 : 0;
         if (loud > 12) {
-          stream.getTracks().forEach((t) => t.stop());
-          ctx.close();
+          stopMic();
           return blowOut();
         }
-        requestAnimationFrame(tick);
+        if (micRef.current) micRef.current.raf = requestAnimationFrame(tick);
       };
       tick();
     } catch {
@@ -204,7 +218,7 @@ export function Future({ slug, onDone }: ChapterProps) {
       </div>
       <WishSphere
         onPick={() => {
-          setWish(c.wishes[Math.floor(Math.random() * c.wishes.length)]);
+          if (c.wishes.length) setWish(c.wishes[Math.floor(Math.random() * c.wishes.length)]);
           setN((x) => x + 1);
         }}
       />
@@ -223,7 +237,7 @@ function WishSphere({ onPick }: { onPick: () => void }) {
     const cv = ref.current!;
     const g = cv.getContext('2d')!;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
-    const W = (cv.width = cv.clientWidth * dpr), H = (cv.height = cv.clientHeight * dpr);
+    const W = (cv.width = Math.max(1, Math.round(cv.clientWidth * dpr))), H = (cv.height = Math.max(1, Math.round(cv.clientHeight * dpr)));
     const N = 365;
     const pts = Array.from({ length: N }, (_, i) => {
       const y = 1 - (i / (N - 1)) * 2, r = Math.sqrt(1 - y * y), a = i * 2.39996;

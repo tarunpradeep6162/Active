@@ -145,15 +145,18 @@ export function WorkPanel() {
 }
 
 export function LabLabel() {
+  // opacity alone would leave the button clickable (and tabbable) everywhere else on the page
+  const section = useStore((s) => s.section);
+  const hidden = section !== 'lab' && section !== 'portal';
   return (
-    <section className="lab-label" aria-labelledby="lab-title">
+    <section className="lab-label" aria-labelledby="lab-title" data-hidden={hidden} aria-hidden={hidden}>
       <h2 className="lab-label__title" id="lab-title">
         // Locked
         <br />
         inside -&gt;
       </h2>
       <p className="lab-label__copy">Something sweet is waiting behind these bars. Touch the cage to open it.</p>
-      <button type="button" className="lab-label__open" onClick={() => events.emit('openCage', undefined)}>
+      <button type="button" className="lab-label__open" tabIndex={hidden ? -1 : 0} onClick={() => events.emit('openCage', undefined)}>
         Open the cage
       </button>
     </section>

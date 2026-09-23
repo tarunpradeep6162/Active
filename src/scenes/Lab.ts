@@ -33,6 +33,7 @@ export class Lab {
   private shackle!: THREE.Mesh;
   private front = new THREE.Vector3(Math.cos((FRONT_DEG * Math.PI) / 180), 0, Math.sin((FRONT_DEG * Math.PI) / 180));
   private cakeHome = new THREE.Vector3();
+  private rose = new THREE.Vector3();
 
   constructor() {
     const c = this.center;
@@ -96,7 +97,8 @@ export class Lab {
     this.group.add(this.cake.group);
     this.materials.push(...this.cake.materials);
     this.pickables.push(...this.cake.pickables);
-    this.cake.syncLights(c.clone().add(this.front.clone().multiplyScalar(6)).setY(c.y + 1.5));
+    this.rose.copy(this.front).multiplyScalar(6).add(c).setY(c.y + 1.5);
+    this.cake.syncLights(this.rose);
 
     // hanging cables (catenaries) from the top ring down to the floor
     const cables: THREE.BufferGeometry[] = [];
@@ -209,7 +211,7 @@ export class Lab {
     this.cake.group.rotation.y = rise * 0.9 + (t > 3.6 ? (t - 3.6) * 0.18 : 0);
     const lit = clamp((t - 2.4) / 1.8);
     const burst = t < 0 ? 0 : ease(2.8, 3.4, t) * (1 - ease(3.4, 6, t) * 0.45);
-    this.cake.syncLights(c.clone().add(this.front.clone().multiplyScalar(6)).setY(c.y + 1.5));
+    this.cake.syncLights(this.rose);
     this.cake.update(time, t < 0 ? 0 : lit, burst, dpr);
   }
 }
