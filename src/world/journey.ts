@@ -49,6 +49,7 @@ export const ANCHOR = {
   workTop: -52,
   workBottom: -150,
   lab: -176,
-  portal: -196,
-  outro: -226,
+  /** the lab floor (lab − 2.1) is the water surface seen from below in the portal (portal + 3.4) */
+  portal: -181.5,
+  outro: -206,
 };

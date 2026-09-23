@@ -96,10 +96,10 @@ export class ParticleField {
           vec2 c = gl_PointCoord - .5;
           float d = length(c);
           float a = smoothstep(.5, .0, d);
-          a *= a;
+          a = mix(a * a, a, .5) + smoothstep(.12, .0, d) * .6 * (1. - vPuff);
           vec3 col = vSeed.y < .45 ? uColorA : vSeed.y < .8 ? uColorB : uColorC;
           col *= 1. + step(.965, vSeed.z) * 3. * (1. - vPuff); // occasional hot sparks feed the bloom
-          a *= mix(1., .09, vPuff);
+          a *= mix(1., .16, vPuff);
           float alpha = a * vFade * uOpacity * (1. - uFocusDim * .85);
           if (alpha < .003) discard;
           gl_FragColor = vec4(col * alpha, alpha);

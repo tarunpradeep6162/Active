@@ -258,14 +258,14 @@ export class ProjectCards {
     if (!c) return false;
     const portrait = state.viewport.aspect < 0.9;
     const n = this.tmpV.set(0, 0, 1).applyQuaternion(c.base.quaternion);
-    const dist = portrait ? 7.4 : 4.9;
+    const dist = portrait ? 7.8 : 5.7;
     outTgt.copy(c.base.position);
     outPos.copy(c.base.position).addScaledVector(n, dist);
     if (!portrait) {
       // shift framing so the card sits right of centre, leaving room for the info panel
       const right = this.tmpV.set(1, 0, 0).applyQuaternion(c.base.quaternion);
-      outPos.addScaledVector(right, -1.15);
-      outTgt.addScaledVector(right, -1.15);
+      outPos.addScaledVector(right, -1.75);
+      outTgt.addScaledVector(right, -1.75);
     } else {
       outPos.y -= 0.9;
       outTgt.y -= 0.9;

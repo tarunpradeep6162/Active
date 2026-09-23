@@ -15,7 +15,7 @@ export function createRenderer(canvas: HTMLCanvasElement) {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.NoToneMapping; // tone mapping happens in the composite pass
   renderer.autoClear = true;
-  renderer.info.autoReset = true;
+  renderer.info.autoReset = false; // reset once per frame so stats cover all passes
 
   canvas.addEventListener(
     'webglcontextlost',

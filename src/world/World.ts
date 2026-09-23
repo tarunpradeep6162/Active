@@ -8,6 +8,7 @@ import { Backdrop } from '../scenes/Backdrop';
 import { iridescentMaterial } from '../scenes/materials';
 import { ParticleField, type FieldOptions } from '../particles/ParticleField';
 import { Streaks } from '../particles/Streaks';
+import { Nebula } from '../particles/Nebula';
 import type { ParticleResult } from '../workers/particles.worker';
 import { ANCHOR, rangeOf } from './journey';
 import { globalUniforms } from './uniforms';
@@ -41,7 +42,7 @@ const PALETTES: Record<SectionId, Palette> = {
   intro: pal('#0c1317', '#06080a', '#1a5e5b', '#090d10', 0.028, 0, '#1f6d68', '#10363d'),
   manifesto: pal('#131b3a', '#06070f', '#2a3c96', '#0a0d1c', 0.03, 1, '#1d3f7a', '#1a2a55'),
   work: pal('#0b1117', '#150c26', '#3b2a7d', '#0d0b18', 0.026, 0, '#1b6663', '#3a2470'),
-  lab: pal('#07090b', '#040506', '#3c0a16', '#060708', 0.045, 0, '#15403f', '#2a0b12'),
+  lab: pal('#07090b', '#040506', '#3c0a16', '#060708', 0.06, 0, '#15403f', '#2a0b12'),
   portal: pal('#061110', '#030707', '#0f4a47', '#041010', 0.05, 0, '#16605a', '#0b2d2e'),
   outro: pal('#0c1317', '#06080a', '#1a5e5b', '#090d10', 0.028, 0, '#1f6d68', '#10363d'),
 };
@@ -66,6 +67,7 @@ export class World {
   private manifestoRing: THREE.Mesh;
   private fields: Record<string, ParticleField> = {};
   private streaks: Streaks[] = [];
+  private nebulae: Record<string, Nebula> = {};
   private pieces: Piece[] = [];
   private raycaster = new THREE.Raycaster();
   private ndc = new THREE.Vector2();
@@ -91,7 +93,7 @@ export class World {
     // manifesto glass ring (edge‑on)
     this.manifestoRing = new THREE.Mesh(
       new THREE.TorusGeometry(3.1, 0.3, 40, 160),
-      iridescentMaterial({ base: '#140a26', envTop: '#d2c6ff', envBottom: '#10143a', film: 1.5, glow: 1.2 }),
+      iridescentMaterial({ base: '#0c0a16', envTop: '#8e8aa8', envBottom: '#0a0c1c', film: 0.9, glow: 0.35 }),
     );
     this.manifestoRing.position.set(0.55, ANCHOR.manifesto - 0.15, -0.4);
     this.manifestoRing.rotation.set(0, Math.PI / 2 - 0.1, 0);
@@ -114,22 +116,34 @@ export class World {
       this.fields[id] = f;
       this.add(f.points, top, bottom);
     };
-    field('embers', { colors: ['#ff6a1f', '#ff2b3d', '#ffc36b'], size: 2.4, turbulence: 0.25, speed: 0.35, drift: [0, 0.35, 0], puff: 0.06 }, 4, -8);
-    field('storm', { colors: ['#ff1f4b', '#ff5a2a', '#ff6ad0'], size: 3.2, turbulence: 0.45, speed: 0.4, twinkle: 0.3, puff: 0.12 }, -1, -28);
+    field('embers', { colors: ['#ff6a1f', '#ff2b3d', '#ffc36b'], size: 3.4, turbulence: 0.25, speed: 0.35, drift: [0, 0.35, 0], puff: 0.06 }, 4, -8);
+    field('storm', { colors: ['#ff4a1a', '#ff9a2e', '#ff2a5a'], size: 5.6, turbulence: 0.45, speed: 0.4, twinkle: 0.3, puff: 0.12 }, 4, -8);
     field('glitter', { colors: ['#ff6fd8', '#8f7bff', '#6fe8ff'], size: 2.3, turbulence: 0.12, speed: 0.25, twinkle: 0.7, puff: 0.05 }, ANCHOR.workTop + 8, ANCHOR.workBottom - 8);
-    field('blob', { colors: ['#ff1f4b', '#ff6a8a', '#ffb36b'], size: 2.6, turbulence: 0.35, speed: 0.5, puff: 0.1 }, ANCHOR.lab + 4, ANCHOR.lab - 4);
+    field('blob', { colors: ['#ff1f4b', '#ff6a8a', '#ffb36b'], size: 3.4, turbulence: 0.35, speed: 0.5, puff: 0.1 }, ANCHOR.lab + 4, ANCHOR.lab - 4);
     field('bubbles', { colors: ['#bfe8e6', '#ffffff', '#7fd6d0'], size: 2.2, turbulence: 0.08, speed: 0.2, drift: [0, 1.2, 0], opacity: 0.5 }, ANCHOR.portal + 4, ANCHOR.portal - 8);
-    field('outroStorm', { colors: ['#ff1f4b', '#ff5a2a', '#ff6ad0'], size: 3.2, turbulence: 0.45, speed: 0.4, twinkle: 0.3, puff: 0.12 }, ANCHOR.outro + 24, ANCHOR.outro);
-    field('outroEmbers', { colors: ['#ff6a1f', '#ff2b3d', '#ffc36b'], size: 2.1, turbulence: 0.25, speed: 0.35, drift: [0, 0.35, 0] }, ANCHOR.outro + 4, ANCHOR.outro - 8);
+    field('outroStorm', { colors: ['#ff4a1a', '#ff9a2e', '#ff2a5a'], size: 5.6, turbulence: 0.45, speed: 0.4, twinkle: 0.3, puff: 0.12 }, ANCHOR.outro + 4, ANCHOR.outro - 8);
+    field('outroEmbers', { colors: ['#ff6a1f', '#ff2b3d', '#ffc36b'], size: 3.2, turbulence: 0.25, speed: 0.35, drift: [0, 0.35, 0] }, ANCHOR.outro + 4, ANCHOR.outro - 8);
     field('dust', { colors: ['#9fd8d8', '#ffffff', '#ff9a7a'], size: 1.1, turbulence: 0.2, speed: 0.2, twinkle: 0.8, opacity: 0.6 }, 10, ANCHOR.outro - 12);
     const dust = this.fields.dust;
     if (dust) this.pieces.pop(); // dust is global: always visible
 
-    const s1 = new Streaks(26, -24, -4, 5, ['#ff2a55', '#ff4f7a', '#ff7a3a']);
-    const s2 = new Streaks(22, ANCHOR.outro + 4, ANCHOR.outro + 22, 9, ['#ff2a55', '#ff4f7a', '#ff7a3a']);
+    const s1 = new Streaks(14, -5, 1.5, 5, ['#ff2a55', '#ff4f7a', '#ff7a3a']);
+    const s2 = new Streaks(14, ANCHOR.outro - 5, ANCHOR.outro + 1.5, 9, ['#ff2a55', '#ff4f7a', '#ff7a3a']);
     this.streaks.push(s1, s2);
-    this.add(s1.mesh, -2, -26);
-    this.add(s2.mesh, ANCHOR.outro + 24, ANCHOR.outro + 2);
+    this.add(s1.mesh, 4, -8);
+    this.add(s2.mesh, ANCHOR.outro + 4, ANCHOR.outro - 8);
+
+    const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
+    const neb = (id: string, o: ConstructorParameters<typeof Nebula>[0], top: number, bottom: number) => {
+      const nb = new Nebula(o);
+      this.nebulae[id] = nb;
+      this.add(nb.mesh, top, bottom);
+    };
+    const warm = ['#ff1840', '#ff3a1c', '#ff2a8a', '#c0102c'];
+        neb('storm', { count: 50, seed: 12, center: V(0, -2.2, -0.8), spread: V(5.5, 2.8, 2.5), size: [2.5, 7], colors: warm, intensity: 0 }, 4, -8);
+    neb('glitter', { count: 90, seed: 13, center: V(0, (ANCHOR.workTop + ANCHOR.workBottom) / 2, 0), spread: V(2.6, 52, 1.6), size: [1.5, 4], colors: ['#8f2bd6', '#d13aa8', '#2a4fd6', '#1fa3b8'], intensity: 0.22 }, ANCHOR.workTop + 8, ANCHOR.workBottom - 8);
+    neb('lab', { count: 22, seed: 14, center: V(0, ANCHOR.lab + 0.2, 0), spread: V(1.1, 1.2, 1.1), size: [1.5, 3.5], colors: warm, intensity: 0.4 }, ANCHOR.lab + 4, ANCHOR.lab - 4);
+    neb('outroStorm', { count: 50, seed: 15, center: V(0, ANCHOR.outro - 1.8, -0.8), spread: V(5.5, 2.8, 2.5), size: [2.5, 7], colors: warm, intensity: 0 }, ANCHOR.outro + 4, ANCHOR.outro - 8);
   }
 
   private add(obj: THREE.Object3D, yTop: number, yBottom: number) {
@@ -144,6 +158,8 @@ export class World {
 
   layout() {
     this.cards.layout();
+    const girth = state.viewport.aspect < 0.9 ? 0.7 : 1;
+    this.spine.group.scale.set(girth, 1, girth);
     const portrait = state.viewport.aspect < 0.9;
     this.manifestoRing.position.x = portrait ? 0.0 : 0.55;
     this.manifestoRing.scale.setScalar(portrait ? 0.8 : 1);
@@ -232,7 +248,7 @@ export class World {
     const intro = state.section === 'intro' ? state.sectionProgress : state.scroll.progress > rangeOf('intro').end ? 1 : 0;
     this.emblem.update(t, state.reveal, state.pointer.targetX, state.pointer.targetY, intro * 0.8);
     const outroLocal = state.section === 'outro' ? state.sectionProgress : 0;
-    this.outroEmblem.update(t, smoothstep(0.35, 0.9, outroLocal), state.pointer.targetX, state.pointer.targetY);
+    this.outroEmblem.update(t, smoothstep(0.15, 0.6, outroLocal), state.pointer.targetX, state.pointer.targetY);
 
     // intro eruption
     const embers = this.fields.embers;
@@ -241,6 +257,11 @@ export class World {
       embers.uniforms.uPointerWorld.value.copy(pointerWorld);
       embers.uniforms.uPointerStrength.value = 0.9;
     }
+    // storms erupt around each emblem as its section scrolls (reference: 25–90 % of the intro)
+    const introStorm = smoothstep(0.2, 0.55, intro) * (1 - smoothstep(0.88, 0.97, intro));
+    const outroStorm = smoothstep(0.02, 0.2, outroLocal) * (1 - smoothstep(0.5, 0.78, outroLocal));
+    this.setStorm('storm', 0, introStorm);
+    this.setStorm('outroStorm', 1, outroStorm);
     const oe = this.fields.outroEmbers;
     if (oe) {
       oe.uniforms.uBurst.value = (1 - smoothstep(0.3, 0.8, outroLocal)) * 3.2;
@@ -261,6 +282,21 @@ export class World {
     this.lab.update(t);
     if (++this.rayFrame % 2 === 0) this.raycast(camera);
     this.cards.update(dt, this.activeSlug, this.highlight, this.hovered, this.hitUv);
+  }
+
+  private setStorm(id: 'storm' | 'outroStorm', streak: number, amount: number) {
+    const f = this.fields[id];
+    if (f) {
+      f.uniforms.uOpacity.value = amount;
+      f.uniforms.uBurst.value = amount * 0.35;
+      f.uniforms.uBurstCenter.value.set(0, id === 'storm' ? ANCHOR.intro : ANCHOR.outro, 0);
+    }
+    const n = this.nebulae[id];
+    if (n) {
+      n.uniforms.uIntensity.value = amount * 0.26;
+      n.uniforms.uBurst.value = amount * 1.5;
+    }
+    this.streaks[streak].uniforms.uIntensity.value = amount;
   }
 
   setParticleScale(visibleFraction: number) {

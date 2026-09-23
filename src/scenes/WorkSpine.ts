@@ -5,13 +5,13 @@ import { ANCHOR } from '../world/journey';
 import { rng } from '../utils/math';
 
 function vertebra() {
-  const body = new THREE.CylinderGeometry(0.4, 0.46, 0.3, 20, 1);
-  const disc = new THREE.TorusGeometry(0.42, 0.06, 8, 24).rotateX(Math.PI / 2).translate(0, 0.18, 0);
-  const wingL = new THREE.ConeGeometry(0.12, 0.95, 8).rotateZ(Math.PI / 2 + 0.25).translate(-0.8, 0.02, -0.18);
-  const wingR = new THREE.ConeGeometry(0.12, 0.95, 8).rotateZ(-Math.PI / 2 - 0.25).translate(0.8, 0.02, -0.18);
-  const spike = new THREE.ConeGeometry(0.1, 0.8, 8).rotateX(-Math.PI / 2 - 0.5).translate(0, -0.15, -0.72);
-  const knobA = new THREE.SphereGeometry(0.13, 10, 8).translate(-0.34, 0.12, -0.42);
-  const knobB = new THREE.SphereGeometry(0.13, 10, 8).translate(0.34, 0.12, -0.42);
+  const body = new THREE.CylinderGeometry(0.4, 0.46, 0.3, 16, 1);
+  const disc = new THREE.TorusGeometry(0.42, 0.06, 6, 20).rotateX(Math.PI / 2).translate(0, 0.18, 0);
+  const wingL = new THREE.CapsuleGeometry(0.1, 0.5, 3, 7).rotateZ(Math.PI / 2 + 0.35).translate(-0.62, 0.06, -0.2);
+  const wingR = new THREE.CapsuleGeometry(0.1, 0.5, 3, 7).rotateZ(-Math.PI / 2 - 0.35).translate(0.62, 0.06, -0.2);
+  const spike = new THREE.CapsuleGeometry(0.09, 0.45, 3, 7).rotateX(-Math.PI / 2 - 0.6).translate(0, -0.12, -0.6);
+  const knobA = new THREE.SphereGeometry(0.13, 8, 6).translate(-0.34, 0.12, -0.42);
+  const knobB = new THREE.SphereGeometry(0.13, 8, 6).translate(0.34, 0.12, -0.42);
   const parts = [body, disc, wingL, wingR, spike, knobA, knobB].map((g) => {
     const ng = g.index ? g.toNonIndexed() : g;
     ng.deleteAttribute('uv');
@@ -32,7 +32,7 @@ export class WorkSpine {
     const bottom = ANCHOR.workBottom - 8;
     const spacing = 0.58;
     const count = Math.floor((top - bottom) / spacing);
-    const mat = iridescentMaterial({ base: '#1b1530', envTop: '#bfe9ff', envBottom: '#3a1b4f', film: 1.6, glow: 1.25 });
+    const mat = iridescentMaterial({ base: '#140f24', envTop: '#9fb4e8', envBottom: '#2a1438', film: 1.3, glow: 0.7 });
     this.materials.push(mat);
     this.spine = new THREE.InstancedMesh(vertebra(), mat, count);
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), e = new THREE.Euler();
@@ -52,7 +52,7 @@ export class WorkSpine {
     this.group.add(this.spine);
 
     // chain links spiralling around the column
-    const linkGeo = new THREE.TorusGeometry(0.15, 0.038, 8, 20).scale(1, 1.7, 1);
+    const linkGeo = new THREE.TorusGeometry(0.15, 0.038, 6, 16).scale(1, 1.7, 1);
     const chainMat = iridescentMaterial({ base: '#07183a', envTop: '#7fb4ff', envBottom: '#081238', film: 0.8, glow: 0.9 });
     this.materials.push(chainMat);
     const linkSpacing = 0.36;

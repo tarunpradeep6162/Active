@@ -55,6 +55,7 @@ export class TransitionController {
   }
 
   private commit(route: Route, push: boolean) {
+    if (sameRoute(route, state.route) && location.pathname === routePath(route)) return;
     state.route = route;
     const path = routePath(route);
     if (push && location.pathname !== path) history.pushState({}, '', path);
@@ -125,7 +126,7 @@ export class TransitionController {
     // 1 · leave the current state
     if (from.name === 'project' && !sameRoute(from, route)) {
       steps.push(
-        { phase: 'EXITING', duration: this.dur(0.25), start: () => this.commit(route.name === 'project' ? route : { name: 'work' }, push && route.name === 'project') },
+        { phase: 'EXITING', duration: this.dur(0.25), start: () => this.commit(route, push) },
         {
           phase: 'ENTERING',
           duration: this.dur(0.9),
@@ -161,7 +162,10 @@ export class TransitionController {
         steps.push({ phase: 'SWITCHING', duration: 0, start: () => this.commit(route, push) });
         if (from.name !== 'project' && from.name !== 'contact') {
           const r = rangeOf('work');
-          steps.push(...this.jumpSteps(r.start + (r.end - r.start) * 0.035));
+          // land with the first card framed, as the reference does
+          const first = this.world.progressForCard(this.world.cards.cards[0].project.slug);
+          const inside = state.scroll.progress >= r.start && state.scroll.progress <= r.end;
+          if (!inside) steps.push(...this.jumpSteps(first));
         }
         break;
       }

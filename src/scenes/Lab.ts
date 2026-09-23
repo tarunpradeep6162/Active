@@ -14,7 +14,7 @@ export class Lab {
 
   constructor() {
     const c = this.center;
-    const chrome = iridescentMaterial({ base: '#1a0c10', envTop: '#ff6b86', envBottom: '#12060a', film: 0.5, glow: 0.7 });
+    const chrome = iridescentMaterial({ base: '#12080b', envTop: '#b0475e', envBottom: '#0a0406', film: 0.45, glow: 0.3 });
     this.materials.push(chrome);
 
     // ring platforms
@@ -65,7 +65,7 @@ export class Lab {
       g.deleteAttribute('uv');
       cables.push(g);
     }
-    const cableMat = darkLitMaterial('#2a0610', '#ff3355', c.clone(), '#ff6b8a');
+    const cableMat = darkLitMaterial('#14030a', '#c8203f', c.clone(), '#7a2a3c');
     this.materials.push(cableMat);
     const cableMesh = new THREE.Mesh(mergeGeometries(cables)!, cableMat);
     cableMesh.position.copy(c);
@@ -88,9 +88,9 @@ export class Lab {
           float n = fbm2(vWorldPos.xz * .6 + uTime * .05);
           vec3 red = vec3(1., .12, .28);
           float glow = exp(-r * .55) * 1.6 + exp(-r * 1.8) * 2.5;
-          vec3 col = vec3(.012, .018, .022) + red * glow * (.35 + .25 * ripple * n);
+          vec3 col = vec3(.004, .006, .008) + red * glow * (.1 + .12 * ripple * n);
           // streaky reflection of the rods
-          col += red * .25 * smoothstep(.96, 1., sin(atan(d.y, d.x) * 18.)) * exp(-abs(r - 2.3) * 1.5);
+          col += red * .12 * smoothstep(.96, 1., sin(atan(d.y, d.x) * 18.)) * exp(-abs(r - 2.3) * 1.5);
           gl_FragColor = vec4(applyFog(col, vDepth), 1.);
         }
       `,

@@ -108,13 +108,16 @@ body {
   color: var(--ink); text-decoration: none; padding: 14px 0; line-height: 1; white-space: pre;
   font-variant-ligatures: none;
 }
+.nav__link { position: relative; display: inline-block; }
+.nav__sizer { visibility: hidden; }
+.nav__fx { position: absolute; left: 0; top: 50%; transform: translateY(-50%); }
 .nav__link[aria-current='page'] { color: #fff; text-shadow: 0 0 10px rgba(160, 220, 255, .55); }
 .nav__divider { width: 50px; height: 14px; overflow: visible; }
 .nav__divider path { fill: none; stroke: #fff; stroke-width: 1; vector-effect: non-scaling-stroke; }
 .nav__glow {
   position: absolute; left: 12%; right: 12%; top: 70%; height: 70px; pointer-events: none;
-  background: radial-gradient(50% 35% at 50% 20%, rgba(140, 230, 190, .5), rgba(80, 180, 160, .12) 55%, transparent 75%);
-  filter: blur(2px); opacity: .75; transform-origin: 50% 0; transition: background 400ms;
+  background: radial-gradient(50% 32% at 50% 18%, rgba(150, 240, 200, .75), rgba(80, 180, 160, .18) 55%, transparent 75%);
+  filter: blur(2px); opacity: .9; transform-origin: 50% 0; transition: background 400ms;
 }
 .nav.is-hot .nav__glow { background: radial-gradient(50% 35% at 50% 20%, rgba(190, 215, 255, .65), rgba(120, 150, 230, .15) 55%, transparent 75%); }
 .nav__rain {
@@ -252,8 +255,9 @@ body {
 
 /* ------------------------------------------------------------------ mobile */
 @media (max-width: 700px) {
-  .nav__row { padding: 0 26px; }
-  .nav__link { font-size: 12px; }
+  .nav__row { padding: 0 24px; }
+  .nav__link { font-size: 11px; letter-spacing: .12em; }
+  .nav__divider { width: 34px; }
   .intro-hint { top: 22vh; }
   .manifesto__title { left: 6vw; top: 12vh; font-size: clamp(34px, 11.2vw, 64px); }
   .manifesto__copy { left: 6vw; right: 6vw; top: auto; bottom: 6vh; width: auto; font-size: 11px; line-height: 2; }

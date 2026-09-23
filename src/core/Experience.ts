@@ -120,19 +120,8 @@ export class Experience {
     this.trails?.setStrands(this.settings.trailStrands);
   }
 
+  /** three.js re‑creates its GL state on restore and lazily re‑uploads every resource; we only re‑size targets. */
   private recoverContext() {
-    const scene = this.world?.scene ?? this.bootScene;
-    scene.traverse((o) => {
-      const m = o as THREE.Mesh;
-      m.geometry?.dispose();
-      const mats = Array.isArray(m.material) ? m.material : m.material ? [m.material] : [];
-      for (const mat of mats) {
-        const u = (mat as THREE.ShaderMaterial).uniforms;
-        if (u) for (const k in u) if (u[k].value instanceof THREE.Texture) u[k].value.dispose();
-        mat.dispose();
-      }
-    });
-    this.post.applySettings(this.settings);
     this.resize();
   }
 
@@ -159,11 +148,11 @@ export class Experience {
     });
     const requests: ParticleRequest[] = [
       req('embers', 'embers', 9000, 1, -7, 3.5),
-      req('storm', 'storm', 24000, 2, -26, -3),
+      req('storm', 'storm', 22000, 2, -6.5, 3),
       req('glitter', 'glitter', 22000, 3, ANCHOR.workBottom - 6, ANCHOR.workTop + 6),
       req('blob', 'blob', 9000, 4, ANCHOR.lab - 1, ANCHOR.lab + 1),
       req('bubbles', 'dust', 900, 5, ANCHOR.portal - 6, ANCHOR.portal + 3),
-      req('outroStorm', 'storm', 20000, 6, ANCHOR.outro + 3, ANCHOR.outro + 22),
+      req('outroStorm', 'storm', 18000, 6, ANCHOR.outro - 6.5, ANCHOR.outro + 3),
       req('outroEmbers', 'embers', 5000, 7, ANCHOR.outro - 7, ANCHOR.outro + 3.5),
       req('dust', 'dust', 5000, 8, ANCHOR.outro - 12, 10),
     ];
@@ -301,6 +290,7 @@ export class Experience {
 
     this.ui.update();
     this.governor.sample(dt);
+    this.renderer.info.reset();
     this.post.render(this.world && this.world.root.visible ? this.world.scene : this.bootScene, cam);
   }
 }

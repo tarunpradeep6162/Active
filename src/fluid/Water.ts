@@ -46,11 +46,11 @@ export function createWaterSurface(size = 60) {
         float band = smoothstep(.0, .6, sin(vWorldPos.z * .35 + vWorldPos.x * .1 + 1.2)) * smoothstep(12., 3., abs(vWorldPos.z + 4.));
         col = mix(col, vec3(1., .2, .55) * lines * 1.6, band * .8);
         col += vec3(.02, .05, .06);
-        float fade = smoothstep(26., 6., vDepth);
-        gl_FragColor = vec4(col * fade, 1.);
+        float fade = smoothstep(26., 6., vDepth) * smoothstep(.2, 1.2, cameraPosition.y < vWorldPos.y ? 1. : 0.);
+        gl_FragColor = vec4(col * fade * .6, 1.);
       }`,
     uniforms: { uTime: globalUniforms.uTime },
-    side: THREE.DoubleSide,
+    side: THREE.FrontSide,
     transparent: true,
     blending: THREE.AdditiveBlending,
     depthWrite: false,

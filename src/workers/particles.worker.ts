@@ -34,6 +34,8 @@ function build(req: ParticleRequest): ParticleResult {
   // cluster centres for clumpy distributions
   const clusters: number[][] = [];
   for (let c = 0; c < 48; c++) clusters.push([gauss(r) * 5, y0 + (y1 - y0) * r(), gauss(r) * 3 - 1, 0.6 + r() * 2.4]);
+  // storms hug the emblem: denser low and toward the centre
+  if (req.kind === 'storm') clusters.forEach((c) => ((c[0] *= 1.1), (c[1] = y0 + (y1 - y0) * Math.pow(r(), 1.4)), (c[3] *= 0.8)));
 
   for (let i = 0; i < n; i++) {
     let x = 0, y = 0, z = 0;

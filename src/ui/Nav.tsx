@@ -6,7 +6,7 @@ import { scramble } from './scramble';
 import { routePath } from '../app/router';
 
 function NavLink({ label, to, current }: { label: string; to: 'work' | 'contact'; current: boolean }) {
-  const ref = useRef<HTMLAnchorElement>(null);
+  const ref = useRef<HTMLSpanElement>(null);
   const cancel = useRef<() => void>(() => {});
   const run = () => {
     if (!ref.current) return;
@@ -15,7 +15,6 @@ function NavLink({ label, to, current }: { label: string; to: 'work' | 'contact'
   };
   return (
     <a
-      ref={ref}
       className="nav__link"
       href={routePath({ name: to })}
       aria-current={current ? 'page' : undefined}
@@ -27,7 +26,12 @@ function NavLink({ label, to, current }: { label: string; to: 'work' | 'contact'
         events.emit('navigate', current && to === 'contact' ? { name: 'home' } : { name: to });
       }}
     >
-      {label}
+      <span className="nav__sizer" aria-hidden="true">
+        {label}
+      </span>
+      <span ref={ref} className="nav__fx" aria-hidden="true">
+        {label}
+      </span>
     </a>
   );
 }

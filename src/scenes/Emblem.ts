@@ -52,7 +52,7 @@ export class Emblem {
   readonly materials: THREE.ShaderMaterial[] = [];
 
   constructor(flip = false) {
-    const ringMat = iridescentMaterial({ base: '#4a0f22', envTop: '#ffb8cc', envBottom: '#1c0610', film: 1.15, glow: 1.0 });
+    const ringMat = iridescentMaterial({ base: '#6a1230', envTop: '#ff9ab4', envBottom: '#1c0610', film: 0.55, glow: 0.9 });
     const glyphMat = iridescentMaterial({ base: '#5a1230', envTop: '#ffc2d4', envBottom: '#2b0818', film: 0.8, glow: 1.3 });
     const ribbonMat = iridescentMaterial({
       useUvGradient: true,

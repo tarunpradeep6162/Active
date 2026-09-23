@@ -23,6 +23,7 @@ if (!supportsWebGL2()) {
       console.error(err);
       mount.insertAdjacentHTML('beforeend', '<div class="fallback" role="alert"><p>Something went wrong while loading.</p></div>');
     });
-    if (import.meta.env.DEV) (window as unknown as { __exp: unknown }).__exp = exp;
+    if (import.meta.env.DEV || new URLSearchParams(location.search).has('debug'))
+      import('./core/state').then(({ state }) => Object.assign(window, { __exp: exp, __state: state }));
   });
 }

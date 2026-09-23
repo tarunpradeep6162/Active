@@ -40,7 +40,7 @@ export class Streaks {
           float ripples = .8 + .2 * sin(vUv.x * 9. + y * 3. - uTime * 2.);
           float a = band * ends * smoothstep(.25, .7, n) * ripples;
           a *= smoothstep(.8, 3., vDepth) * (1. - smoothstep(18., 32., vDepth));
-          a *= uIntensity * (1. + min(abs(uScrollVelocity), 4.) * .5);
+          a *= uIntensity * .55 * (1. + min(abs(uScrollVelocity), 4.) * .6);
           gl_FragColor = vec4(vColor * a * 1.6, a);
         }`,
       uniforms: this.uniforms,

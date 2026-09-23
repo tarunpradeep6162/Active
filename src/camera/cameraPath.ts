@@ -16,9 +16,10 @@ const k = (section: SectionId, local: number, pos: [number, number, number], tgt
 function buildKeys(): Key[] {
   const keys: Key[] = [
     k('intro', 0, [0, 0, 12.4], [0, 0, 0]),
-    k('intro', 0.2, [0, -2.2, 9.6], [0, 0.35, 0]),
-    k('intro', 0.45, [0.5, -4.8, 5.2], [0, -6.5, -2]),
-    k('intro', 0.72, [-0.6, -14, 6.5], [0, -17.5, -1]),
+    k('intro', 0.22, [0, -1.7, 10.4], [0, 0.45, 0]),
+    k('intro', 0.5, [0.3, -0.9, 13.2], [0, -0.5, 0]),
+    k('intro', 0.8, [-0.2, -0.9, 11.2], [0, -0.9, 0]),
+    k('intro', 0.94, [0, -12, 10.5], [0, -16, 0]),
     k('manifesto', 0, [0, ANCHOR.manifesto + 3.5, 10.5], [0, ANCHOR.manifesto + 0.8, 0]),
     k('manifesto', 0.5, [0, ANCHOR.manifesto, 10], [0, ANCHOR.manifesto, 0]),
     k('manifesto', 1, [0, ANCHOR.manifesto - 8, 9.5], [0, ANCHOR.manifesto - 10, 0]),
@@ -29,17 +30,17 @@ function buildKeys(): Key[] {
     const u = i / steps;
     const y = ANCHOR.workTop - 3 + (ANCHOR.workBottom - ANCHOR.workTop + 3) * u;
     const sway = i === 0 || i === steps ? 0 : (i % 2 ? -0.55 : 0.55);
-    keys.push(k('work', 0.02 + u * 0.96, [sway, y, 8.6], [sway * 0.3, y - 0.45, 0]));
+    keys.push(k('work', 0.02 + u * 0.96, [sway, y, 6.6], [sway * 0.3, y - 0.45, 0]));
   }
   keys.push(
-    k('lab', 0, [0, ANCHOR.lab + 5, 13], [0, ANCHOR.lab + 1.8, 0]),
-    k('lab', 0.45, [1.2, ANCHOR.lab + 0.6, 9], [0, ANCHOR.lab - 0.3, 0]),
-    k('lab', 1, [0, ANCHOR.lab - 7, 7], [0, ANCHOR.lab - 10, -2]),
-    k('portal', 0, [0, ANCHOR.portal + 2.8, 6], [0, ANCHOR.portal + 1, -6]),
-    k('portal', 0.55, [0, ANCHOR.portal + 0.2, 3.6], [0, ANCHOR.portal - 0.5, -6]),
-    k('portal', 1, [0, ANCHOR.portal - 4, 4], [0, ANCHOR.portal - 8, -2]),
-    k('outro', 0.25, [0.5, ANCHOR.outro + 15, 5.5], [0, ANCHOR.outro + 12, 0]),
-    k('outro', 0.62, [0, ANCHOR.outro + 4.5, 9.5], [0, ANCHOR.outro + 1.2, 0]),
+    k('lab', 0, [0, ANCHOR.lab + 4.5, 13.5], [0, ANCHOR.lab + 1.2, 0]),
+    k('lab', 0.5, [0.8, ANCHOR.lab + 0.6, 11], [0, ANCHOR.lab + 0.5, 0]),
+    k('lab', 0.86, [0, ANCHOR.lab - 1.0, 9.6], [0, ANCHOR.lab - 0.2, 0]),
+    k('portal', 0, [0, ANCHOR.portal + 1.6, 10], [0, ANCHOR.portal + 0.6, -6]),
+    k('portal', 0.55, [0, ANCHOR.portal + 0.7, 8.6], [0, ANCHOR.portal + 0.1, -6]),
+    k('portal', 1, [0, ANCHOR.portal - 5, 7], [0, ANCHOR.portal - 8, -2]),
+    k('outro', 0.22, [0, ANCHOR.outro + 0.9, 11.2], [0, ANCHOR.outro + 0.9, 0]),
+    k('outro', 0.6, [0.3, ANCHOR.outro + 0.8, 13.2], [0, ANCHOR.outro + 0.5, 0]),
     k('outro', 1, [0, ANCHOR.outro, 12.4], [0, ANCHOR.outro, 0]),
   );
   return keys.sort((a, b) => a.t - b.t);
