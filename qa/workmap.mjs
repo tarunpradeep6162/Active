@@ -65,7 +65,8 @@ const measure = () => page.evaluate(({ isRef, W, H }) => {
     });
     for (let y = 8; y >= -18; y -= 1) axis.push({ wy: y, ...toScreen(view, camera.projectionMatrix.elements, 0, y, 0) });
   } else {
-    const c = __exp.rig.camera; c.updateMatrixWorld(); const mw = c.matrixWorld.elements;
+    // during the exit wipe the work view is the overlay camera (the main camera is on the lab)
+    const c = __exp.rig.overlayEdge != null ? __exp.rig.overlayCamera : __exp.rig.camera; c.updateMatrixWorld(); const mw = c.matrixWorld.elements;
     cam = { pos: [mw[12], mw[13], mw[14]], fwd: [-mw[8], -mw[9], -mw[10]], fov: c.fov };
     const view = c.matrixWorldInverse.elements, pe = c.projectionMatrix.elements;
     for (const k of __exp.world.cards.cards) { const m = k.mesh; m.updateMatrixWorld(); const e = m.matrixWorld.elements;

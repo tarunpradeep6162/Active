@@ -224,10 +224,46 @@ export class PostFX {
     this.renderer.render(this.scene, this.camera);
   }
 
-  render(scene: THREE.Scene, camera: THREE.Camera) {
+  /**
+   * Two‑view wipe (measured Work → lab seam): `overlay.camera` is drawn over the main view
+   * everywhere ABOVE a slanted edge (edge = screen y from the top at the centre, 0…1; the
+   * edge rises to the right by `slant`). A depth‑only mask blocks the overlay below the edge.
+   */
+  private wipeMask = new THREE.Mesh(
+    new THREE.PlaneGeometry(2, 2),
+    new THREE.ShaderMaterial({
+      uniforms: { uEdge: { value: 1 }, uSlant: { value: 0 } },
+      vertexShader: /* glsl */ `varying vec2 vUv; void main(){ vUv = position.xy * .5 + .5; gl_Position = vec4(position.xy, -1., 1.); }`,
+      fragmentShader: /* glsl */ `varying vec2 vUv; uniform float uEdge, uSlant;
+        void main(){ float yTop = 1. - vUv.y; float edge = uEdge + (.5 - vUv.x) * uSlant; if (yTop < edge) discard; gl_FragColor = vec4(0.); }`,
+      colorWrite: false,
+      depthWrite: true,
+      // GL skips depth writes when the depth test is disabled, so test with ALWAYS instead
+      depthTest: true,
+      depthFunc: THREE.AlwaysDepth,
+    }),
+  );
+  private wipeScene = new THREE.Scene().add(this.wipeMask);
+  private wipeCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+  render(scene: THREE.Scene, camera: THREE.Camera, overlay?: { camera: THREE.Camera; edge: number; slant: number; toggle: (on: boolean) => void }) {
     const r = this.renderer;
     r.setRenderTarget(this.sceneRT);
     r.render(scene, camera);
+    if (overlay) {
+      const auto = r.autoClear;
+      r.autoClear = false;
+      r.clearDepth();
+      const u = (this.wipeMask.material as THREE.ShaderMaterial).uniforms;
+      u.uEdge.value = overlay.edge;
+      u.uSlant.value = overlay.slant;
+      this.wipeMask.frustumCulled = false;
+      r.render(this.wipeScene, this.wipeCam);
+      overlay.toggle(true);
+      r.render(scene, overlay.camera);
+      overlay.toggle(false);
+      r.autoClear = auto;
+    }
 
     const bloom = this.settings.bloom && this.levels.length > 0;
     if (bloom) {

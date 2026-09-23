@@ -61,6 +61,8 @@ function vertebra(seed: number) {
 
 /** World y below which the column is visible; far above = fully revealed. Shared by spine + chain. */
 const revealY = { value: 1e5 };
+/** Exit crumble 0…1, shared by spine + chain. */
+const crumble = { value: 0 };
 
 /** Dark, dense, oily glass: thin‑film only on grazing/specular, not a neon body colour. */
 export function spineMaterial() {
@@ -71,12 +73,15 @@ export function spineMaterial() {
       ${noise}
       ${iridescence}
       ${fog}
-      uniform float uTime, uFocus, uRevealY;
+      uniform float uTime, uFocus, uRevealY, uCrumble;
       varying vec3 vN; varying vec3 vWorldPos; varying float vDepth; varying vec2 vUv; varying vec3 vLocal;
       void main(){
         // bottom‑up reveal front with a ragged edge (entry seam)
         float edge = uRevealY - vWorldPos.y + snoise(vWorldPos * 2.3) * .35;
         if (edge < 0.) discard;
+        // exit crumble: coarse noise cells drop out, with a bright rim
+        float crumbleEdge = snoise(vWorldPos * 1.7) * .35 + .7 - uCrumble * 1.4;
+        if (crumbleEdge < 0.) discard;
         vec3 V = normalize(cameraPosition - vWorldPos);
         vec3 N = normalize(vN);
         if (!gl_FrontFacing) N = -N;
@@ -100,12 +105,14 @@ export function spineMaterial() {
         col += vec3(.25, .12, .35) * pow(1. - ndv, 6.) * .35;
         col *= 1. - uFocus * .85;
         col += vec3(.5, .7, 1.) * smoothstep(.25, 0., edge) * step(uRevealY, 1e4) * .8;
+        col += vec3(.5, .7, 1.) * smoothstep(.12, 0., crumbleEdge) * step(.001, uCrumble);
         gl_FragColor = vec4(applyFog(col, vDepth), 1.);
       }`,
     uniforms: {
       uTime: globalUniforms.uTime,
       uFocus: globalUniforms.uFocus,
       uRevealY: revealY,
+      uCrumble: crumble,
       uFogColor: globalUniforms.uFogColor,
       uFogDensity: globalUniforms.uFogDensity,
     },
@@ -197,6 +204,12 @@ export class WorkSpine {
 
   update(_time: number) {
     // the column is static; all apparent motion comes from the camera orbiting it (reference)
+  }
+
+  /** Exit crumble, 0 = intact … 1 = gone. */
+  setCrumble(c: number) {
+    crumble.value = c;
+    this.group.visible = c < 0.999;
   }
 
   /** Entry reveal front in column‑local y (null = fully shown). */

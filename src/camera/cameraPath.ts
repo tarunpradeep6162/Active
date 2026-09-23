@@ -104,6 +104,26 @@ export function inWorkTimeline(p: number) {
   return p >= w.start + WorkTimeline.START * len && p <= w.start + WorkTimeline.END * len;
 }
 
+/**
+ * Exit wipe (measured): returns the edge (screen y from the top, 0…1) and writes the parked
+ * work view into outPos/outTgt while the lab is being revealed; null otherwise.
+ */
+export function workOverlay(p: number, outPos: THREE.Vector3, outTgt: THREE.Vector3): number | null {
+  const w = rangeOf('work');
+  const t = (p - w.start) / (w.end - w.start);
+  const edge = WorkTimeline.exitWipe(t);
+  if (edge === null) return null;
+  workTimeline.sampleParked(t, outPos, outTgt);
+  return edge;
+}
+
+/** Discrete view segment: the main camera cuts (no damped sweep) when this changes. */
+export function viewSegment(p: number) {
+  const w = rangeOf('work');
+  const t = (p - w.start) / (w.end - w.start);
+  return t >= 0.93 && t < 1 ? 1 : 0;
+}
+
 /** Read‑only view of the timeline (debug / docs). */
 export const cameraKeys = (): readonly Readonly<Key>[] => KEYS;
 

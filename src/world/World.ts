@@ -318,6 +318,7 @@ export class World {
     const wt = (state.scroll.progress - wr.start) / (wr.end - wr.start);
     this.spine.setReveal(WorkTimeline.spineFront(wt));
     this.cards.setEntry(WorkTimeline.card0Entry(wt));
+    this.spine.setCrumble(WorkTimeline.spineDissolve(wt));
     this.spine.update(t);
     this.lab.update(t);
     if (++this.rayFrame % 2 === 0) this.raycast(camera);

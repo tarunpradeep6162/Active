@@ -13,8 +13,19 @@ import { ANCHOR } from '../world/journey';
 const CARD0_RISE = 2.75; // world units (≈0.75 screen heights at the card's depth of 5.8)
 /** Column reveal: local y of the reveal front against work p (measured from the same frames). */
 const SPINE_FRONT: readonly (readonly [number, number])[] = [[-0.05, -20], [-0.045, 0.5], [-0.04, 1.7], [-0.03, 2.2], [-0.02, 4], [-0.01, 8.5]];
-/** Lab framing distance from the axis (reached at the end of the exit slide). */
+/** Lab framing distance from the axis (reached at the end of the exit wipe). */
 const LAB_DISTANCE = 12.5;
+/** Exit wipe: work p where the lab starts to show under the rising edge, and the edge table. */
+const WIPE_START = 0.93;
+const WIPE_EDGE: readonly (readonly [number, number])[] = [[0.93, 1.1], [0.94, 0.62], [0.95, 0.53], [0.96, 0.45], [0.97, 0.3], [0.98, 0.2], [0.99, 0.05], [1, -0.12]];
+
+function piecewise(f: readonly (readonly [number, number])[], t: number) {
+  if (t <= f[0][0]) return f[0][1];
+  if (t >= f[f.length - 1][0]) return f[f.length - 1][1];
+  let i = 0;
+  while (t > f[i + 1][0]) i++;
+  return f[i][1] + ((f[i + 1][1] - f[i][1]) * (t - f[i][0])) / (f[i + 1][0] - f[i][0]);
+}
 
 /** [p, orbit angle deg, height, radius, heading offset deg (optional)] */
 type Row = readonly number[];
@@ -47,26 +58,48 @@ export class WorkTimeline {
   static readonly END = 1;
 
   /**
-   * t = work‑section progress. Returns FOV.
-   * Seams (measured): on entry the camera is parked on card 0 (see CARD0_RISE); on exit the last card and
-   * the column slide up and the lab rises from below (0.935 → 1.0). In our single world both are
-   * the same image motion produced by a vertical camera move — so the lab is placed directly
-   * beneath the column and the camera sinks into it, keeping the reference's final heading.
+   * t = work‑section progress; the MAIN camera. Returns FOV.
+   * Entry seam: the camera is parked on card 0 (see CARD0_RISE).
+   * Exit seam (measured, clean settle): the camera stays parked on the last card while the column
+   * crumbles (0.915 → 0.94); a static lab view is then revealed under a slanted edge rising from
+   * the bottom of the frame (see exitWipe). During the wipe the main camera is already on the lab
+   * framing (slowly pushing in, as measured), and the parked orbit view is drawn over it above the
+   * edge by `sampleParked` — so by t = 1 the image is entirely the lab and the path continues.
    */
   sample(t: number, outPos: THREE.Vector3, outTgt: THREE.Vector3) {
-    const fov = this.sampleOrbit(t, outPos, outTgt);
-    const e = THREE.MathUtils.smoothstep(t, 0.935, 1);
-    if (e > 0) {
-      // sink into the lab; pull back to the lab's framing distance along the same heading
-      const drop = e * this.exitDrop();
-      outPos.y -= drop;
-      outTgt.y -= drop - e * 0.3;
-      const dx = outPos.x - WORK_ORIGIN.x, dz = outPos.z - WORK_ORIGIN.z;
-      const r = Math.hypot(dx, dz), k = (r + e * (LAB_DISTANCE - r)) / r;
-      outPos.x = WORK_ORIGIN.x + dx * k;
-      outPos.z = WORK_ORIGIN.z + dz * k;
-    }
-    return fov;
+    if (t < WIPE_START) return this.sampleOrbit(t, outPos, outTgt);
+    return this.sampleLab(THREE.MathUtils.clamp((t - WIPE_START) / (1 - WIPE_START), 0, 1), outPos, outTgt);
+  }
+
+  /** The parked orbit view (what sits above the wipe edge). */
+  sampleParked(t: number, outPos: THREE.Vector3, outTgt: THREE.Vector3) {
+    return this.sampleOrbit(t, outPos, outTgt);
+  }
+
+  /** Lab framing along the exit heading; u = 0 … 1 across the wipe (slight push‑in). */
+  private sampleLab(u: number, outPos: THREE.Vector3, outTgt: THREE.Vector3) {
+    this.sampleOrbit(1, outPos, outTgt);
+    const dx = outPos.x - WORK_ORIGIN.x, dz = outPos.z - WORK_ORIGIN.z;
+    const r = Math.hypot(dx, dz), k = (LAB_DISTANCE + (1 - u) * 0.7) / r;
+    const drop = this.exitDrop();
+    outPos.set(WORK_ORIGIN.x + dx * k, outPos.y - drop, WORK_ORIGIN.z + dz * k);
+    outTgt.set(WORK_ORIGIN.x, outTgt.y - drop + 0.3, WORK_ORIGIN.z);
+    return this.config.fov;
+  }
+
+  /**
+   * Exit wipe edge (screen y from the top at the frame centre, 0…1) or null outside the wipe.
+   * Measured from the clean‑settle reference frames at 1440×900; the edge rises to the right.
+   */
+  static exitWipe(t: number): number | null {
+    if (t < WIPE_START || t >= 1) return null;
+    return piecewise(WIPE_EDGE, t);
+  }
+  static readonly WIPE_SLANT = 0.18;
+
+  /** Column crumble before the wipe, 0 = intact … 1 = gone. */
+  static spineDissolve(t: number) {
+    return THREE.MathUtils.smoothstep(t, 0.915, 0.94);
   }
 
   /** Card 0 entry, 1 = fully below its slot and dissolved, 0 = in place (fit to measured offsets). */
@@ -76,13 +109,8 @@ export class WorkTimeline {
   static readonly CARD0_RISE = CARD0_RISE;
   /** Column reveal front (local y; everything below it is shown), or null when fully shown. */
   static spineFront(t: number): number | null {
-    const f = SPINE_FRONT;
-    if (t >= f[f.length - 1][0]) return null;
-    if (t <= f[0][0]) return f[0][1];
-    let i = 0;
-    while (t > f[i + 1][0]) i++;
-    const u = (t - f[i][0]) / (f[i + 1][0] - f[i][0]);
-    return f[i][1] + (f[i + 1][1] - f[i][1]) * u;
+    if (t >= SPINE_FRONT[SPINE_FRONT.length - 1][0]) return null;
+    return piecewise(SPINE_FRONT, t);
   }
 
   /** Vertical distance from the last work frame to the lab framing. */

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { state } from '../core/state';
-import { sampleCameraPath, inWorkTimeline } from './cameraPath';
+import { sampleCameraPath, inWorkTimeline, workOverlay, viewSegment } from './cameraPath';
 import { dampFactor, clamp, lerp, easeInOutCubic } from '../utils/math';
 
 /**
@@ -10,6 +10,13 @@ import { dampFactor, clamp, lerp, easeInOutCubic } from '../utils/math';
  */
 export class CameraRig {
   readonly camera: THREE.PerspectiveCamera;
+  /** Second view drawn above the exit‑wipe edge (pure function of progress, no damping). */
+  readonly overlayCamera = new THREE.PerspectiveCamera(35, 1, 0.1, 400);
+  /** Current exit‑wipe edge (screen y from the top) or null when no overlay is drawn. */
+  overlayEdge: number | null = null;
+  private segment = 0;
+  private oPos = new THREE.Vector3();
+  private oTgt = new THREE.Vector3();
   private basePos = new THREE.Vector3();
   private baseTgt = new THREE.Vector3();
   private desiredPos = new THREE.Vector3();
@@ -85,7 +92,11 @@ export class CameraRig {
     // scroll position is already smoothed (λ 6.5); the rig only adds a light follow so the
     // combined response settles well inside the reference's < 0.9 s (measured) and never floats
     const lambda = reduced ? 30 : 10;
-    const k = this.initialised ? dampFactor(lambda, dt) : 1;
+    // a view cut (exit wipe) must not be smoothed into a visible sweep: snap across it
+    const seg = viewSegment(s.progress);
+    const cut = seg !== this.segment;
+    this.segment = seg;
+    const k = this.initialised && !cut ? dampFactor(lambda, dt) : 1;
     this.initialised = true;
     this.curPos.lerp(this.desiredPos, k);
     this.curTgt.lerp(this.desiredTgt, k);
@@ -110,6 +121,20 @@ export class CameraRig {
       cam.aspect = state.viewport.aspect;
       cam.updateProjectionMatrix();
     }
+    this.updateOverlay();
+  }
+
+  private updateOverlay() {
+    this.overlayEdge = state.focus > 0.001 ? null : workOverlay(state.scroll.progress, this.oPos, this.oTgt);
+    if (this.overlayEdge === null) return;
+    const c = this.overlayCamera;
+    c.position.copy(this.oPos);
+    c.lookAt(this.oTgt);
+    if (c.aspect !== state.viewport.aspect || c.fov !== this.baseFov) {
+      c.aspect = state.viewport.aspect;
+      c.fov = this.baseFov;
+      c.updateProjectionMatrix();
+    }
   }
 
   /** Snap after a hard route switch so the camera doesn't sweep across the whole world. */
@@ -122,5 +147,7 @@ export class CameraRig {
     this.camera.fov = this.fov;
     this.camera.aspect = state.viewport.aspect;
     this.camera.updateProjectionMatrix();
+    this.segment = viewSegment(state.scroll.progress);
+    this.updateOverlay();
   }
 }

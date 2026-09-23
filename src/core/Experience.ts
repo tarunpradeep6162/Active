@@ -1,3 +1,4 @@
+import { WorkTimeline } from '../work/WorkTimeline';
 import * as THREE from 'three';
 import { state, store, events, type Route } from './state';
 import { createRenderer, readViewport } from '../renderer/Renderer';
@@ -64,6 +65,12 @@ export class Experience {
     this.last = performance.now();
     this.renderer.setAnimationLoop(() => this.frame());
   }
+
+  /** The backdrop ignores depth; during the wipe's second view it must respect the mask. */
+  private toggleBackdropDepth = (on: boolean) => {
+    const m = this.world?.backdrop.mesh.material as THREE.Material | undefined;
+    if (m && m.depthTest !== on) { m.depthTest = on; m.needsUpdate = true; }
+  };
 
   constructor(private canvas: HTMLCanvasElement) {
     this.renderer = createRenderer(canvas);
@@ -316,7 +323,9 @@ export class Experience {
     this.ui.update();
     if (this.revealStart >= 0) this.governor.sample(rawMs);
     this.renderer.info.reset();
-    this.post.render(this.world && this.world.root.visible ? this.world.scene : this.bootScene, cam);
+    const world = this.world && this.world.root.visible ? this.world : null;
+    const edge = world ? this.rig.overlayEdge : null;
+    this.post.render(world ? world.scene : this.bootScene, cam, edge === null ? undefined : { camera: this.rig.overlayCamera, edge, slant: WorkTimeline.WIPE_SLANT, toggle: this.toggleBackdropDepth });
     this.debug?.frame(rawMs);
   }
 }
