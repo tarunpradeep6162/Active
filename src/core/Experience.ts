@@ -315,8 +315,9 @@ export class Experience {
     g.uAudio.value = state.audioLevel;
 
     const cu = this.post.composite.uniforms;
-    cu.uBlur.value = state.overlay * 0.92;
-    cu.uDim.value = state.overlay * 0.35 + state.focus * 0.08;
+    // an open birthday chapter sits over a softened, darker world so its text never competes
+    cu.uBlur.value = Math.max(state.overlay * 0.92, state.focus * 0.85);
+    cu.uDim.value = state.overlay * 0.35 + state.focus * 0.3;
     cu.uBloomStrength.value = 0.85 + Math.min(Math.abs(state.scroll.velocity), 3) * 0.12 + this.rig.warp * 0.8;
     if (!this.world) cu.uGlowA.value.setRGB(0, 0, 0), cu.uGlowB.value.setRGB(0, 0, 0);
 

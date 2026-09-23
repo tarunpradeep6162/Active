@@ -1,0 +1,360 @@
+{
+  "name": "Dheepika",
+  "date": "25 · 11",
+  "beginning": {
+    "line": "The day my favourite person entered this world."
+  },
+  "memories": [
+    {
+      "caption": "[Memory 1: what you remember about this moment]",
+      "date": "[date]",
+      "place": "[place]",
+      "media": {
+        "src": "media/memory-1.jpg",
+        "type": "image",
+        "alt": "[describe the photo]"
+      }
+    },
+    {
+      "caption": "[Memory 2: what you remember about this moment]",
+      "date": "[date]",
+      "place": "[place]"
+    },
+    {
+      "caption": "[Memory 3: what you remember about this moment]",
+      "date": "[date]",
+      "place": "[place]"
+    },
+    {
+      "caption": "[Memory 4: what you remember about this moment]",
+      "date": "[date]",
+      "place": "[place]"
+    },
+    {
+      "caption": "[Memory 5: what you remember about this moment]",
+      "date": "[date]",
+      "place": "[place]"
+    },
+    {
+      "caption": "[Memory 6: what you remember about this moment]",
+      "date": "[date]",
+      "place": "[place]"
+    },
+    {
+      "caption": "[Memory 7: what you remember about this moment]",
+      "date": "[date]",
+      "place": "[place]"
+    },
+    {
+      "caption": "[Memory 8: what you remember about this moment]",
+      "date": "[date]",
+      "place": "[place]"
+    }
+  ],
+  "polaroidPrompt": "Press the shutter.",
+  "puzzle": {
+    "caption": "[The caption that appears when the photo is whole again]",
+    "media": {
+      "src": "media/puzzle.jpg",
+      "type": "image",
+      "alt": "[describe the photo]"
+    }
+  },
+  "letter": {
+    "greeting": "[Dear Dheepika,]",
+    "paragraphs": [
+      "[The first paragraph of the letter you never said out loud.]",
+      "[The second paragraph.]",
+      "[The third paragraph.]"
+    ],
+    "signoff": "[Yours,]"
+  },
+  "reasons": [
+    "[Your smile — write why, in your own words]",
+    "[Your laugh — write why, in your own words]",
+    "[Your kindness — write why, in your own words]",
+    "[Your angry face — write why, in your own words]",
+    "[Your craziness — write why, in your own words]",
+    "[Your voice — write why, in your own words]",
+    "[The way you support me — write why, in your own words]",
+    "[Your little habits — write why, in your own words]",
+    "[Reason 9 — write why, in your own words]",
+    "[Reason 10 — write why, in your own words]",
+    "[Reason 11 — write why, in your own words]",
+    "[Reason 12 — write why, in your own words]",
+    "[Reason 13 — write why, in your own words]",
+    "[Reason 14 — write why, in your own words]"
+  ],
+  "nameLetters": [
+    "[A memory for the letter D]",
+    "[A memory for the letter H]",
+    "[A memory for the letter E]",
+    "[A memory for the letter E]",
+    "[A memory for the letter P]",
+    "[A memory for the letter I]",
+    "[A memory for the letter K]",
+    "[A memory for the letter A]"
+  ],
+  "game": {
+    "finish": "You already caught the important one — mine."
+  },
+  "quiz": [
+    {
+      "q": "What was our first ___?",
+      "options": [
+        "[option A]",
+        "[option B]",
+        "[option C]"
+      ],
+      "answer": 0,
+      "yes": "You remember! 🥹",
+      "no": "[A gentle, funny hint]"
+    },
+    {
+      "q": "Which moment do I talk about the most?",
+      "options": [
+        "[option A]",
+        "[option B]",
+        "[option C]"
+      ],
+      "answer": 1,
+      "yes": "Of course you know. 💛",
+      "no": "[A gentle, funny hint]"
+    },
+    {
+      "q": "What do you think I noticed first about you?",
+      "options": [
+        "[option A]",
+        "[option B]",
+        "[option C]"
+      ],
+      "answer": null,
+      "yes": "[Your real answer, told sweetly]",
+      "no": "[Your real answer, told sweetly]"
+    }
+  ],
+  "thisOrThat": [
+    [
+      "Beach",
+      "Mountains"
+    ],
+    [
+      "Movie",
+      "Long drive"
+    ],
+    [
+      "Hugs",
+      "Kisses"
+    ],
+    [
+      "Morning",
+      "Night"
+    ],
+    [
+      "Planned trip",
+      "Random adventure"
+    ]
+  ],
+  "secret": {
+    "intro": "Answer each clue to reveal one symbol of the code.",
+    "clues": [
+      {
+        "clue": "[Clue 1 about us]",
+        "answers": [
+          "answer"
+        ],
+        "symbol": "2"
+      },
+      {
+        "clue": "[Clue 2 about us]",
+        "answers": [
+          "answer"
+        ],
+        "symbol": "5"
+      },
+      {
+        "clue": "[Clue 3 about us]",
+        "answers": [
+          "answer"
+        ],
+        "symbol": "♥"
+      },
+      {
+        "clue": "[Clue 4 about us]",
+        "answers": [
+          "answer"
+        ],
+        "symbol": "1"
+      },
+      {
+        "clue": "[Clue 5 about us]",
+        "answers": [
+          "answer"
+        ],
+        "symbol": "1"
+      }
+    ],
+    "reveal": {
+      "text": "[The hidden memory or message she unlocks]",
+      "media": {
+        "src": "media/secret.jpg",
+        "type": "image"
+      }
+    }
+  },
+  "songs": [
+    {
+      "title": "[Song 1]",
+      "artist": "[artist]",
+      "note": "[What this song reminds you of (your words, not lyrics)]",
+      "audio": {
+        "src": "media/song-1.mp3",
+        "type": "audio"
+      }
+    },
+    {
+      "title": "[Song 2]",
+      "artist": "[artist]",
+      "note": "[What this song reminds you of (your words, not lyrics)]"
+    },
+    {
+      "title": "[Song 3]",
+      "artist": "[artist]",
+      "note": "[What this song reminds you of (your words, not lyrics)]"
+    },
+    {
+      "title": "[Song 4]",
+      "artist": "[artist]",
+      "note": "[What this song reminds you of (your words, not lyrics)]"
+    },
+    {
+      "title": "[Song 5]",
+      "artist": "[artist]",
+      "note": "[What this song reminds you of (your words, not lyrics)]"
+    }
+  ],
+  "timeline": [
+    {
+      "label": "Before Us",
+      "text": "[Who we were before]"
+    },
+    {
+      "label": "We Met",
+      "date": "[date]",
+      "text": "[How it happened]",
+      "media": {
+        "src": "media/we-met.jpg",
+        "type": "image"
+      }
+    },
+    {
+      "label": "[A memory]",
+      "date": "[date]",
+      "text": "[What happened]"
+    },
+    {
+      "label": "[Another memory]",
+      "date": "[date]",
+      "text": "[What happened]"
+    },
+    {
+      "label": "Today",
+      "text": "[Where we are now]"
+    },
+    {
+      "label": "What Comes Next",
+      "text": "[What you hope for]"
+    }
+  ],
+  "emptyFrame": "Next memory goes here.",
+  "gifts": [
+    {
+      "label": "I",
+      "kind": "message",
+      "text": "[A message]"
+    },
+    {
+      "label": "II",
+      "kind": "promise",
+      "text": "[A promise]"
+    },
+    {
+      "label": "III",
+      "kind": "clue",
+      "text": "[A clue to a real‑world gift]"
+    }
+  ],
+  "wish": {
+    "line": "I hope this one comes true."
+  },
+  "future": [
+    {
+      "title": "A place we should visit",
+      "text": "[where]"
+    },
+    {
+      "title": "Something we should try",
+      "text": "[what]"
+    },
+    {
+      "title": "A photo we haven't taken yet",
+      "text": "[which one]"
+    },
+    {
+      "title": "A midnight adventure",
+      "text": "[the plan]"
+    },
+    {
+      "title": "One dream for us",
+      "text": "[the dream]"
+    }
+  ],
+  "wishes": [
+    "[Wish 1 for your year]",
+    "[Wish 2 for your year]",
+    "[Wish 3 for your year]",
+    "[Wish 4 for your year]",
+    "[Wish 5 for your year]",
+    "[Wish 6 for your year]",
+    "[Wish 7 for your year]",
+    "[Wish 8 for your year]",
+    "[Wish 9 for your year]",
+    "[Wish 10 for your year]",
+    "[Wish 11 for your year]",
+    "[Wish 12 for your year]",
+    "[Wish 13 for your year]",
+    "[Wish 14 for your year]",
+    "[Wish 15 for your year]",
+    "[Wish 16 for your year]",
+    "[Wish 17 for your year]",
+    "[Wish 18 for your year]",
+    "[Wish 19 for your year]",
+    "[Wish 20 for your year]",
+    "[Wish 21 for your year]",
+    "[Wish 22 for your year]",
+    "[Wish 23 for your year]",
+    "[Wish 24 for your year]"
+  ],
+  "movie": {
+    "clips": [
+      {
+        "src": "media/clip-1.mp4",
+        "type": "video"
+      },
+      {
+        "src": "media/photo-2.jpg",
+        "type": "image"
+      }
+    ],
+    "line": "Different days. Different places. Same person I keep choosing."
+  },
+  "finale": {
+    "headline": "HAPPY BIRTHDAY, DHEEPIKA.",
+    "lastThing": "[Your most personal message — only ever stored encrypted]",
+    "secretEnding": "[A secret ending for finding every hidden heart]",
+    "voice": {
+      "src": "media/voice.m4a",
+      "type": "audio"
+    }
+  }
+}

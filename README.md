@@ -9,6 +9,7 @@ The studio, projects and clients are fictional placeholders.
 - `REFERENCE_AUDIT.md`: what was observed on the reference, and how each part is reproduced
 - `REFERENCE_AUDIT_V2.md`: completion‑pass audit, with measurements, differences and fixes
 - `COMPARISON.md`: side‑by‑side comparison rounds, motion notes and validation results
+- `BIRTHDAY.md`: the 14 birthday chapters in the Work section, and how to fill them in and encrypt them
 
 ## Run
 

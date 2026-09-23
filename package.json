@@ -8,7 +8,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "realtime": "node server/realtime.mjs"
+    "realtime": "node server/realtime.mjs",
+    "vault": "node scripts/vault.mjs"
   },
   "dependencies": {
     "@fontsource-variable/tourney": "^5.3.0",

@@ -1,0 +1,198 @@
+import { useEffect, useRef, useState } from 'react';
+import { PROJECTS } from '../../../app/projects';
+import { HiddenHeart, Media, ParticleText, reducedMotion, useContent, useProgress, useTypewriter } from '../shared';
+import type { ChapterProps } from '../ChapterView';
+
+/* 1 ── The Beginning: darkness, one star; waking it reveals the date and the line. */
+export function Beginning({ slug, onDone }: ChapterProps) {
+  const c = useContent();
+  const [awake, setAwake] = useState(0);
+  const line = useTypewriter(c.beginning.line, awake >= 2, 26);
+  useEffect(() => {
+    if (awake >= 2 && line.length === c.beginning.line.length) onDone();
+  }, [awake, line]);
+  return (
+    <div className="bd-beginning" data-awake={awake}>
+      <button type="button" className="bd-star" aria-label={awake ? 'The star is awake' : 'Wake the star'} onClick={() => setAwake((a) => Math.min(2, a + 1))}>
+        <span />
+      </button>
+      <p className="bd-hint">{awake === 0 ? 'Touch the star.' : awake === 1 ? 'Once more.' : ''}</p>
+      <h2 className="bd-date" aria-hidden={awake < 1}>
+        {c.date}
+      </h2>
+      <p className="bd-line">{line}</p>
+      <HiddenHeart slug={slug} style={{ right: '9%', bottom: '12%' }} />
+    </div>
+  );
+}
+
+/* 9 ── Timeline: Before Us → … → What Comes Next, ending on the empty frame. */
+export function Timeline({ slug, onDone }: ChapterProps) {
+  const c = useContent();
+  const [i, setI] = useState(0);
+  const stops = [...c.timeline, { label: 'Next', text: c.emptyFrame, empty: true as const }];
+  const s = stops[i];
+  useEffect(() => {
+    if (i === stops.length - 1) onDone();
+  }, [i]);
+  return (
+    <div className="bd-timeline">
+      <ol className="bd-timeline__track" aria-label="Our timeline">
+        {stops.map((t, k) => (
+          <li key={k}>
+            <button type="button" aria-current={k === i} onClick={() => setI(k)}>
+              <span className="bd-dot" />
+              <span className="bd-timeline__label">{t.label}</span>
+            </button>
+          </li>
+        ))}
+      </ol>
+      <article className="bd-timeline__stop" key={i}>
+        {'empty' in s ? (
+          <div className="bd-emptyframe">
+            <div className="bd-emptyframe__frame" aria-hidden="true" />
+            <p>{s.text}</p>
+          </div>
+        ) : (
+          <>
+            <Media media={s.media} label={`${s.label} — photo or clip`} className="bd-timeline__media" />
+            <h3>{s.label}</h3>
+            {s.date && <p className="bd-meta">{s.date}</p>}
+            <p>{s.text}</p>
+          </>
+        )}
+      </article>
+      <div className="bd-row">
+        <button type="button" className="bd-btn" disabled={i === 0} onClick={() => setI(i - 1)}>
+          ← Back in time
+        </button>
+        <button type="button" className="bd-btn" disabled={i === stops.length - 1} onClick={() => setI(i + 1)}>
+          Forward →
+        </button>
+      </div>
+      <HiddenHeart slug={slug} style={{ left: '4%', top: '8%' }} />
+    </div>
+  );
+}
+
+/* 13 ── Our Little Movie: a quiet montage, one line, fade to black. */
+export function Movie({ slug, onDone }: ChapterProps) {
+  const c = useContent();
+  const clips = c.movie.clips;
+  const [i, setI] = useState(-1);
+  const [end, setEnd] = useState(false);
+  const count = Math.max(clips.length, 5);
+  useEffect(() => {
+    if (i < 0 || end) return;
+    const clip = clips[i];
+    if (clip?.type === 'video') return; // videos advance on `ended`
+    const t = window.setTimeout(() => next(), reducedMotion() ? 2500 : 3600);
+    return () => window.clearTimeout(t);
+  }, [i, end]);
+  const next = () => {
+    if (i + 1 >= count) {
+      setEnd(true);
+      onDone();
+    } else setI(i + 1);
+  };
+  return (
+    <div className={`bd-movie ${end ? 'is-end' : ''}`}>
+      {i < 0 ? (
+        <button type="button" className="bd-btn bd-btn--big" onClick={() => setI(0)}>
+          ▶ Play
+        </button>
+      ) : !end ? (
+        <div className="bd-movie__frame" key={i}>
+          <Media media={clips[i]} label={`Clip ${i + 1} — photo or video`} className="bd-movie__media" autoPlay onEnded={next} />
+        </div>
+      ) : (
+        <p className="bd-movie__line">{c.movie.line}</p>
+      )}
+      {i >= 0 && !end && <p className="bd-movie__caption">{c.movie.line}</p>}
+      <HiddenHeart slug={slug} style={{ right: '3%', top: '4%' }} />
+    </div>
+  );
+}
+
+/* 14 ── For Dheepika: Door 25. Opens once chapters 1–13 are done. */
+export function Finale({ slug, onDone }: ChapterProps) {
+  const c = useContent();
+  const prog = useProgress();
+  const others = PROJECTS.filter((p) => p.slug !== slug);
+  const doneCount = others.filter((p) => prog.done.includes(p.slug)).length;
+  const locked = doneCount < others.length;
+  const allHearts = prog.hearts.length >= PROJECTS.length;
+  const [stage, setStage] = useState(0);
+  const timers = useRef<number[]>([]);
+  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+  const begin = () => {
+    setStage(1);
+    const at = (ms: number, s: number) => timers.current.push(window.setTimeout(() => setStage(s), reducedMotion() ? ms / 3 : ms));
+    at(c.finale.voice ? 9000 : 2500, 2); // darkness (+ voice) → memories
+    at(c.finale.voice ? 14000 : 7500, 3); // → 25 · 11
+    at(c.finale.voice ? 19000 : 12500, 4); // → headline
+  };
+  useEffect(() => {
+    if (stage >= 4) onDone();
+  }, [stage]);
+  if (locked) {
+    return (
+      <div className="bd-door">
+        <div className="bd-door__frame" aria-hidden="true">
+          <span>25</span>
+        </div>
+        <p>
+          This door opens when every other door is open. <strong>{doneCount} / {others.length}</strong>
+        </p>
+        <ul className="bd-door__list">
+          {others.map((p) => (
+            <li key={p.slug} data-done={prog.done.includes(p.slug)}>
+              {p.title}
+            </li>
+          ))}
+        </ul>
+        <HiddenHeart slug={slug} style={{ left: '50%', bottom: '3%' }} />
+      </div>
+    );
+  }
+  return (
+    <div className="bd-finale" data-stage={stage}>
+      {stage === 0 && (
+        <button type="button" className="bd-btn bd-btn--big" onClick={begin}>
+          Open Door 25
+        </button>
+      )}
+      {stage >= 1 && c.finale.voice && <Media media={c.finale.voice} label="Your voice" autoPlay className="bd-finale__voice" />}
+      {stage >= 2 && (
+        <div className="bd-orbit" aria-hidden="true">
+          {c.memories.slice(0, 10).map((m, k) => (
+            <div key={k} className="bd-orbit__item" style={{ ['--k' as string]: k, ['--n' as string]: Math.min(10, c.memories.length) }}>
+              <Media media={m.media} label="" />
+            </div>
+          ))}
+        </div>
+      )}
+      <ParticleText text={c.date} phase={stage >= 3 ? 'form' : stage >= 2 ? 'scatter' : 'hidden'} className="bd-finale__date" />
+      {stage >= 4 && (
+        <div className="bd-finale__end">
+          <h2 className="bd-finale__name">{c.name.toUpperCase()}</h2>
+          <p className="bd-finale__headline">{c.finale.headline}</p>
+          <LastThing text={c.finale.lastThing} />
+          {allHearts && <p className="bd-secret-ending">♥ {c.finale.secretEnding}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LastThing({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  const shown = useTypewriter(text, open, 30);
+  return open ? (
+    <p className="bd-lastthing">{shown}</p>
+  ) : (
+    <button type="button" className="bd-btn" onClick={() => setOpen(true)}>
+      One last thing…
+    </button>
+  );
+}

@@ -1,0 +1,70 @@
+# For Dheepika — how to fill in the Work chapters
+
+The Work helix now carries 14 birthday chapters, one per card, in order. Everything outside
+Work (intro, headline, lab, tunnel, ending) is unchanged.
+
+| # | Chapter | What she does | Extras folded in |
+|---|---|---|---|
+| 1 | 25 · 11 | wakes one star → date → your line | |
+| 2 | Memory Universe | opens floating photos (caption, date, place) | Polaroid camera, photo puzzle |
+| 3 | The Letter | opens a sealed envelope; the letter writes itself | |
+| 4 | 14 Things | touches 14 stars, one reason each | Constellation of Her (a memory per letter) |
+| 5 | Catch My Heart | catches 14 hearts, dodges clouds (skippable) | |
+| 6 | Know Us? | quiz with gentle reactions | This‑or‑That → "our next date" card |
+| 7 | Our Secret | answers clues → symbols of a code | scratch‑to‑reveal |
+| 8 | Music Room | picks songs on a record player; your note for each | |
+| 9 | Our Timeline | Before Us → … → What Comes Next | the Empty Frame |
+| 10 | Choose a Gift | opens one of three boxes | |
+| 11 | Make a Wish | holds (or blows into the mic) to put out the candle | |
+| 12 | Future Universe | opens possibility orbs | 365 Wishes sphere |
+| 13 | Our Little Movie | a montage, then fade to black | |
+| 14 | For Dheepika | Door 25: opens after chapters 1–13 → finale | Voice From Me, hidden hearts → secret ending |
+
+A small hidden heart sits in every chapter. Finding all 14 adds the secret ending to the
+finale. Progress (chapters opened, hearts, gift choice, This‑or‑That picks) stays in her
+browser only.
+
+## Filling it in
+
+Nothing personal is ever committed.
+
+1. Copy the template: `cp -r birthday-private.example birthday-private`. The
+   `birthday-private/` folder is git‑ignored.
+2. Edit `birthday-private/content.json`:
+   - Replace every `[bracketed]` placeholder with your own words.
+   - Lines without brackets are the ones you wrote in the brief; change them freely.
+   - `reasons` needs exactly 14 entries, and `nameLetters` one entry per letter of her name.
+   - For quiz questions, `answer` is the index of your answer, or `null` when any answer is
+     lovely. Keep both reactions kind.
+   - Secret clue answers are matched ignoring case, spaces and punctuation. List every
+     spelling you'd accept.
+   - For songs, write your note about what the song means to you. Don't paste lyrics. Add
+     `audio` only for files you have the right to use.
+3. Put photos, videos and audio in `birthday-private/media/` and reference them as
+   `{ "src": "media/file.jpg", "type": "image", "alt": "…" }` (`type` is `image`, `video` or
+   `audio`). Compress large videos first; each file is loaded when its chapter needs it.
+4. Encrypt: `npm run vault -- --pass "a passphrase only she would know" --hint "an optional hint"`
+5. `npm run build`, then commit `public/vault/` and deploy as usual.
+
+## How the protection works
+
+- `public/vault/` holds only AES‑GCM‑encrypted files. The key is derived from the
+  passphrase with PBKDF2‑SHA256 at 600,000 iterations. Without the passphrase, the photos,
+  the letter and your final message are unreadable, even though the site and repo are
+  public.
+- It is exactly as strong as the passphrase. Use a phrase (several words), not a short PIN.
+  A hint is shown on the gate, so don't make the hint give it away.
+- After she unlocks, the passphrase is remembered for that browser tab only
+  (`sessionStorage`). Closing the tab forgets it.
+- Keep the GitHub repo private anyway, as you chose. It hides even the encrypted files and
+  the placeholder structure.
+- Re‑running `npm run vault` replaces the whole vault. Deleting `public/vault/` returns the
+  site to placeholder preview mode.
+
+## Checking it
+
+- `npm run build && npx vite preview`, then open `/work/the-beginning`.
+- Without a vault the footer shows "Preview — placeholder content". With a vault the
+  passcode gate appears first.
+- `RECREATION_URL=http://localhost:4173/ node qa/bdtour.mjs 1280 800` (or `390 844`)
+  screenshots every chapter to `qa/out/`.

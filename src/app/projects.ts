@@ -1,12 +1,16 @@
-/** Original placeholder portfolio — fictional studio, fictional clients. */
-export type Category = 'websites' | 'installations' | 'xr' | 'multiplayer' | 'games';
+/**
+ * The Work helix carries the 14 birthday chapters (one per card, in order). The shape is the
+ * old portfolio record so the cards, focus framing and search keep working unchanged:
+ * `client` is the chapter label, `year` its number, `description` the teaser line.
+ */
+export type Category = 'story' | 'memories' | 'love' | 'play' | 'music';
 
 export const CATEGORIES: { id: Category; label: string }[] = [
-  { id: 'websites', label: 'Websites' },
-  { id: 'installations', label: 'Installations' },
-  { id: 'xr', label: 'XR / VR / AI' },
-  { id: 'multiplayer', label: 'Multiplayer' },
-  { id: 'games', label: 'Games' },
+  { id: 'story', label: 'Our story' },
+  { id: 'memories', label: 'Memories' },
+  { id: 'love', label: 'Love notes' },
+  { id: 'play', label: 'Play' },
+  { id: 'music', label: 'Music' },
 ];
 
 export interface Project {
@@ -23,175 +27,33 @@ export interface Project {
   style: number;
 }
 
+const ch = (n: number, slug: string, title: string, kicker: string, category: Category, description: string, palette: [string, string, string]): Project => ({
+  slug,
+  title,
+  kicker,
+  client: `Chapter ${String(n).padStart(2, '0')}`,
+  year: n,
+  category,
+  description,
+  palette,
+  style: n - 1,
+});
+
 export const PROJECTS: Project[] = [
-  {
-    slug: 'tidal-archive',
-    title: 'Tidal Archive',
-    kicker: '[ ~ ≈ ~ ]',
-    client: 'Northwind Museum',
-    year: 2026,
-    category: 'installations',
-    description:
-      'A forty‑metre projection wall that reads live tide gauges from twelve harbours and paints them as slow, breathing sediment. Visitors disturb the layers with their shadows.',
-    palette: ['#0d3b3f', '#58c2b5', '#e8f4e0'],
-    style: 0,
-  },
-  {
-    slug: 'glass-orchard',
-    title: 'Glass Orchard',
-    kicker: 'VERDANT',
-    client: 'Verdant Audio',
-    year: 2025,
-    category: 'websites',
-    description:
-      'An album launch site where every track grows a translucent tree. Listening longer lets the orchard ripen; fans share seeds that plant their tree in a friend’s grove.',
-    palette: ['#1d3b1c', '#8fd18b', '#f3e6b0'],
-    style: 1,
-  },
-  {
-    slug: 'signal-bloom',
-    title: 'Signal Bloom',
-    kicker: '/// LIVE',
-    client: 'Pulse Festival',
-    year: 2025,
-    category: 'multiplayer',
-    description:
-      'A browser venue for a 12‑hour virtual festival. Up to 60k concurrent visitors shared one field of light that bloomed with the crowd’s movement and the live set’s spectrum.',
-    palette: ['#2a0f3d', '#d45ad8', '#ffd2f4'],
-    style: 2,
-  },
-  {
-    slug: 'parallel-garden',
-    title: 'Parallel Garden',
-    kicker: 'XR',
-    client: 'Oda Botanical',
-    year: 2024,
-    category: 'xr',
-    description:
-      'A mixed‑reality walk through a glasshouse where each plant has a speculative twin from another climate. Built for headsets and phones from one codebase.',
-    palette: ['#0f2a2a', '#4fe0b0', '#c4fff0'],
-    style: 3,
-  },
-  {
-    slug: 'kiln',
-    title: 'Kiln',
-    kicker: 'PLAY',
-    client: 'Emberline Games',
-    year: 2024,
-    category: 'games',
-    description:
-      'A tactile browser game about firing pottery. Temperature, glaze and chance combine into a glaze pattern nobody else will ever get.',
-    palette: ['#3a120a', '#e3702f', '#ffe0b8'],
-    style: 4,
-  },
-  {
-    slug: 'low-orbit-radio',
-    title: 'Low Orbit Radio',
-    kicker: '◌ 88.1',
-    client: 'Halo Broadcast',
-    year: 2024,
-    category: 'websites',
-    description:
-      'A radio station that only plays while a real satellite is above your horizon. The site tracks its pass in realtime and tunes the static accordingly.',
-    palette: ['#0b1636', '#5a7cff', '#d8e2ff'],
-    style: 5,
-  },
-  {
-    slug: 'echo-choir',
-    title: 'Echo Choir',
-    kicker: '((( • )))',
-    client: 'Civic Arts Council',
-    year: 2023,
-    category: 'multiplayer',
-    description:
-      'Visitors hum into their phones; the voices are pitched into a shared, evolving chord projected onto a concert hall façade during a winter festival.',
-    palette: ['#1b1036', '#9b7bff', '#ffe3a8'],
-    style: 6,
-  },
-  {
-    slug: 'salt-and-static',
-    title: 'Salt & Static',
-    kicker: 'INSTALL',
-    client: 'Harbour Biennale',
-    year: 2023,
-    category: 'installations',
-    description:
-      'A room of suspended salt crystals lit by lasers that react to the humidity outside. The crystals slowly grow over the exhibition’s three months.',
-    palette: ['#262626', '#cfcfcf', '#ff5a6a'],
-    style: 7,
-  },
-  {
-    slug: 'driftwood-protocol',
-    title: 'Driftwood Protocol',
-    kicker: '> RUN',
-    client: 'Tidewater Interactive',
-    year: 2023,
-    category: 'games',
-    description:
-      'A cooperative puzzle game played across two browsers — one player sees the map, the other the tide. Neither can finish alone.',
-    palette: ['#10231f', '#b98a4e', '#e8d2a8'],
-    style: 8,
-  },
-  {
-    slug: 'aurora-ledger',
-    title: 'Aurora Ledger',
-    kicker: 'AI / XR',
-    client: 'Polar Institute',
-    year: 2022,
-    category: 'xr',
-    description:
-      'Twenty years of auroral readings reconstructed as a volumetric sky you can stand inside. A small language model narrates what each storm disrupted on the ground.',
-    palette: ['#051a1f', '#2de0a0', '#b98cff'],
-    style: 9,
-  },
-  {
-    slug: 'paper-moons',
-    title: 'Paper Moons',
-    kicker: '☾ ☾ ☾',
-    client: 'Folio Press',
-    year: 2022,
-    category: 'websites',
-    description:
-      'A children’s book that folds itself. Each page is a physically simulated paper sculpture that readers can crease, unfold and send to someone.',
-    palette: ['#2b2130', '#e7b7c8', '#fff4ea'],
-    style: 10,
-  },
-  {
-    slug: 'deep-field-atlas',
-    title: 'Deep Field Atlas',
-    kicker: '[ ✦ ]',
-    client: 'Observatory Network',
-    year: 2021,
-    category: 'installations',
-    description:
-      'A planetarium dome show generated live from telescope survey data, rendered at 8K across six projectors and re‑composed every night.',
-    palette: ['#070b1a', '#3c5bd6', '#f6c26b'],
-    style: 11,
-  },
-  {
-    slug: 'night-market',
-    title: 'Night Market',
-    kicker: '[ 夜 ]',
-    client: 'Lantern Collective',
-    year: 2021,
-    category: 'games',
-    description:
-      'A multiplayer stroll through a procedurally generated night market. Every stall is run by another visitor; trades happen in gestures, not words.',
-    palette: ['#1a0d1f', '#e0567a', '#ffd89a'],
-    style: 12,
-  },
-  {
-    slug: 'halflight',
-    title: 'Halflight',
-    kicker: 'XR / AI',
-    client: 'Meridian Lab',
-    year: 2020,
-    category: 'xr',
-    description:
-      'An experiment in reading light: a headset piece where an on‑device model narrates the colour temperature of the room as it changes through the afternoon.',
-    palette: ['#0e1a24', '#7fb3d6', '#f2e8c9'],
-    style: 13,
-  },
+  ch(1, 'the-beginning', '25 · 11', 'THE BEGINNING', 'story', 'Start in the dark, with one star.', ['#07081a', '#6b6fd8', '#fff1c9']),
+  ch(2, 'memory-universe', 'Memory Universe', 'OUR', 'memories', 'Our photos, floating where they belong.', ['#101a2c', '#7fb3e6', '#ffe0ef']),
+  ch(3, 'the-letter', 'The Letter', 'UNSAID', 'love', 'Something I never said out loud.', ['#2a0f18', '#d9738c', '#ffe6d0']),
+  ch(4, 'fourteen-things', '14 Things', 'I LOVE ABOUT YOU', 'love', 'Fourteen stars, fourteen reasons.', ['#1a0d24', '#b06ad8', '#ffd8f2']),
+  ch(5, 'catch-my-heart', 'Catch My Heart', 'PLAY', 'play', 'A little game. Catch what falls.', ['#1d0a12', '#ff5a7a', '#ffd89a']),
+  ch(6, 'know-us', 'Know Us?', 'QUIZ', 'play', 'How well do you know us?', ['#0f1d24', '#58c2b5', '#fff1c9']),
+  ch(7, 'our-secret', 'Our Secret', 'UNLOCK', 'memories', 'Five clues. One hidden memory.', ['#0c0c14', '#c9a25a', '#fff0c8']),
+  ch(8, 'music-room', 'Music Room', 'OUR SONGS', 'music', 'Songs that mean us.', ['#140c20', '#8a6ff0', '#ffd2f4']),
+  ch(9, 'our-timeline', 'Our Timeline', 'BEFORE → NEXT', 'story', 'From before us to what comes next.', ['#161410', '#d6b27a', '#fff6e0']),
+  ch(10, 'gift-boxes', 'Choose a Gift', 'THREE BOXES', 'memories', 'Pick one. Choose carefully.', ['#1f0c10', '#e0567a', '#ffe0a0']),
+  ch(11, 'make-a-wish', 'Make a Wish', 'ONE CANDLE', 'love', 'Close your eyes first.', ['#140d06', '#ffb14a', '#fff4d6']),
+  ch(12, 'future-universe', 'Future Universe', 'SOMEDAY', 'love', 'Possibilities, not predictions.', ['#08101f', '#5fa8ff', '#e6f2ff']),
+  ch(13, 'little-movie', 'Our Little Movie', 'MONTAGE', 'story', 'Different days. Different places.', ['#0d0d10', '#a0a6b8', '#f4f4f6']),
+  ch(14, 'for-dheepika', 'For Dheepika', 'DOOR 25', 'story', 'Opens when every other door is open.', ['#0a0716', '#c77dff', '#fff1c9']),
 ];
 
 export const projectBySlug = (slug: string) => PROJECTS.find((p) => p.slug === slug) ?? null;

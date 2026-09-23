@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { events, state } from '../core/state';
 import { useStore } from './useStore';
 import { scramble } from './scramble';
-import { CATEGORIES, PROJECTS, projectBySlug, type Project } from '../app/projects';
+import { CATEGORIES, PROJECTS, type Project } from '../app/projects';
 import { routePath } from '../app/router';
 
 export function Preloader() {
@@ -76,7 +76,7 @@ export function WorkPanel() {
   const hidden = (section !== 'work' && section !== 'manifesto') || route.name === 'project' || route.name === 'contact';
   return (
     <aside className="work-panel" data-hidden={hidden} aria-label="Browse work" aria-hidden={hidden}>
-      <h2 className="work-panel__q">What are you looking for?</h2>
+      <h2 className="work-panel__q">Where shall we go?</h2>
       <ul className="work-panel__list">
         {CATEGORIES.map((c) => (
           <li key={c.id}>
@@ -89,7 +89,7 @@ export function WorkPanel() {
                 events.emit('filter', next);
                 const n = PROJECTS.filter((p) => p.category === c.id).length;
                 setResults([]);
-                setResponse(next ? `${n} ${n === 1 ? 'project' : 'projects'} lit up in ${c.label}.` : '');
+                setResponse(next ? `${n} ${n === 1 ? 'chapter' : 'chapters'} lit up in ${c.label}.` : '');
               }}
             >
               -&gt; {c.label}
@@ -114,15 +114,15 @@ export function WorkPanel() {
           const found = search(q);
           setResults(found);
           if (found.length) {
-            setResponse(`Closest match: ${found[0].title} (${found[0].year}).`);
+            setResponse(`Closest: chapter ${found[0].year}, ${found[0].title}.`);
             events.emit('jumpToProject', found[0].slug);
-          } else setResponse(q.trim() ? 'Nothing yet — try “installations”, “games” or a client.' : '');
+          } else setResponse(q.trim() ? 'Nothing yet — try “letter”, “music” or “wish”.' : '');
         }}
       >
         <label className="sr-only" htmlFor="ask-input">
-          Ask about our work
+          Search the chapters
         </label>
-        <input id="ask-input" name="q" type="text" maxLength={100} autoComplete="off" placeholder="Ask me anything..." tabIndex={hidden ? -1 : 0} />
+        <input id="ask-input" name="q" type="text" maxLength={100} autoComplete="off" placeholder="Find a chapter..." tabIndex={hidden ? -1 : 0} />
       </form>
       <ul className="sr-only">
         {PROJECTS.map((p) => (
@@ -135,55 +135,12 @@ export function WorkPanel() {
                 events.emit('navigate', { name: 'project', slug: p.slug });
               }}
             >
-              {p.title} — {p.client}, {p.year}
+              {p.client}: {p.title}
             </a>
           </li>
         ))}
       </ul>
     </aside>
-  );
-}
-
-export function ProjectDetail() {
-  const route = useStore((s) => s.route);
-  const [last, setLast] = useState<Project | null>(null);
-  const open = route.name === 'project';
-  const project = open ? projectBySlug(route.slug) : null;
-  useEffect(() => {
-    if (project) setLast(project);
-  }, [project]);
-  const p = project ?? last;
-  const closeRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    if (open) setTimeout(() => closeRef.current?.focus({ preventScroll: true }), 700);
-  }, [open]);
-  const idx = p ? PROJECTS.indexOf(p) : -1;
-  const next = PROJECTS[(idx + 1) % PROJECTS.length];
-  return (
-    <>
-      <p className={`detail-top label ${open ? 'is-open' : ''}`} aria-hidden="true">
-        {p ? `${String(idx + 1).padStart(2, '0')} / ${String(PROJECTS.length).padStart(2, '0')}` : ''}
-      </p>
-      <article className={`detail ${open ? 'is-open' : ''}`} aria-hidden={!open} aria-live="polite">
-        {p && (
-          <>
-            <h1>{p.title}</h1>
-            <p className="detail__meta">
-              {p.year} / {p.client} / {p.category === 'xr' ? 'XR / VR / AI' : p.category}
-            </p>
-            <p className="detail__desc">{p.description}</p>
-            <div className="detail__links">
-              <button type="button" tabIndex={open ? 0 : -1} onClick={() => events.emit('navigate', { name: 'project', slug: next.slug })}>
-                Next: {next.title} -&gt;
-              </button>
-              <button ref={closeRef} type="button" tabIndex={open ? 0 : -1} onClick={() => events.emit('navigate', { name: 'work' })}>
-                &lt;- Close
-              </button>
-            </div>
-          </>
-        )}
-      </article>
-    </>
   );
 }
 

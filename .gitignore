@@ -6,3 +6,6 @@ dist
 qa/out/
 qa/cache/
 sheet.html
+
+# Private birthday material — never commit; encrypt with `npm run vault` instead
+birthday-private/
