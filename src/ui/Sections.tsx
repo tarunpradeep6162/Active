@@ -73,7 +73,7 @@ export function WorkPanel() {
   const section = useStore((s) => s.section);
   const [response, setResponse] = useState('');
   const [results, setResults] = useState<Project[]>([]);
-  const hidden = section !== 'work' || route.name === 'project' || route.name === 'contact';
+  const hidden = (section !== 'work' && section !== 'manifesto') || route.name === 'project' || route.name === 'contact';
   return (
     <aside className="work-panel" data-hidden={hidden} aria-label="Browse work" aria-hidden={hidden}>
       <h2 className="work-panel__q">What are you looking for?</h2>

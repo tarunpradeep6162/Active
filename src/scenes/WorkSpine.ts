@@ -3,7 +3,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { standardVert } from './materials';
 import { globalUniforms } from '../world/uniforms';
 import { noise, math, iridescence, fog } from '../shaders/chunks';
-import { ANCHOR } from '../world/journey';
+import { WORK_ORIGIN, SPINE, CHAIN, spineBottom } from '../work/WorkLayout';
 import { rng } from '../utils/math';
 import { fbm3 } from '../utils/noise';
 
@@ -59,6 +59,9 @@ function vertebra(seed: number) {
   return merged;
 }
 
+/** World y below which the column is visible; far above = fully revealed. Shared by spine + chain. */
+const revealY = { value: 1e5 };
+
 /** Dark, dense, oily glass: thin‑film only on grazing/specular, not a neon body colour. */
 export function spineMaterial() {
   return new THREE.ShaderMaterial({
@@ -68,9 +71,12 @@ export function spineMaterial() {
       ${noise}
       ${iridescence}
       ${fog}
-      uniform float uTime, uFocus;
+      uniform float uTime, uFocus, uRevealY;
       varying vec3 vN; varying vec3 vWorldPos; varying float vDepth; varying vec2 vUv; varying vec3 vLocal;
       void main(){
+        // bottom‑up reveal front with a ragged edge (entry seam)
+        float edge = uRevealY - vWorldPos.y + snoise(vWorldPos * 2.3) * .35;
+        if (edge < 0.) discard;
         vec3 V = normalize(cameraPosition - vWorldPos);
         vec3 N = normalize(vN);
         if (!gl_FrontFacing) N = -N;
@@ -93,11 +99,13 @@ export function spineMaterial() {
         col += tf * spec * 1.6;
         col += vec3(.25, .12, .35) * pow(1. - ndv, 6.) * .35;
         col *= 1. - uFocus * .85;
+        col += vec3(.5, .7, 1.) * smoothstep(.25, 0., edge) * step(uRevealY, 1e4) * .8;
         gl_FragColor = vec4(applyFog(col, vDepth), 1.);
       }`,
     uniforms: {
       uTime: globalUniforms.uTime,
       uFocus: globalUniforms.uFocus,
+      uRevealY: revealY,
       uFogColor: globalUniforms.uFogColor,
       uFogDensity: globalUniforms.uFogDensity,
     },
@@ -110,57 +118,58 @@ export class WorkSpine {
   private meshes: THREE.InstancedMesh[] = [];
 
   constructor() {
-    const top = ANCHOR.workTop + 10;
-    const bottom = ANCHOR.workBottom - 8;
     const mat = spineMaterial();
     this.materials.push(mat);
 
-    // irregular spacing, scale, twist and lateral drift along a gently curving column
+    // Measured reference layout: a straight column of 40 vertebrae, 0.65 apart, each twisted
+    // a further ≈23° about the axis. Four seeded variants break exact repetition, normalised
+    // to the reference vertebra size so the silhouette and rhythm match.
+    const variants = [11, 23, 37, 51].map((seed) => {
+      const g = vertebra(seed);
+      g.computeBoundingBox();
+      const size = new THREE.Vector3();
+      g.boundingBox!.getSize(size);
+      g.scale(SPINE.size.x / size.x, SPINE.size.y / size.y, SPINE.size.z / size.z);
+      g.computeBoundingBox();
+      const c = new THREE.Vector3();
+      g.boundingBox!.getCenter(c);
+      g.translate(-c.x, -c.y, -c.z);
+      return g;
+    });
     const r = rng(7);
-    const placements: { y: number; variant: number }[] = [];
-    for (let y = top; y > bottom; ) {
-      placements.push({ y, variant: (r() * 4) | 0 });
-      y -= 0.5 + r() * 0.22;
-    }
-    const variants = [11, 23, 37, 51].map(vertebra);
-    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), e = new THREE.Euler();
-    // chunk by height so off‑screen parts of the 110‑unit column are frustum‑culled
-    const CHUNK = 12;
+    const lists: number[][] = [[], [], [], []];
+    for (let i = 0; i < SPINE.count; i++) lists[(r() * 4) | 0].push(i);
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(1, 1, 1), p = new THREE.Vector3();
+    const up = new THREE.Vector3(0, 1, 0);
     variants.forEach((geo, vi) => {
-      for (let c0 = top; c0 > bottom; c0 -= CHUNK) {
-        const list = placements.filter((pl) => pl.variant === vi && pl.y <= c0 && pl.y > c0 - CHUNK);
-        if (!list.length) continue;
-        const im = new THREE.InstancedMesh(geo, mat, list.length);
-        list.forEach((pl, i) => {
-          const y = pl.y;
-          p.set(Math.sin(y * 0.09) * 0.35 + (r() - 0.5) * 0.06, y, Math.cos(y * 0.07) * 0.25);
-          e.set(0.1 * Math.sin(y * 0.3) + (r() - 0.5) * 0.12, Math.sin(y * 0.05) * 0.9 + (r() - 0.5) * 0.35, 0.08 * Math.cos(y * 0.2) + (r() - 0.5) * 0.08);
-          q.setFromEuler(e);
-          const sc = 0.92 + 0.22 * Math.sin(y * 0.21) + r() * 0.12;
-          s.set(sc * (0.95 + r() * 0.1), sc * (0.9 + r() * 0.25), sc);
-          im.setMatrixAt(i, m.compose(p, q, s));
-        });
-        im.instanceMatrix.needsUpdate = true;
-        im.computeBoundingSphere();
-        this.meshes.push(im);
-        this.group.add(im);
-      }
+      const list = lists[vi];
+      if (!list.length) return;
+      const im = new THREE.InstancedMesh(geo, mat, list.length);
+      list.forEach((i, k) => {
+        p.set(0, SPINE.top - i * SPINE.spacing, 0);
+        q.setFromAxisAngle(up, THREE.MathUtils.degToRad(SPINE.twistDeg * i));
+        im.setMatrixAt(k, m.compose(p, q, s));
+      });
+      im.instanceMatrix.needsUpdate = true;
+      im.computeBoundingSphere();
+      this.meshes.push(im);
+      this.group.add(im);
     });
 
     // chain links spiralling around the column (dark blue chrome)
     const linkGeo = new THREE.TorusGeometry(0.15, 0.038, 6, 16).scale(1, 1.7, 1);
     const chainMat = spineMaterial();
-    chainMat.fragmentShader = chainMat.fragmentShader.replace('vec3 base = vec3(.035, .03, .055);', 'vec3 base = vec3(.01, .03, .09);');
+    chainMat.fragmentShader = chainMat.fragmentShader.replace('vec3 base = vec3(.09, .08, .12);', 'vec3 base = vec3(.01, .03, .09);');
     this.materials.push(chainMat);
-    const linkSpacing = 0.36;
+    const top = CHAIN.top, bottom = spineBottom();
+    const linkSpacing = 0.34;
     const links = Math.floor((top - bottom) / linkSpacing);
     const chain = new THREE.InstancedMesh(linkGeo, chainMat, links);
-    const up = new THREE.Vector3(0, 1, 0), tan = new THREE.Vector3(), prev = new THREE.Vector3();
+    const tan = new THREE.Vector3(), prev = new THREE.Vector3();
     const qa = new THREE.Quaternion(), qb = new THREE.Quaternion();
     const helixPoint = (y: number, out: THREE.Vector3) => {
-      const a = y * 0.16 + 0.6;
-      const rad = 1.05 + 0.15 * Math.sin(y * 0.4);
-      return out.set(Math.sin(y * 0.09) * 0.35 + Math.cos(a) * rad, y, Math.sin(a) * rad * 0.9 + 0.1);
+      const a = y * 0.55 + 0.6;
+      return out.set(Math.cos(a) * 1.15, y, Math.sin(a) * 1.15);
     };
     for (let i = 0; i < links; i++) {
       const y = top - i * linkSpacing;
@@ -170,16 +179,29 @@ export class WorkSpine {
       qa.setFromUnitVectors(up, tan);
       qb.setFromAxisAngle(up, (i % 2) * Math.PI * 0.5);
       q.multiplyQuaternions(qa, qb);
-      s.setScalar(1);
       chain.setMatrixAt(i, m.compose(p, q, s));
     }
     chain.instanceMatrix.needsUpdate = true;
     chain.computeBoundingSphere();
     this.group.add(chain);
+    this.group.position.copy(WORK_ORIGIN);
   }
 
-  update(time: number) {
-    this.group.rotation.y = Math.sin(time * 0.1) * 0.05;
+  /** World‑space vertical extent of the column (for QA projection). */
+  get axisTop() {
+    return WORK_ORIGIN.y + SPINE.top;
+  }
+  get axisBottom() {
+    return WORK_ORIGIN.y + spineBottom();
+  }
+
+  update(_time: number) {
+    // the column is static; all apparent motion comes from the camera orbiting it (reference)
+  }
+
+  /** Entry reveal front in column‑local y (null = fully shown). */
+  setReveal(front: number | null) {
+    revealY.value = front === null ? 1e5 : WORK_ORIGIN.y + front;
   }
 
   triangles() {

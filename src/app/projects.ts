@@ -168,6 +168,30 @@ export const PROJECTS: Project[] = [
     palette: ['#070b1a', '#3c5bd6', '#f6c26b'],
     style: 11,
   },
+  {
+    slug: 'night-market',
+    title: 'Night Market',
+    kicker: '[ 夜 ]',
+    client: 'Lantern Collective',
+    year: 2021,
+    category: 'games',
+    description:
+      'A multiplayer stroll through a procedurally generated night market. Every stall is run by another visitor; trades happen in gestures, not words.',
+    palette: ['#1a0d1f', '#e0567a', '#ffd89a'],
+    style: 12,
+  },
+  {
+    slug: 'halflight',
+    title: 'Halflight',
+    kicker: 'XR / AI',
+    client: 'Meridian Lab',
+    year: 2020,
+    category: 'xr',
+    description:
+      'An experiment in reading light: a headset piece where an on‑device model narrates the colour temperature of the room as it changes through the afternoon.',
+    palette: ['#0e1a24', '#7fb3d6', '#f2e8c9'],
+    style: 13,
+  },
 ];
 
 export const projectBySlug = (slug: string) => PROJECTS.find((p) => p.slug === slug) ?? null;

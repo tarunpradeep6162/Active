@@ -27,6 +27,7 @@
   --overlay: 0;
   --scroll-vel: 0;
   --manifesto-local: 0;
+  --headline-shift: 0;
   color-scheme: dark;
 }
 @media (max-width: 700px) {
@@ -162,11 +163,12 @@ body {
 /* ------------------------------------------------------------------ manifesto */
 .manifesto {
   position: fixed; inset: 0; opacity: var(--v-manifesto); visibility: visible;
-  /* reference: the headline travels with the camera (~47 vh per section length) */
-  transform: translate3d(0, calc((0.17 - var(--manifesto-local)) * 47vh), 0);
+  /* measured (1440, clean settle): enters from below, pinned at 21 vh for the first 20 % of the
+     section, then leaves upward at 42 vh per section length (see headlineShift in UIDriver) */
+  transform: translate3d(0, calc(var(--headline-shift) * 1vh), 0);
 }
 .manifesto__title {
-  position: absolute; left: 11.4vw; top: 41.5vh; margin: 0;
+  position: absolute; left: 11.4vw; top: 19.2vh; margin: 0; /* glyph top lands at the measured 21 vh */
   font-family: var(--display); font-weight: 480; font-stretch: 112%; text-transform: uppercase;
   font-size: clamp(40px, 6.95vw, 150px); line-height: 1.02; letter-spacing: .005em;
   color: #fff; text-shadow: 0 0 18px rgba(255,255,255,.28);

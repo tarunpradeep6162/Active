@@ -2,12 +2,13 @@ import * as THREE from 'three';
 import { PROJECTS, type Project } from '../app/projects';
 import { globalUniforms } from '../world/uniforms';
 import { noise, math, iridescence, fog } from '../shaders/chunks';
-import { workCameraY, workLocalForCard } from '../world/journey';
+import { WorkTimeline } from '../work/WorkTimeline';
+import { CARD, WORK_ORIGIN, helixSlot } from '../work/WorkLayout';
 import { state } from '../core/state';
 import { damp, clamp } from '../utils/math';
 
-export const CARD_W = 4.4;
-export const CARD_H = 3.4;
+export const CARD_W = CARD.w;
+export const CARD_H = CARD.h;
 const DISPLAY_FONT = '"Tourney Variable", "Tourney", sans-serif';
 const MONO_FONT = '"Share Tech Mono", monospace';
 
@@ -95,7 +96,7 @@ ${iridescence}
 ${fog}
 uniform sampler2D uTitle;
 uniform vec3 uPalA, uPalB, uPalC;
-uniform float uStyle, uHover, uTime, uFocus, uActive, uHighlight, uOpacity, uGhost;
+uniform float uStyle, uHover, uTime, uFocus, uActive, uHighlight, uOpacity, uGhost, uEnter;
 varying vec3 vN; varying vec3 vLocalN; varying vec3 vWorldPos; varying float vDepth; varying vec2 vCardUv;
 
 vec3 media(vec2 uv){
@@ -114,6 +115,9 @@ vec3 media(vec2 uv){
 }
 
 void main(){
+  // entry dissolve: noisy, biased to the lower edge, with a bright rim
+  float dm = vnoise(vCardUv * vec2(16., 10.)) * .6 + (1. - vCardUv.y) * .4;
+  if (dm < uEnter) discard;
   vec3 V = normalize(cameraPosition - vWorldPos);
   vec3 N = normalize(vN);
   if (!gl_FrontFacing) N = -N;
@@ -151,7 +155,11 @@ void main(){
   // other cards recede when a project is focused
   col *= mix(1., mix(.08, 1.25, uActive), uFocus);
   col *= mix(1., .45, uGhost);
+  // camera‑space depth falloff (measured: the near card and its neighbour at depth ≈ 6–7 read
+  // fully, cards on the far side of the helix at depth ≈ 12–13 are almost invisible)
+  col *= mix(1., .08, smoothstep(8.5, 13., vDepth));
   col = applyFog(col, vDepth);
+  col += vec3(.55, .75, 1.) * smoothstep(uEnter + .07, uEnter, dm) * step(.001, uEnter) * 1.4;
   gl_FragColor = vec4(col, uOpacity);
 }`;
 
@@ -169,11 +177,15 @@ export class ProjectCards {
   readonly cards: CardEntry[] = [];
   readonly materials: THREE.ShaderMaterial[] = [];
   private geometry: THREE.ExtrudeGeometry;
-  private ghosts: THREE.Mesh[] = [];
   private tmpV = new THREE.Vector3();
+  /** Card 0 entry (measured seam): 1 = below its slot and dissolved, 0 = in place. */
+  private entry = 0;
+  setEntry(e: number) {
+    this.entry = e;
+  }
 
   constructor(titles: Map<string, THREE.Texture>) {
-    this.geometry = new THREE.ExtrudeGeometry(roundedRect(CARD_W, CARD_H, 0.34), {
+    this.geometry = new THREE.ExtrudeGeometry(roundedRect(CARD_W, CARD_H, 0.26), {
       depth: 0.06,
       bevelEnabled: true,
       bevelThickness: 0.035,
@@ -198,6 +210,7 @@ export class ProjectCards {
         uActive: { value: 0 },
         uHighlight: { value: 0 },
         uOpacity: { value: 1 },
+        uEnter: { value: 0 },
         uGhost: { value: ghost ? 1 : 0 },
         uTime: globalUniforms.uTime,
         uFocus: globalUniforms.uFocus,
@@ -216,39 +229,20 @@ export class ProjectCards {
       this.group.add(mesh);
       this.cards.push({ project: p, mesh, uniforms, base, hover: 0, hoverTarget: 0 });
     });
-    // background filler cards give the column depth (dim, non‑interactive)
-    for (let i = 0; i < 12; i++) {
-      const { mesh } = make(PROJECTS[(i * 5 + 3) % PROJECTS.length], true);
-      this.ghosts.push(mesh);
-      this.group.add(mesh);
-    }
     this.layout();
   }
 
-  /** Card positions adapt to aspect ratio (responsive 3D). */
+  /** Cards sit on the measured reference helix around the spine, facing outward. */
   layout() {
-    const portrait = state.viewport.aspect < 0.9;
-    const step = workCameraY(0) - workCameraY(1 / PROJECTS.length);
+    const v = new THREE.Vector3();
     this.cards.forEach((c, i) => {
-      const left = i % 2 === 0;
-      // card centre sits just below the eye line at its anchor (camera looks 0.45 down)
-      const y = workCameraY(workLocalForCard(i)) - 0.35;
-      // reference: large cards in front of the spine, alternating a little either side of centre
-      const x = portrait ? (left ? -0.35 : 0.45) : left ? -1.0 : 1.35;
-      const z = left ? 1.5 : 1.2;
-      c.base.position.set(x, y, z);
-      c.base.rotation.set(0.04 * (left ? 1 : -1), left ? 0.2 : -0.28, left ? -0.02 : 0.03);
-      c.base.scale.setScalar(portrait ? 0.78 : 1);
+      const { pos, yaw } = helixSlot(i, v);
+      c.base.position.copy(pos).add(WORK_ORIGIN);
+      c.base.rotation.set(0, yaw, 0);
+      c.base.scale.setScalar(1);
       c.mesh.position.copy(c.base.position);
       c.mesh.quaternion.copy(c.base.quaternion);
       c.mesh.scale.copy(c.base.scale);
-    });
-    this.ghosts.forEach((g, i) => {
-      const left = i % 2 === 1;
-      const y = workCameraY(0) + 1 - i * step - step * 0.5;
-      g.position.set((left ? -1 : 1) * (portrait ? 2.2 : 4.4), y, -2.5 - (i % 3) * 1.4);
-      g.rotation.set(0, left ? 0.5 : -0.55, 0);
-      g.scale.setScalar(portrait ? 0.7 : 0.85);
     });
   }
 
@@ -293,7 +287,6 @@ export class ProjectCards {
   }
 
   update(dt: number, activeSlug: string | null, highlightCategory: string | null, hoveredSlug: string | null, pointerUv: THREE.Vector2) {
-    const t = state.time;
     for (const c of this.cards) {
       c.hoverTarget = hoveredSlug === c.project.slug ? 1 : 0;
       c.hover = damp(c.hover, c.hoverTarget, 7, dt);
@@ -305,14 +298,19 @@ export class ProjectCards {
       c.uniforms.uHighlight.value = damp(c.uniforms.uHighlight.value, hl, 5, dt);
       // idle float + hover tilt toward the pointer
       const m = c.mesh;
-      const seed = c.project.style;
+      // positions are a pure function of layout (no idle drift): only hover tilts a card
       m.position.copy(c.base.position);
-      m.position.y += Math.sin(t * 0.5 + seed) * 0.08;
-      m.position.x += Math.sin(t * 0.35 + seed * 2.1) * 0.05;
       m.rotation.copy(c.base.rotation);
-      m.rotation.y += (c.uniforms.uHoverUv.value.x - 0.5) * 0.18 * c.hover + Math.sin(t * 0.3 + seed) * 0.03;
+      m.rotation.y += (c.uniforms.uHoverUv.value.x - 0.5) * 0.18 * c.hover;
       m.rotation.x += -(c.uniforms.uHoverUv.value.y - 0.5) * 0.14 * c.hover;
       m.scale.copy(c.base.scale).multiplyScalar(1 + c.hover * 0.025);
+      const e = c === this.cards[0] ? this.entry : 0;
+      c.uniforms.uEnter.value = e * 0.85;
+      if (e > 0) {
+        m.position.y -= e * WorkTimeline.CARD0_RISE;
+        m.rotation.x += e * 0.14;
+        m.rotation.z += e * 0.07;
+      }
     }
   }
 }

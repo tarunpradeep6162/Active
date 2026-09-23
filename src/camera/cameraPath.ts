@@ -1,5 +1,9 @@
 import * as THREE from 'three';
-import { rangeOf, ANCHOR, workCameraY } from '../world/journey';
+import { rangeOf, ANCHOR } from '../world/journey';
+import { workTimeline, WorkTimeline } from '../work/WorkTimeline';
+
+/** Heading (deg, atan2(z,x)) of the reference camera when the work section ends. */
+const EXIT_HEADING_DEG = 70;
 import type { SectionId } from '../core/state';
 
 /**
@@ -31,25 +35,22 @@ function buildKeys(): Key[] {
     k('intro', 0.55, [0.2, -0.35, 17.7], [0, -0.3, 0]),
     k('intro', 0.83, [0, -0.6, 22.5], [0, -0.6, 0]),
     k('intro', 0.96, [0, -12, 13], [0, -16, 0]),
-    k('manifesto', 0, [0, ANCHOR.manifesto + 3.5, 10.5], [0, ANCHOR.manifesto + 0.8, 0]),
-    k('manifesto', 0.5, [0, ANCHOR.manifesto, 10], [0, ANCHOR.manifesto, 0]),
-    k('manifesto', 1, [0, workCameraY(0) + 0.9, 9.6], [0, workCameraY(0) + 0.4, 0]),
   ];
-  // Descent along the spine with a gentle alternating sway toward each card.
-  // descend the column over the first 94 % of the section, then start dropping toward the lab
-  // (the reference is already entering the lab at 0.70, just before its work section ends)
-  const steps = 14;
-  for (let i = 0; i <= steps; i++) {
-    const u = 0.002 + (i / steps) * 0.938;
-    const y = workCameraY(u);
-    const sway = i === 0 || i === steps ? 0 : (i % 2 ? -0.55 : 0.55);
-    keys.push(k('work', u, [sway, y, 9.2], [sway * 0.3, y - 0.45, 0]));
-  }
+  // The work section itself is driven by the measured WorkTimeline (see sampleCameraPath).
+  // Seam keys: the manifesto ends exactly on the timeline's first frame, the lab starts from its last.
+  // The headline section is part of it (measured: the reference camera is already on the work
+  // orbit there, with the headline layered on top).
+  const wp = new THREE.Vector3(), wt = new THREE.Vector3();
+  workTimeline.sample(WorkTimeline.START, wp, wt);
+  keys.push(k('work', WorkTimeline.START, [wp.x, wp.y, wp.z], [wt.x, wt.y, wt.z], 35));
+  workTimeline.sample(WorkTimeline.END, wp, wt);
+  keys.push(k('work', WorkTimeline.END, [wp.x, wp.y, wp.z], [wt.x, wt.y, wt.z], 35));
+  // lab framing continues along the heading the work camera exits on (70°, measured)
+  const H = THREE.MathUtils.degToRad(EXIT_HEADING_DEG);
+  const polar = (r: number, y: number): [number, number, number] => [Math.cos(H) * r, y, Math.sin(H) * r];
   keys.push(
-    k('work', 1, [0, ANCHOR.lab + 9, 15], [0, ANCHOR.lab + 3, 0]),
-    k('lab', 0.12, [0, ANCHOR.lab + 4.5, 13.5], [0, ANCHOR.lab + 1.2, 0]),
-    k('lab', 0.5, [0.6, ANCHOR.lab + 0.6, 13], [0, ANCHOR.lab + 1, 0]),
-    k('lab', 0.86, [0, ANCHOR.lab - 0.2, 12.5], [0, ANCHOR.lab + 0.9, 0]),
+    k('lab', 0.5, polar(13, ANCHOR.lab + 0.6), [0, ANCHOR.lab + 1, 0]),
+    k('lab', 0.86, polar(12.5, ANCHOR.lab - 0.2), [0, ANCHOR.lab + 0.9, 0]),
     // under the surface: rig visible above through the water, tunnel low in frame
     k('portal', 0.15, [0, ANCHOR.portal + 0.4, 12], [0, ANCHOR.portal + 0.6, -6], 48),
     k('portal', 0.6, [0, ANCHOR.portal - 0.4, 10], [0, ANCHOR.portal - 0.6, -6], 46),
@@ -97,11 +98,19 @@ function hermite(out: THREE.Vector3, p0: THREE.Vector3, m0: THREE.Vector3, p1: T
   return out;
 }
 
+/** True where the measured Work timeline drives the camera (its framing is already per‑device). */
+export function inWorkTimeline(p: number) {
+  const w = rangeOf('work'), len = w.end - w.start;
+  return p >= w.start + WorkTimeline.START * len && p <= w.start + WorkTimeline.END * len;
+}
+
 /** Read‑only view of the timeline (debug / docs). */
 export const cameraKeys = (): readonly Readonly<Key>[] => KEYS;
 
 /** Sample the journey camera at progress p (no allocations). Returns the FOV. */
 export function sampleCameraPath(p: number, outPos: THREE.Vector3, outTgt: THREE.Vector3): number {
+  const w = rangeOf('work'), len = w.end - w.start;
+  if (p >= w.start + WorkTimeline.START * len && p <= w.start + WorkTimeline.END * len) return workTimeline.sample((p - w.start) / len, outPos, outTgt);
   if (p <= KEYS[0].t) {
     outPos.copy(KEYS[0].pos);
     outTgt.copy(KEYS[0].tgt);

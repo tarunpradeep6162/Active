@@ -29,8 +29,10 @@ export class UIDriver {
     this.set('--v-intro', state.reveal * band('intro', -1, -0.9, 0.03, 0.1) * free);
     this.set('--v-manifesto', band('manifesto', -0.35, 0.08, 0.78, 1.05) * free);
     const mr = rangeOf('manifesto');
-    this.set('--manifesto-local', (p - mr.start) / (mr.end - mr.start));
-    this.set('--v-work', band('work', 0.0, 0.03, 0.97, 1.0) * (1 - state.overlay) * (1 - state.focus));
+    const man = (p - mr.start) / (mr.end - mr.start);
+    this.set('--manifesto-local', man);
+    this.set('--headline-shift', headlineShift(man));
+    this.set('--v-work', band('work', -0.045, -0.02, 0.93, 0.965) * (1 - state.overlay) * (1 - state.focus));
     this.set('--v-lab', band('portal', 0.15, 0.4, 0.85, 1.0) * free);
     this.set('--v-end', band('outro', 0.82, 0.97, 2, 3) * free);
     this.set('--focus', state.focus);
@@ -42,3 +44,16 @@ export class UIDriver {
     if (store.get().section !== state.section) store.set({ section: state.section });
   }
 }
+
+/**
+ * Headline vertical offset (vh) against manifesto progress m — measured on the reference at
+ * 1440×900 with a frame‑counted settle: rising in from below before the section (≈112 vh per
+ * section length), pinned for m ∈ [0, 0.2], then leaving upward at ≈42 vh per section length.
+ * Shared with the headline ring's timing in World.
+ */
+export function headlineShift(m: number) {
+  if (m < 0) return -m * 112;
+  if (m < 0.2) return 0;
+  return -(m - 0.2) * 42;
+}
+

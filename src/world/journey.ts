@@ -63,22 +63,14 @@ export function sectionAt(p: number): { id: SectionId; local: number } {
 export const ANCHOR = {
   intro: 0,
   manifesto: -34,
+  // the work scene (measured reference layout) spans WORK_ORIGIN.y + 7.45 … − 17.9
   workTop: -52,
-  // a tighter column: cards ~5 units apart so the next card is always partly in frame (reference)
-  workBottom: -115,
-  lab: -141,
+  // the reference camera never sees below local y ≈ −15, so the column is trimmed there and the
+  // lab sits directly beneath it: the exit is a vertical slide from the last card into the lab
+  workBottom: -75.5,
+  lab: -81,
   /** the lab floor (lab − 2.1) is the water surface seen from below in the portal (portal + 3.4) */
-  portal: -146.5,
-  outro: -171,
+  portal: -86.5,
+  outro: -111,
 };
 
-/**
- * Work‑section anchors shared by the camera timeline, card layout and routing,
- * so "card i is framed" means the same scroll position everywhere.
- * The camera descends linearly from WORK_CAM.y0 (local 0) to WORK_CAM.y1 (local 1).
- */
-export const WORK_CAM = { y0: ANCHOR.workTop - 3, y1: ANCHOR.workBottom };
-export const WORK_CARDS = 12;
-/** Local work progress at which card i sits in front of the camera. */
-export const workLocalForCard = (i: number) => 0.003 + (i / WORK_CARDS) * 0.93;
-export const workCameraY = (local: number) => WORK_CAM.y0 + (WORK_CAM.y1 - WORK_CAM.y0) * local;

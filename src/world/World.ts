@@ -10,9 +10,11 @@ import { ParticleField, type FieldOptions } from '../particles/ParticleField';
 import { Streaks } from '../particles/Streaks';
 import { Nebula } from '../particles/Nebula';
 import type { ParticleResult } from '../workers/particles.worker';
-import { ANCHOR, rangeOf, workLocalForCard } from './journey';
+import { ANCHOR, rangeOf } from './journey';
+import { workTimeline, WorkTimeline } from '../work/WorkTimeline';
 import { globalUniforms } from './uniforms';
 import { state, store, type SectionId } from '../core/state';
+import { headlineShift } from '../ui/UIDriver';
 import { smoothstep, clamp, dampFactor } from '../utils/math';
 import type { TierSettings } from '../core/Performance';
 import { PROJECTS } from '../app/projects';
@@ -40,7 +42,8 @@ const pal = (top: string, bottom: string, accent: string, fog: string, density: 
 
 const PALETTES: Record<SectionId, Palette> = {
   intro: pal('#0c1317', '#06080a', '#1a5e5b', '#090d10', 0.028, 0, '#1f6d68', '#10363d'),
-  manifesto: pal('#1c2a4c', '#070a14', '#3a5ab0', '#0c1224', 0.03, 0.6, '#2f8f8a', '#23407a'),
+  // headline: measured near‑black frame with a teal corner glow (clean‑settle captures)
+  manifesto: pal('#0d1a1f', '#05070b', '#1f5f5a', '#080c12', 0.03, 0.35, '#2f8f8a', '#1c2c4a'),
   work: pal('#0e1520', '#1a0f30', '#4a3490', '#0d0b18', 0.02, 0, '#237a74', '#4a2c88'),
   lab: pal('#07090b', '#040506', '#3c0a16', '#060708', 0.06, 0, '#15403f', '#2a0b12'),
   portal: pal('#061110', '#030707', '#0f4a47', '#041010', 0.05, 0, '#16605a', '#0b2d2e'),
@@ -97,11 +100,11 @@ export class World {
     // reference: a chunky, dark glass torus (thick tube), not a thin neon hoop
     this.manifestoRing = new THREE.Mesh(
       new THREE.TorusGeometry(2.9, 0.52, 48, 160),
-      iridescentMaterial({ base: '#0b0a12', envTop: '#9a98a8', envBottom: '#06070c', film: 0.25, glow: 0.08 }),
+      iridescentMaterial({ base: '#0b0a12', envTop: '#9a98a8', envBottom: '#06070c', film: 0.25, glow: 0.08, transparent: true }),
     );
-    this.manifestoRing.position.set(0.55, ANCHOR.manifesto - 0.15, -0.4);
-    this.manifestoRing.rotation.set(0, Math.PI / 2 - 0.1, 0);
-    this.add(this.manifestoRing, ANCHOR.manifesto + 4, ANCHOR.manifesto - 4);
+    // camera‑attached (see placeManifestoRing): part of the headline layer over the work scene
+    this.manifestoRing.frustumCulled = false;
+    this.root.add(this.manifestoRing);
 
     this.add(this.spine.group, ANCHOR.workTop + 10, ANCHOR.workBottom - 8);
     this.add(this.cards.group, ANCHOR.workTop + 2, ANCHOR.workBottom - 4);
@@ -165,20 +168,44 @@ export class World {
 
   layout() {
     this.cards.layout();
-    // reference spine reads ~20–25 % of the frame width behind the cards
-    const girth = state.viewport.aspect < 0.9 ? 0.85 : 1.3;
-    this.spine.group.scale.set(girth, 1, girth);
-    this.spine.group.position.z = -0.5;
+  }
+
+  private ringQ = new THREE.Quaternion();
+  private ringV = new THREE.Vector3();
+  /**
+   * Headline ring (measured, clean settle): it does NOT scroll with the headline — it holds near
+   * the frame centre (≈49 % across, ≈50 % down) at ≈68 % of the frame height, opens from edge‑on
+   * (before the section) through a ¾ view (m = 0) toward face‑on, and dissolves at m ≈ 0.62–0.8
+   * while card 0 and the column arrive.
+   */
+  private placeManifestoRing(camera: THREE.PerspectiveCamera, man: number) {
+    const ring = this.manifestoRing;
+    ring.visible = man > -0.35 && man < 1.05;
+    if (!ring.visible) return;
+    const d = 3.8;
+    const visH = 2 * d * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
     const portrait = state.viewport.aspect < 0.9;
-    this.manifestoRing.position.x = portrait ? 0.0 : 0.55;
-    this.manifestoRing.scale.setScalar(portrait ? 0.8 : 1);
+    const centreVh = portrait ? 46 + Math.min(0, headlineShift(man)) * 0.5 : 50;
+    ring.position.copy(camera.position)
+      .addScaledVector(this.ringV.set(0, 0, -1).applyQuaternion(camera.quaternion), d)
+      .addScaledVector(this.ringV.set(0, 1, 0).applyQuaternion(camera.quaternion), (0.5 - centreVh / 100) * visH)
+      .addScaledVector(this.ringV.set(1, 0, 0).applyQuaternion(camera.quaternion), (portrait ? 0 : 0.05) * visH * state.viewport.aspect);
+    // outer diameter (2 × (2.9 + 0.52)) ≈ 68 % of the frame height
+    ring.scale.setScalar(((0.34 * visH) / 3.42) * (portrait ? 1.3 : 1));
+    const fade = 1 - smoothstep(0.62, 0.8, man);
+    ring.visible = fade > 0.001;
+    (ring.material as THREE.ShaderMaterial).uniforms.uOpacity.value = fade;
+    // edge‑on before the section → ¾ at m = 0 → nearly face‑on by m ≈ 0.7
+    const open = THREE.MathUtils.clamp(1 - man * (man < 0 ? 2.5 : 1), 0.05, Math.PI / 2 - 0.1) + Math.sin(state.time * 0.25) * 0.05 + state.pointer.targetX * 0.08;
+    ring.quaternion.copy(camera.quaternion).multiply(this.ringQ.setFromAxisAngle(this.ringV.set(0, 1, 0), open));
   }
 
   /** Journey progress where the camera faces card i. */
   progressForCard(slug: string) {
     const i = Math.max(0, PROJECTS.findIndex((p) => p.slug === slug));
     const r = rangeOf('work');
-    return r.start + (r.end - r.start) * clamp(workLocalForCard(i));
+    // measured: the progress at which the reference camera faces card i
+    return r.start + (r.end - r.start) * clamp(workTimeline.cardCentre(i));
   }
 
   private blendPalettes(dt: number, post: THREE.ShaderMaterial) {
@@ -283,10 +310,14 @@ export class World {
     }
     if (this.fields.blob) this.fields.blob.uniforms.uBurstCenter.value.set(0, ANCHOR.lab, 0);
 
-    const man = state.section === 'manifesto' ? state.sectionProgress : state.scroll.progress > rangeOf('manifesto').end ? 1 : 0;
-    this.manifestoRing.rotation.y = Math.PI / 2 - 0.1 - smoothstep(0.05, 0.7, man) * 0.95 + Math.sin(t * 0.25) * 0.06 + state.pointer.targetX * 0.08;
-    this.manifestoRing.rotation.x = Math.sin(t * 0.2) * 0.04;
+    const mr = rangeOf('manifesto');
+    this.placeManifestoRing(camera, (state.scroll.progress - mr.start) / (mr.end - mr.start));
 
+    // measured entry seam: column sweep + card 0 rise, both pure functions of work progress
+    const wr = rangeOf('work');
+    const wt = (state.scroll.progress - wr.start) / (wr.end - wr.start);
+    this.spine.setReveal(WorkTimeline.spineFront(wt));
+    this.cards.setEntry(WorkTimeline.card0Entry(wt));
     this.spine.update(t);
     this.lab.update(t);
     if (++this.rayFrame % 2 === 0) this.raycast(camera);

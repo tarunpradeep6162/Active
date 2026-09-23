@@ -1,6 +1,7 @@
 import { state } from '../core/state';
 import { SECTIONS, MOBILE_SCALE, TOTAL_VH, sectionAt, computeRanges } from '../world/journey';
 import { rebuildCameraPath } from '../camera/cameraPath';
+import { setWorkDevice } from '../work/WorkTimeline';
 import { damp, clamp } from '../utils/math';
 
 /**
@@ -38,7 +39,8 @@ export class ScrollEngine {
     // Use a stable height on mobile so the toolbar showing/hiding doesn't rescale the journey.
     const vh = state.viewport.mobile ? Math.max(window.innerHeight, screen.height * 0.8) / 100 : window.innerHeight / 100;
     const k = this.scale();
-    if (computeRanges(k)) rebuildCameraPath();
+    const deviceChanged = setWorkDevice(k !== 1);
+    if (computeRanges(k) || deviceChanged) rebuildCameraPath();
     SECTIONS.forEach((s, i) => (this.sectionEls[i].style.height = `${Math.round(s.vh * k * vh)}px`));
     const total = Math.round(TOTAL_VH * k * vh);
     this.spacer.style.height = `${total}px`;
