@@ -19,6 +19,7 @@ import { parseRoute } from '../app/router';
 import { ANCHOR } from '../world/journey';
 import { globalUniforms } from '../world/uniforms';
 import { UIDriver } from '../ui/UIDriver';
+import { DebugOverlay } from '../ui/DebugOverlay';
 import { clamp, easeInOutCubic } from '../utils/math';
 import type { ParticleRequest } from '../workers/particles.worker';
 
@@ -45,6 +46,9 @@ export class Experience {
   private revealStart = -1;
   private preloaderOut = -1;
   private resizeTimer = 0;
+  private debug: DebugOverlay | null = null;
+  /** QA harness flag: skip the intro choreography so captures don't wait on software rendering. */
+  private qa = new URLSearchParams(location.search).has('qa');
 
   constructor(private canvas: HTMLCanvasElement) {
     this.renderer = createRenderer(canvas);
@@ -60,6 +64,8 @@ export class Experience {
     this.post = new PostFX(this.renderer, this.settings);
     this.scroll = new ScrollEngine();
     this.governor = new FpsGovernor(() => this.applyTier());
+    const dbg = new URLSearchParams(location.search).get('debug');
+    if (dbg === '1' || dbg === '') this.debug = new DebugOverlay(this.renderer, this.rig.camera, this.rig.debugTarget, this.governor);
 
     globalUniforms.uReveal.value = 1;
     this.bootScene.add(this.rig.camera);
@@ -148,9 +154,11 @@ export class Experience {
     });
     const requests: ParticleRequest[] = [
       req('embers', 'embers', 9000, 1, -7, 3.5),
-      req('storm', 'storm', 22000, 2, -6.5, 3),
-      req('glitter', 'glitter', 22000, 3, ANCHOR.workBottom - 6, ANCHOR.workTop + 6),
-      req('blob', 'blob', 9000, 4, ANCHOR.lab - 1, ANCHOR.lab + 1),
+      req('storm', 'storm', 30000, 2, -6.5, 3),
+      req('glitter', 'glitter', 34000, 3, ANCHOR.workBottom - 6, ANCHOR.workTop + 6),
+      req('blob', 'blob', 12000, 4, ANCHOR.lab - 1, ANCHOR.lab + 1),
+      req('specks', 'specks', 2600, 9, -5, 3),
+      req('outroSpecks', 'specks', 1200, 10, ANCHOR.outro - 5, ANCHOR.outro + 3),
       req('bubbles', 'dust', 900, 5, ANCHOR.portal - 6, ANCHOR.portal + 3),
       req('outroStorm', 'storm', 18000, 6, ANCHOR.outro - 6.5, ANCHOR.outro + 3),
       req('outroEmbers', 'embers', 5000, 7, ANCHOR.outro - 7, ANCHOR.outro + 3.5),
@@ -228,7 +236,8 @@ export class Experience {
   /* ------------------------------------------------------------ frame */
   private frame() {
     const now = performance.now();
-    const dt = Math.min(0.05, (now - this.last) / 1000);
+    const rawMs = now - this.last;
+    const dt = Math.min(0.05, rawMs / 1000);
     this.last = now;
     state.delta = dt;
     state.time += dt;
@@ -246,7 +255,7 @@ export class Experience {
     pu.uIn.value = clamp(state.time / 0.8);
     pu.uProgress.value += (store.get().loadProgress - pu.uProgress.value) * 0.12;
     if (this.preloaderOut >= 0) {
-      const t = clamp((state.time - this.preloaderOut) / (state.reducedMotion ? 0.2 : 0.9));
+      const t = clamp((state.time - this.preloaderOut) / (this.qa ? 0.01 : state.reducedMotion ? 0.2 : 0.9));
       pu.uOut.value = easeInOutCubic(t);
       if (t >= 1 && this.revealStart < 0) {
         this.preloader.mesh.visible = false;
@@ -259,7 +268,7 @@ export class Experience {
       }
     }
     if (this.revealStart >= 0) {
-      const t = clamp((state.time - this.revealStart) / (state.reducedMotion ? 0.3 : 2.6));
+      const t = clamp((state.time - this.revealStart) / (this.qa ? 0.01 : state.reducedMotion ? 0.3 : 2.6));
       state.reveal = t;
       globalUniforms.uReveal.value = clamp(t * 1.8);
     }
@@ -289,8 +298,9 @@ export class Experience {
     if (!this.world) cu.uGlowA.value.setRGB(0, 0, 0), cu.uGlowB.value.setRGB(0, 0, 0);
 
     this.ui.update();
-    this.governor.sample(dt);
+    if (this.revealStart >= 0) this.governor.sample(rawMs);
     this.renderer.info.reset();
     this.post.render(this.world && this.world.root.visible ? this.world.scene : this.bootScene, cam);
+    this.debug?.frame(rawMs);
   }
 }

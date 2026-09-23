@@ -74,37 +74,86 @@ export function tierSettings(tier: PerformanceTier): TierSettings {
 }
 
 /**
- * Watches frame times and steps the tier down when the device can't keep up.
- * Never steps up automatically (avoids oscillation).
+ * Automatic tiering with hysteresis.
+ *  1. Startup benchmark: the first ~90 settled frames after reveal. If their median
+ *     frame time is far over budget, step down once immediately.
+ *  2. Rolling monitor: 1 s windows. Three consecutive slow windows → step down.
+ *     After any change there is a cooldown, so tiers never oscillate.
+ *  3. One step back up is allowed per session, only if the benchmark caused the
+ *     drop and the device then runs well under budget for 10 s straight.
+ * Only rendering cost changes between tiers — never layout.
  */
 export class FpsGovernor {
+  private samples: number[] = [];
+  private benchmarkDone = false;
   private acc = 0;
   private frames = 0;
-  private slowWindows = 0;
-  private cooldown = 3; // ignore first seconds (shader warm‑up)
-  constructor(private onDowngrade: (tier: PerformanceTier) => void) {}
+  private slow = 0;
+  private fast = 0;
+  private cooldown = 2;
+  private upgradedOnce = false;
+  private droppedByBenchmark = false;
+  private startTier: PerformanceTier;
+  readonly history: string[] = [];
+  lastFps = 0;
+  benchmarkMs = 0;
+  enabled = true;
 
-  sample(dt: number) {
-    if (document.hidden) return;
-    this.acc += dt;
+  constructor(private onChange: (tier: PerformanceTier) => void) {
+    this.startTier = state.performanceTier;
+    // a forced ?tier= disables automatic changes
+    this.enabled = !new URLSearchParams(location.search).get('tier');
+  }
+
+  private budget() {
+    return state.viewport.mobile ? 1000 / 30 : 1000 / 60;
+  }
+
+  private set(tier: PerformanceTier, why: string) {
+    if (tier === state.performanceTier) return;
+    this.history.push(`${state.performanceTier}→${tier} (${why})`);
+    state.performanceTier = tier;
+    store.set({ tier });
+    this.cooldown = 5;
+    this.slow = this.fast = 0;
+    this.onChange(tier);
+  }
+
+  /** Call once per frame after reveal with the real frame delta in ms. */
+  sample(ms: number) {
+    if (document.hidden || ms > 250) return; // ignore tab switches / stalls
+    this.acc += ms;
     this.frames++;
-    if (this.acc < 1) return;
-    const fps = this.frames / this.acc;
+    if (!this.benchmarkDone) {
+      this.samples.push(ms);
+      if (this.samples.length >= 90) {
+        this.benchmarkDone = true;
+        const sorted = this.samples.slice().sort((a, b) => a - b);
+        this.benchmarkMs = sorted[sorted.length >> 1];
+        if (this.enabled && this.benchmarkMs > this.budget() * 1.8 && state.performanceTier !== 'low') {
+          this.droppedByBenchmark = true;
+          this.set(state.performanceTier === 'high' ? 'medium' : 'low', `benchmark median ${this.benchmarkMs.toFixed(1)} ms`);
+        }
+      }
+    }
+    if (this.acc < 1000) return;
+    const mean = this.acc / this.frames;
+    this.lastFps = 1000 / mean;
     this.acc = 0;
     this.frames = 0;
+    if (!this.enabled) return;
     if (this.cooldown > 0) {
       this.cooldown--;
       return;
     }
-    const floor = state.viewport.mobile ? 26 : 42;
-    this.slowWindows = fps < floor ? this.slowWindows + 1 : Math.max(0, this.slowWindows - 1);
-    if (this.slowWindows >= 3 && state.performanceTier !== 'low') {
-      const next: PerformanceTier = state.performanceTier === 'high' ? 'medium' : 'low';
-      state.performanceTier = next;
-      store.set({ tier: next });
-      this.slowWindows = 0;
-      this.cooldown = 3;
-      this.onDowngrade(next);
+    const budget = this.budget();
+    this.slow = mean > budget * 1.45 ? this.slow + 1 : 0;
+    this.fast = mean < budget * 0.55 ? this.fast + 1 : 0;
+    if (this.slow >= 3 && state.performanceTier !== 'low') {
+      this.set(state.performanceTier === 'high' ? 'medium' : 'low', `sustained ${mean.toFixed(1)} ms`);
+    } else if (this.fast >= 10 && this.droppedByBenchmark && !this.upgradedOnce && state.performanceTier !== this.startTier) {
+      this.upgradedOnce = true;
+      this.set(state.performanceTier === 'low' ? 'medium' : 'high', `recovered ${mean.toFixed(1)} ms`);
     }
   }
 }

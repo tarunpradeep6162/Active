@@ -53,3 +53,14 @@ export const ANCHOR = {
   portal: -181.5,
   outro: -206,
 };
+
+/**
+ * Work‑section anchors shared by the camera timeline, card layout and routing,
+ * so "card i is framed" means the same scroll position everywhere.
+ * The camera descends linearly from WORK_CAM.y0 (local 0) to WORK_CAM.y1 (local 1).
+ */
+export const WORK_CAM = { y0: ANCHOR.workTop - 3, y1: ANCHOR.workBottom };
+export const WORK_CARDS = 12;
+/** Local work progress at which card i sits in front of the camera. */
+export const workLocalForCard = (i: number) => 0.003 + (i / WORK_CARDS) * 0.94;
+export const workCameraY = (local: number) => WORK_CAM.y0 + (WORK_CAM.y1 - WORK_CAM.y0) * local;

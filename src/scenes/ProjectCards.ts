@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { PROJECTS, type Project } from '../app/projects';
 import { globalUniforms } from '../world/uniforms';
 import { noise, math, iridescence, fog } from '../shaders/chunks';
-import { ANCHOR } from '../world/journey';
+import { workCameraY, workLocalForCard } from '../world/journey';
 import { state } from '../core/state';
 import { damp, clamp } from '../utils/math';
 
@@ -45,7 +45,8 @@ export function titleTexture(p: Project) {
   const lines: string[] = [];
   let line = '';
   const size = 118;
-  g.font = `330 ${size}px ${DISPLAY_FONT}`;
+  g.font = `480 ${size}px ${DISPLAY_FONT}`;
+  (g as CanvasRenderingContext2D & { fontStretch?: string }).fontStretch = 'semi-expanded';
   for (const w of words) {
     const test = line ? line + ' ' + w : w;
     if (g.measureText(test).width > W * 0.78 && line) {
@@ -107,6 +108,8 @@ vec3 media(vec2 uv){
   vec3 col = mix(uPalA, uPalB, smoothstep(.25, .75, f));
   col = mix(col, uPalC, smoothstep(.5, .95, length(r) * f * 1.35));
   col *= .8 + .35 * vnoise(uv * vec2(90., 14.) + q * 8.);
+  // reference media read photographic: muted saturation, deeper shadows
+  col = mix(vec3(luma(col)), col, .62) * .82;
   return col;
 }
 
@@ -225,15 +228,16 @@ export class ProjectCards {
   /** Card positions adapt to aspect ratio (responsive 3D). */
   layout() {
     const portrait = state.viewport.aspect < 0.9;
-    const span = ANCHOR.workTop - 6 - (ANCHOR.workBottom + 4);
-    const step = span / PROJECTS.length;
+    const step = workCameraY(0) - workCameraY(1 / PROJECTS.length);
     this.cards.forEach((c, i) => {
       const left = i % 2 === 0;
-      const y = ANCHOR.workTop - 6 - i * step;
-      const x = portrait ? (left ? -1.05 : 1.35) : left ? -2.55 : 2.85;
-      const z = left ? 0.7 : -0.9;
+      // card centre sits just below the eye line at its anchor (camera looks 0.45 down)
+      const y = workCameraY(workLocalForCard(i)) - 0.35;
+      // reference: large cards in front of the spine, alternating a little either side of centre
+      const x = portrait ? (left ? -0.35 : 0.45) : left ? -1.0 : 1.35;
+      const z = left ? 1.5 : 1.2;
       c.base.position.set(x, y, z);
-      c.base.rotation.set(0.04 * (left ? 1 : -1), left ? 0.26 : -0.4, left ? -0.02 : 0.03);
+      c.base.rotation.set(0.04 * (left ? 1 : -1), left ? 0.2 : -0.28, left ? -0.02 : 0.03);
       c.base.scale.setScalar(portrait ? 0.78 : 1);
       c.mesh.position.copy(c.base.position);
       c.mesh.quaternion.copy(c.base.quaternion);
@@ -241,8 +245,8 @@ export class ProjectCards {
     });
     this.ghosts.forEach((g, i) => {
       const left = i % 2 === 1;
-      const y = ANCHOR.workTop - 2 - i * (span / 12) - step * 0.5;
-      g.position.set((left ? -1 : 1) * (portrait ? 2.2 : 4.6), y, -4.5 - (i % 3) * 1.4);
+      const y = workCameraY(0) + 1 - i * step - step * 0.5;
+      g.position.set((left ? -1 : 1) * (portrait ? 2.2 : 4.4), y, -2.5 - (i % 3) * 1.4);
       g.rotation.set(0, left ? 0.5 : -0.55, 0);
       g.scale.setScalar(portrait ? 0.7 : 0.85);
     });

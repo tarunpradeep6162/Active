@@ -1,9 +1,8 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { iridescentMaterial, darkLitMaterial, standardVert } from './materials';
+import { iridescentMaterial, darkLitMaterial } from './materials';
+import { createWaterFloor } from '../fluid/Water';
 import { ANCHOR } from '../world/journey';
-import { globalUniforms } from '../world/uniforms';
-import { noise, math, fog } from '../shaders/chunks';
 import { rng } from '../utils/math';
 
 /** The lab rig: chrome cage, ring platforms, hanging cables, wet floor. The red particle mass is added by World. */
@@ -50,11 +49,11 @@ export class Lab {
     // hanging cables (catenaries) from the top ring down to the floor
     const cables: THREE.BufferGeometry[] = [];
     const rr = rng(21);
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 22; i++) {
       const a0 = rr() * Math.PI * 2;
       const a1 = a0 + (rr() - 0.5) * 1.6;
       const r0 = 2.3, r1 = 2.8 + rr() * 3.5;
-      const p0 = new THREE.Vector3(Math.cos(a0) * r0, 2.9, Math.sin(a0) * r0);
+      const p0 = new THREE.Vector3(Math.cos(a0) * r0, 3.3 + rr() * 0.8, Math.sin(a0) * r0);
       const p2 = new THREE.Vector3(Math.cos(a1) * r1, -2.05, Math.sin(a1) * r1);
       const p1 = p0.clone().lerp(p2, 0.5);
       p1.y -= 1.2 + rr() * 1.4;
@@ -72,39 +71,50 @@ export class Lab {
     this.group.add(cableMesh);
 
 
-    // wet reflective floor
-    const floorMat = new THREE.ShaderMaterial({
-      vertexShader: standardVert,
-      fragmentShader: /* glsl */ `
-        ${math}
-        ${noise}
-        ${fog}
-        uniform vec3 uCenter; uniform float uTime;
-        varying vec3 vN; varying vec3 vWorldPos; varying float vDepth; varying vec2 vUv; varying vec3 vLocal;
-        void main(){
-          vec2 d = vWorldPos.xz - uCenter.xz;
-          float r = length(d);
-          float ripple = sin(r * 7. - uTime * 1.6) * .5 + .5;
-          float n = fbm2(vWorldPos.xz * .6 + uTime * .05);
-          vec3 red = vec3(1., .12, .28);
-          float glow = exp(-r * .55) * 1.6 + exp(-r * 1.8) * 2.5;
-          vec3 col = vec3(.004, .006, .008) + red * glow * (.1 + .12 * ripple * n);
-          // streaky reflection of the rods
-          col += red * .12 * smoothstep(.96, 1., sin(atan(d.y, d.x) * 18.)) * exp(-abs(r - 2.3) * 1.5);
-          gl_FragColor = vec4(applyFog(col, vDepth), 1.);
-        }
-      `,
-      uniforms: {
-        uCenter: { value: c.clone() },
-        uTime: globalUniforms.uTime,
-        uFogColor: globalUniforms.uFogColor,
-        uFogDensity: globalUniforms.uFogDensity,
-      },
-    });
-    this.materials.push(floorMat);
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40).rotateX(-Math.PI / 2), floorMat);
+    // wet environmental water floor (becomes the portal's surface from below)
+    const floor = createWaterFloor(c, 40);
     floor.position.set(c.x, c.y - 2.1, c.z);
+    this.materials.push(floor.material as THREE.ShaderMaterial);
     this.group.add(floor);
+
+    // murky room: large dark housing above the cage, leaning buttresses, rocks
+    const concrete = darkLitMaterial('#060708', '#2c0610', c.clone().add(new THREE.Vector3(0, 0.6, 0)), '#081c1e');
+    this.materials.push(concrete);
+    const housing = new THREE.Mesh(new THREE.CylinderGeometry(2.75, 2.75, 1.7, 48, 1, true), concrete);
+    housing.material.side = THREE.DoubleSide;
+    housing.position.set(c.x, c.y + 4.0, c.z);
+    this.group.add(housing);
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(2.75, 2.75, 0.1, 48), concrete);
+    cap.position.set(c.x, c.y + 4.85, c.z);
+    this.group.add(cap);
+    for (const [x, z, lean, h] of [[-5.2, -2.5, 0.28, 11], [5.6, -2.8, -0.3, 11], [-8.5, -6, 0.12, 12], [8.8, -6.5, -0.15, 12]] as const) {
+      const b = new THREE.Mesh(new THREE.BoxGeometry(1.5, h, 1.8).translate(0, h / 2, 0), concrete);
+      b.position.set(c.x + x, c.y - 2.3, c.z + z);
+      b.rotation.set(0, x > 0 ? -0.4 : 0.4, lean);
+      this.group.add(b);
+    }
+    const rockGeo = new THREE.DodecahedronGeometry(0.6, 1);
+    const rocks = new THREE.InstancedMesh(rockGeo, concrete, 9);
+    const rm = new THREE.Matrix4(), rq = new THREE.Quaternion(), rs = new THREE.Vector3(), rp = new THREE.Vector3(), re = new THREE.Euler();
+    const rr2 = rng(77);
+    for (let i = 0; i < 9; i++) {
+      const side = i < 6 ? 1 : -1;
+      rp.set(c.x + side * (2.8 + rr2() * 2.4), c.y - 2.15, c.z + 0.5 + rr2() * 2.5);
+      re.set(rr2() * 3, rr2() * 3, rr2() * 3);
+      rq.setFromEuler(re);
+      const k = 0.5 + rr2() * 1.1;
+      rs.set(k * 1.4, k * 0.6, k);
+      rocks.setMatrixAt(i, rm.compose(rp, rq, rs));
+    }
+    rocks.computeBoundingSphere();
+    this.group.add(rocks);
+    // foreground silhouettes left/right of frame
+    for (const side of [-1, 1]) {
+      const fg = new THREE.Mesh(new THREE.BoxGeometry(1.2, 10, 1.2), concrete);
+      fg.position.set(c.x + side * 6.4, c.y + 2.5, c.z + 5.8);
+      fg.rotation.set(0, side * 0.5, side * -0.08);
+      this.group.add(fg);
+    }
   }
 
   update(time: number) {

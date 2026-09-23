@@ -183,7 +183,7 @@ export class TransitionController {
         steps.push(
           {
             phase: 'EXITING',
-            duration: this.dur(0.5),
+            duration: this.dur(0.32),
             start: () => {
               this.world.activeSlug = route.slug;
               this.world.cards.focusFor(route.slug, this.rig.focusPos, this.rig.focusTgt);
@@ -201,7 +201,7 @@ export class TransitionController {
           },
           {
             phase: 'ENTERING',
-            duration: this.dur(1.1),
+            duration: this.dur(0.85),
             tick: (t) => (state.focus = Math.max(state.focus, 0.45 + 0.55 * easeOutCubic(t))),
             end: () => (state.focus = 1),
           },

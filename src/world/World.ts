@@ -10,7 +10,7 @@ import { ParticleField, type FieldOptions } from '../particles/ParticleField';
 import { Streaks } from '../particles/Streaks';
 import { Nebula } from '../particles/Nebula';
 import type { ParticleResult } from '../workers/particles.worker';
-import { ANCHOR, rangeOf } from './journey';
+import { ANCHOR, rangeOf, workLocalForCard } from './journey';
 import { globalUniforms } from './uniforms';
 import { state, store, type SectionId } from '../core/state';
 import { smoothstep, clamp, dampFactor } from '../utils/math';
@@ -40,8 +40,8 @@ const pal = (top: string, bottom: string, accent: string, fog: string, density: 
 
 const PALETTES: Record<SectionId, Palette> = {
   intro: pal('#0c1317', '#06080a', '#1a5e5b', '#090d10', 0.028, 0, '#1f6d68', '#10363d'),
-  manifesto: pal('#131b3a', '#06070f', '#2a3c96', '#0a0d1c', 0.03, 1, '#1d3f7a', '#1a2a55'),
-  work: pal('#0b1117', '#150c26', '#3b2a7d', '#0d0b18', 0.026, 0, '#1b6663', '#3a2470'),
+  manifesto: pal('#1c2a4c', '#070a14', '#3a5ab0', '#0c1224', 0.03, 0.6, '#2f8f8a', '#23407a'),
+  work: pal('#0e1520', '#1a0f30', '#4a3490', '#0d0b18', 0.02, 0, '#237a74', '#4a2c88'),
   lab: pal('#07090b', '#040506', '#3c0a16', '#060708', 0.06, 0, '#15403f', '#2a0b12'),
   portal: pal('#061110', '#030707', '#0f4a47', '#041010', 0.05, 0, '#16605a', '#0b2d2e'),
   outro: pal('#0c1317', '#06080a', '#1a5e5b', '#090d10', 0.028, 0, '#1f6d68', '#10363d'),
@@ -81,7 +81,10 @@ export class World {
   private tmpA = new THREE.Color();
   private tmpB = new THREE.Color();
 
+  private nebulaScale: number;
+
   constructor(particles: ParticleResult[], titles: Map<string, THREE.Texture>, settings: TierSettings) {
+    this.nebulaScale = Math.max(0.35, settings.particleScale);
     this.scene.add(this.backdrop.mesh, this.root);
     this.cards = new ProjectCards(titles);
     this.portal = new HexPortal(settings.hexCount);
@@ -91,9 +94,10 @@ export class World {
     this.add(this.emblem.group, 4, -12);
 
     // manifesto glass ring (edge‑on)
+    // reference: a chunky, dark glass torus (thick tube), not a thin neon hoop
     this.manifestoRing = new THREE.Mesh(
-      new THREE.TorusGeometry(3.1, 0.3, 40, 160),
-      iridescentMaterial({ base: '#0c0a16', envTop: '#8e8aa8', envBottom: '#0a0c1c', film: 0.9, glow: 0.35 }),
+      new THREE.TorusGeometry(2.9, 0.52, 48, 160),
+      iridescentMaterial({ base: '#0b0a12', envTop: '#9a98a8', envBottom: '#06070c', film: 0.25, glow: 0.08 }),
     );
     this.manifestoRing.position.set(0.55, ANCHOR.manifesto - 0.15, -0.4);
     this.manifestoRing.rotation.set(0, Math.PI / 2 - 0.1, 0);
@@ -117,15 +121,18 @@ export class World {
       this.add(f.points, top, bottom);
     };
     field('embers', { colors: ['#ff6a1f', '#ff2b3d', '#ffc36b'], size: 3.4, turbulence: 0.25, speed: 0.35, drift: [0, 0.35, 0], puff: 0.06 }, 4, -8);
-    field('storm', { colors: ['#ff4a1a', '#ff9a2e', '#ff2a5a'], size: 5.6, turbulence: 0.45, speed: 0.4, twinkle: 0.3, puff: 0.12 }, 4, -8);
-    field('glitter', { colors: ['#ff6fd8', '#8f7bff', '#6fe8ff'], size: 2.3, turbulence: 0.12, speed: 0.25, twinkle: 0.7, puff: 0.05 }, ANCHOR.workTop + 8, ANCHOR.workBottom - 8);
-    field('blob', { colors: ['#ff1f4b', '#ff6a8a', '#ffb36b'], size: 3.4, turbulence: 0.35, speed: 0.5, puff: 0.1 }, ANCHOR.lab + 4, ANCHOR.lab - 4);
+    field('storm', { colors: ['#ff4a1a', '#ff9a2e', '#ff2a5a'], size: 9, turbulence: 0.45, speed: 0.4, twinkle: 0.3, puff: 0.12 }, 4, -8);
+    field('glitter', { colors: ['#e07ad8', '#9a82f0', '#d9a0e8'], size: 1.9, turbulence: 0.05, speed: 0.2, twinkle: 0.35 }, ANCHOR.workTop + 8, ANCHOR.workBottom - 8);
+    field('blob', { colors: ['#ff1f4b', '#ff4a6a', '#ff8a5a'], size: 2.6, turbulence: 0.08, speed: 0.3 }, ANCHOR.lab + 4, ANCHOR.lab - 4);
     field('bubbles', { colors: ['#bfe8e6', '#ffffff', '#7fd6d0'], size: 2.2, turbulence: 0.08, speed: 0.2, drift: [0, 1.2, 0], opacity: 0.5 }, ANCHOR.portal + 4, ANCHOR.portal - 8);
     field('outroStorm', { colors: ['#ff4a1a', '#ff9a2e', '#ff2a5a'], size: 5.6, turbulence: 0.45, speed: 0.4, twinkle: 0.3, puff: 0.12 }, ANCHOR.outro + 4, ANCHOR.outro - 8);
     field('outroEmbers', { colors: ['#ff6a1f', '#ff2b3d', '#ffc36b'], size: 3.2, turbulence: 0.25, speed: 0.35, drift: [0, 0.35, 0] }, ANCHOR.outro + 4, ANCHOR.outro - 8);
+    // foreground energy specks: few, large, hot — the brightest layer of each storm
+    field('specks', { colors: ['#ffd27a', '#ffae3a', '#ff5a2a'], size: 7, turbulence: 0.35, speed: 0.5, twinkle: 0.6 }, 4, -8);
+    field('outroSpecks', { colors: ['#ffd27a', '#ffae3a', '#ff5a2a'], size: 4.2, turbulence: 0.35, speed: 0.5, twinkle: 0.6 }, ANCHOR.outro + 4, ANCHOR.outro - 8);
     field('dust', { colors: ['#9fd8d8', '#ffffff', '#ff9a7a'], size: 1.1, turbulence: 0.2, speed: 0.2, twinkle: 0.8, opacity: 0.6 }, 10, ANCHOR.outro - 12);
-    const dust = this.fields.dust;
-    if (dust) this.pieces.pop(); // dust is global: always visible
+    // dust is global: always visible
+    this.pieces = this.pieces.filter((p) => p.obj !== this.fields.dust?.points);
 
     const s1 = new Streaks(14, -5, 1.5, 5, ['#ff2a55', '#ff4f7a', '#ff7a3a']);
     const s2 = new Streaks(14, ANCHOR.outro - 5, ANCHOR.outro + 1.5, 9, ['#ff2a55', '#ff4f7a', '#ff7a3a']);
@@ -135,13 +142,13 @@ export class World {
 
     const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
     const neb = (id: string, o: ConstructorParameters<typeof Nebula>[0], top: number, bottom: number) => {
-      const nb = new Nebula(o);
+      const nb = new Nebula({ ...o, count: Math.max(6, Math.round(o.count * this.nebulaScale)) });
       this.nebulae[id] = nb;
       this.add(nb.mesh, top, bottom);
     };
     const warm = ['#ff1840', '#ff3a1c', '#ff2a8a', '#c0102c'];
-        neb('storm', { count: 50, seed: 12, center: V(0, -2.2, -0.8), spread: V(5.5, 2.8, 2.5), size: [2.5, 7], colors: warm, intensity: 0 }, 4, -8);
-    neb('glitter', { count: 90, seed: 13, center: V(0, (ANCHOR.workTop + ANCHOR.workBottom) / 2, 0), spread: V(2.6, 52, 1.6), size: [1.5, 4], colors: ['#8f2bd6', '#d13aa8', '#2a4fd6', '#1fa3b8'], intensity: 0.22 }, ANCHOR.workTop + 8, ANCHOR.workBottom - 8);
+        neb('storm', { count: 60, seed: 12, center: V(0, -2.2, -0.8), spread: V(9, 2.8, 3), size: [2.5, 7], colors: warm, intensity: 0 }, 4, -8);
+    neb('glitter', { count: 70, seed: 13, center: V(0, (ANCHOR.workTop + ANCHOR.workBottom) / 2, 0), spread: V(2.6, 52, 1.6), size: [1.5, 4], colors: ['#6a2bb0', '#a8327f', '#2a3aa6', '#1a6e84'], intensity: 0.14 }, ANCHOR.workTop + 8, ANCHOR.workBottom - 8);
     neb('lab', { count: 22, seed: 14, center: V(0, ANCHOR.lab + 0.2, 0), spread: V(1.1, 1.2, 1.1), size: [1.5, 3.5], colors: warm, intensity: 0.4 }, ANCHOR.lab + 4, ANCHOR.lab - 4);
     neb('outroStorm', { count: 50, seed: 15, center: V(0, ANCHOR.outro - 1.8, -0.8), spread: V(5.5, 2.8, 2.5), size: [2.5, 7], colors: warm, intensity: 0 }, ANCHOR.outro + 4, ANCHOR.outro - 8);
   }
@@ -158,8 +165,10 @@ export class World {
 
   layout() {
     this.cards.layout();
-    const girth = state.viewport.aspect < 0.9 ? 0.7 : 1;
+    // reference spine reads ~20–25 % of the frame width behind the cards
+    const girth = state.viewport.aspect < 0.9 ? 0.85 : 1.3;
     this.spine.group.scale.set(girth, 1, girth);
+    this.spine.group.position.z = -0.5;
     const portrait = state.viewport.aspect < 0.9;
     this.manifestoRing.position.x = portrait ? 0.0 : 0.55;
     this.manifestoRing.scale.setScalar(portrait ? 0.8 : 1);
@@ -167,14 +176,9 @@ export class World {
 
   /** Journey progress where the camera faces card i. */
   progressForCard(slug: string) {
-    const i = PROJECTS.findIndex((p) => p.slug === slug);
-    const c = this.cards.cards[i];
-    if (!c) return rangeOf('work').start;
-    const y = c.base.position.y;
-    const yTop = ANCHOR.workTop - 3, yBot = ANCHOR.workBottom;
-    const local = clamp(0.02 + 0.96 * ((y + 0.2 - yTop) / (yBot - yTop)));
+    const i = Math.max(0, PROJECTS.findIndex((p) => p.slug === slug));
     const r = rangeOf('work');
-    return r.start + (r.end - r.start) * local;
+    return r.start + (r.end - r.start) * clamp(workLocalForCard(i));
   }
 
   private blendPalettes(dt: number, post: THREE.ShaderMaterial) {
@@ -185,10 +189,12 @@ export class World {
     const lp = state.sectionProgress;
     // blend across the section boundaries
     let from = cur, to = cur, t = 0;
-    if (lp < 0.12 && i > 0) {
+    // short sections blend over a wider share; the long work section switches quickly
+    const win = state.section === 'work' ? 0.04 : 0.12;
+    if (lp < win && i > 0) {
       from = prev;
       to = cur;
-      t = 0.5 + 0.5 * smoothstep(0, 0.12, lp);
+      t = 0.5 + 0.5 * smoothstep(0, win, lp);
     } else if (lp > 0.88 && i < ORDER.length - 1) {
       from = cur;
       to = next;
@@ -246,7 +252,7 @@ export class World {
     this.blendPalettes(dt, post);
 
     const intro = state.section === 'intro' ? state.sectionProgress : state.scroll.progress > rangeOf('intro').end ? 1 : 0;
-    this.emblem.update(t, state.reveal, state.pointer.targetX, state.pointer.targetY, intro * 0.8);
+    this.emblem.update(t, state.reveal, state.pointer.targetX, state.pointer.targetY, smoothstep(0.05, 0.6, intro) * Math.PI);
     const outroLocal = state.section === 'outro' ? state.sectionProgress : 0;
     this.outroEmblem.update(t, smoothstep(0.15, 0.6, outroLocal), state.pointer.targetX, state.pointer.targetY);
 
@@ -275,7 +281,8 @@ export class World {
     }
     if (this.fields.blob) this.fields.blob.uniforms.uBurstCenter.value.set(0, ANCHOR.lab, 0);
 
-    this.manifestoRing.rotation.y = Math.PI / 2 - 0.1 + Math.sin(t * 0.25) * 0.06 + state.pointer.targetX * 0.08;
+    const man = state.section === 'manifesto' ? state.sectionProgress : state.scroll.progress > rangeOf('manifesto').end ? 1 : 0;
+    this.manifestoRing.rotation.y = Math.PI / 2 - 0.1 - smoothstep(0.05, 0.7, man) * 0.95 + Math.sin(t * 0.25) * 0.06 + state.pointer.targetX * 0.08;
     this.manifestoRing.rotation.x = Math.sin(t * 0.2) * 0.04;
 
     this.spine.update(t);
@@ -285,21 +292,34 @@ export class World {
   }
 
   private setStorm(id: 'storm' | 'outroStorm', streak: number, amount: number) {
+    const on = amount > 0.004;
+    const sp = this.fields[id === 'storm' ? 'specks' : 'outroSpecks'];
+    if (sp) {
+      sp.uniforms.uOpacity.value = amount;
+      sp.points.visible &&= on;
+    }
     const f = this.fields[id];
     if (f) {
+      f.points.visible &&= on;
       f.uniforms.uOpacity.value = amount;
       f.uniforms.uBurst.value = amount * 0.35;
       f.uniforms.uBurstCenter.value.set(0, id === 'storm' ? ANCHOR.intro : ANCHOR.outro, 0);
     }
     const n = this.nebulae[id];
     if (n) {
-      n.uniforms.uIntensity.value = amount * 0.26;
+      n.mesh.visible &&= on;
+      n.uniforms.uIntensity.value = amount * 0.34;
       n.uniforms.uBurst.value = amount * 1.5;
     }
     this.streaks[streak].uniforms.uIntensity.value = amount;
+    this.streaks[streak].mesh.visible &&= on;
   }
 
   setParticleScale(visibleFraction: number) {
+    for (const n of Object.values(this.nebulae)) {
+      const full = (n.mesh.userData.full ??= n.mesh.count) as number;
+      n.mesh.count = Math.max(4, Math.floor(full * visibleFraction));
+    }
     for (const f of Object.values(this.fields)) {
       const g = f.points.geometry;
       const n = g.getAttribute('position').count;

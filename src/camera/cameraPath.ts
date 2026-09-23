@@ -1,44 +1,57 @@
 import * as THREE from 'three';
-import { rangeOf, ANCHOR } from '../world/journey';
+import { rangeOf, ANCHOR, workCameraY } from '../world/journey';
 import type { SectionId } from '../core/state';
 
+/**
+ * Explicit camera timeline. Every key: journey time (section + local progress),
+ * eye position, look target and vertical FOV (desktop framing; portrait adds a
+ * fixed offset in CameraRig). Interpolation is a time‑aware cubic Hermite for
+ * position/target and smoothstep for FOV, so motion is continuous in both directions.
+ */
 interface Key {
   t: number;
   pos: THREE.Vector3;
   tgt: THREE.Vector3;
+  fov: number;
 }
 
-const k = (section: SectionId, local: number, pos: [number, number, number], tgt: [number, number, number]): Key => {
+const SECTION_FOV: Record<SectionId, number> = { intro: 40, manifesto: 40, work: 42, lab: 38, portal: 44, outro: 40 };
+
+const k = (section: SectionId, local: number, pos: [number, number, number], tgt: [number, number, number], fov = SECTION_FOV[section]): Key => {
   const r = rangeOf(section);
-  return { t: r.start + (r.end - r.start) * local, pos: new THREE.Vector3(...pos), tgt: new THREE.Vector3(...tgt) };
+  return { t: r.start + (r.end - r.start) * local, pos: new THREE.Vector3(...pos), tgt: new THREE.Vector3(...tgt), fov };
 };
 
 function buildKeys(): Key[] {
   const keys: Key[] = [
+    // reference: emblem stays centred and recedes (ring ≈200→170→140→110 px) while the storm grows
     k('intro', 0, [0, 0, 12.4], [0, 0, 0]),
-    k('intro', 0.22, [0, -1.7, 10.4], [0, 0.45, 0]),
-    k('intro', 0.5, [0.3, -0.9, 13.2], [0, -0.5, 0]),
-    k('intro', 0.8, [-0.2, -0.9, 11.2], [0, -0.9, 0]),
-    k('intro', 0.94, [0, -12, 10.5], [0, -16, 0]),
+    k('intro', 0.17, [0, -0.15, 14.6], [0, -0.1, 0]),
+    k('intro', 0.33, [0, -0.25, 16], [0, -0.2, 0]),
+    k('intro', 0.55, [0.2, -0.35, 17.7], [0, -0.3, 0]),
+    k('intro', 0.83, [0, -0.6, 22.5], [0, -0.6, 0]),
+    k('intro', 0.96, [0, -12, 13], [0, -16, 0]),
     k('manifesto', 0, [0, ANCHOR.manifesto + 3.5, 10.5], [0, ANCHOR.manifesto + 0.8, 0]),
     k('manifesto', 0.5, [0, ANCHOR.manifesto, 10], [0, ANCHOR.manifesto, 0]),
-    k('manifesto', 1, [0, ANCHOR.manifesto - 8, 9.5], [0, ANCHOR.manifesto - 10, 0]),
+    k('manifesto', 1, [0, workCameraY(0) + 0.9, 9.6], [0, workCameraY(0) + 0.4, 0]),
   ];
   // Descent along the spine with a gentle alternating sway toward each card.
   const steps = 14;
   for (let i = 0; i <= steps; i++) {
-    const u = i / steps;
-    const y = ANCHOR.workTop - 3 + (ANCHOR.workBottom - ANCHOR.workTop + 3) * u;
+    const u = 0.002 + (i / steps) * 0.996;
+    const y = workCameraY(u);
     const sway = i === 0 || i === steps ? 0 : (i % 2 ? -0.55 : 0.55);
-    keys.push(k('work', 0.02 + u * 0.96, [sway, y, 6.6], [sway * 0.3, y - 0.45, 0]));
+    keys.push(k('work', u, [sway, y, 9.2], [sway * 0.3, y - 0.45, 0]));
   }
   keys.push(
     k('lab', 0, [0, ANCHOR.lab + 4.5, 13.5], [0, ANCHOR.lab + 1.2, 0]),
-    k('lab', 0.5, [0.8, ANCHOR.lab + 0.6, 11], [0, ANCHOR.lab + 0.5, 0]),
-    k('lab', 0.86, [0, ANCHOR.lab - 1.0, 9.6], [0, ANCHOR.lab - 0.2, 0]),
-    k('portal', 0, [0, ANCHOR.portal + 1.6, 10], [0, ANCHOR.portal + 0.6, -6]),
-    k('portal', 0.55, [0, ANCHOR.portal + 0.7, 8.6], [0, ANCHOR.portal + 0.1, -6]),
-    k('portal', 1, [0, ANCHOR.portal - 5, 7], [0, ANCHOR.portal - 8, -2]),
+    k('lab', 0.5, [0.6, ANCHOR.lab + 0.6, 13], [0, ANCHOR.lab + 1, 0]),
+    k('lab', 0.86, [0, ANCHOR.lab - 0.2, 12.5], [0, ANCHOR.lab + 0.9, 0]),
+    // under the surface: rig visible above through the water, tunnel low in frame
+    k('portal', 0.15, [0, ANCHOR.portal + 0.4, 12], [0, ANCHOR.portal + 0.6, -6], 48),
+    k('portal', 0.6, [0, ANCHOR.portal - 0.4, 10], [0, ANCHOR.portal - 0.6, -6], 46),
+    k('portal', 0.9, [0, ANCHOR.portal - 2.4, 7.5], [0, ANCHOR.portal - 3.2, -7], 44),
+    k('portal', 1, [0, ANCHOR.portal - 6, 6], [0, ANCHOR.portal - 9, -2]),
     k('outro', 0.22, [0, ANCHOR.outro + 0.9, 11.2], [0, ANCHOR.outro + 0.9, 0]),
     k('outro', 0.6, [0.3, ANCHOR.outro + 0.8, 13.2], [0, ANCHOR.outro + 0.5, 0]),
     k('outro', 1, [0, ANCHOR.outro, 12.4], [0, ANCHOR.outro, 0]),
@@ -74,18 +87,21 @@ function hermite(out: THREE.Vector3, p0: THREE.Vector3, m0: THREE.Vector3, p1: T
   return out;
 }
 
-/** Sample the journey camera at progress p (no allocations). */
-export function sampleCameraPath(p: number, outPos: THREE.Vector3, outTgt: THREE.Vector3) {
+/** Read‑only view of the timeline (debug / docs). */
+export const CAMERA_KEYS: readonly Readonly<Key>[] = KEYS;
+
+/** Sample the journey camera at progress p (no allocations). Returns the FOV. */
+export function sampleCameraPath(p: number, outPos: THREE.Vector3, outTgt: THREE.Vector3): number {
   if (p <= KEYS[0].t) {
     outPos.copy(KEYS[0].pos);
     outTgt.copy(KEYS[0].tgt);
-    return;
+    return KEYS[0].fov;
   }
   const last = KEYS.length - 1;
   if (p >= KEYS[last].t) {
     outPos.copy(KEYS[last].pos);
     outTgt.copy(KEYS[last].tgt);
-    return;
+    return KEYS[last].fov;
   }
   let i = 0;
   while (i < last - 1 && p > KEYS[i + 1].t) i++;
@@ -94,4 +110,6 @@ export function sampleCameraPath(p: number, outPos: THREE.Vector3, outTgt: THREE
   const u = (p - a.t) / h;
   hermite(outPos, a.pos, tangentsPos[i], b.pos, tangentsPos[i + 1], u, h);
   hermite(outTgt, a.tgt, tangentsTgt[i], b.tgt, tangentsTgt[i + 1], u, h);
+  const su = u * u * (3 - 2 * u);
+  return a.fov + (b.fov - a.fov) * su;
 }

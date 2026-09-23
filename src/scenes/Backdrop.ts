@@ -13,6 +13,7 @@ export class Backdrop {
     uTime: globalUniforms.uTime,
     uScrollVelocity: globalUniforms.uScrollVelocity,
     uResolution: globalUniforms.uResolution,
+    uFocus: globalUniforms.uFocus,
   };
 
   constructor() {
@@ -23,7 +24,7 @@ export class Backdrop {
       fragmentShader: /* glsl */ `
         ${math}
         ${noise}
-        uniform vec3 uTop, uBottom, uAccent; uniform float uStreaks, uTime, uScrollVelocity; uniform vec2 uResolution;
+        uniform vec3 uTop, uBottom, uAccent; uniform float uStreaks, uTime, uScrollVelocity, uFocus; uniform vec2 uResolution;
         varying vec2 vUv;
         void main(){
           vec2 uv = vUv;
@@ -37,6 +38,8 @@ export class Backdrop {
           float s = fbm2(vec2(uv.x * 1.2 - uTime * .08 * (1. + abs(uScrollVelocity)), y));
           float streak = smoothstep(.55, .85, s) * smoothstep(.0, .5, fract(y)) * smoothstep(1., .5, fract(y));
           col += uAccent * streak * uStreaks * .55;
+          // project focus: the world sinks into a dark teal void (reference detail view)
+          col = mix(col, vec3(.012, .03, .032) * (1.1 - uv.y * .3), smoothstep(.2, .9, uFocus));
           gl_FragColor = vec4(col, 1.);
         }`,
       uniforms: this.uniforms,

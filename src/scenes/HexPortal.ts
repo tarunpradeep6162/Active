@@ -9,7 +9,7 @@ export class HexPortal {
   readonly group = new THREE.Group();
   readonly materials: THREE.ShaderMaterial[] = [];
   private hex: THREE.InstancedMesh;
-  readonly wallCenter = new THREE.Vector3(0, ANCHOR.portal - 1.2, -7);
+  readonly wallCenter = new THREE.Vector3(0, ANCHOR.portal - 3.4, -7);
 
   constructor(density = 1) {
     const radius = 0.14 / Math.sqrt(Math.max(0.45, density));
@@ -71,6 +71,7 @@ export class HexPortal {
           float edge = max(e.x, e.y);
           col *= 1. - smoothstep(.8, 1., edge) * .6;
           col *= mix(.45, 1., smoothstep(.0, .5, length(vCell / uHalf)) * uDish + (1. - uDish));
+          col *= .6;
           gl_FragColor = vec4(applyFog(col, vDepth), 1.);
         }`,
       uniforms: {

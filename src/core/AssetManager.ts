@@ -1,4 +1,5 @@
-import tourneyUrl from '@fontsource-variable/tourney/files/tourney-latin-wght-normal.woff2?url';
+// two‑axis (wght + wdth) file: the reference display face is wider than Tourney's default width
+import tourneyUrl from '@fontsource-variable/tourney/files/tourney-latin-standard-normal.woff2?url';
 import monoUrl from '@fontsource/share-tech-mono/files/share-tech-mono-latin-400-normal.woff2?url';
 import type { ParticleRequest, ParticleResult } from '../workers/particles.worker';
 import ParticleWorker from '../workers/particles.worker?worker';
@@ -80,7 +81,7 @@ export class AssetManager {
       weight: 2,
       run: async (report) => {
         const fonts: [string, string, FontFaceDescriptors][] = [
-          ['Tourney Variable', tourneyUrl, { weight: '100 900', style: 'normal', display: 'block' }],
+          ['Tourney Variable', tourneyUrl, { weight: '100 900', stretch: '75% 125%', style: 'normal', display: 'block' }],
           ['Share Tech Mono', monoUrl, { weight: '400', style: 'normal', display: 'block' }],
         ];
         const progress = fonts.map(() => 0);

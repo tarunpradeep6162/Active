@@ -30,21 +30,25 @@ export class CameraRig {
     this.camera = new THREE.PerspectiveCamera(40, 1, 0.1, 400);
   }
 
-  /** Portrait framing: wider lens and pulled‑back camera so key content stays composed. */
+  /** Portrait framing: FOV offset added to the timeline FOV, and a pull‑back factor. */
   private frame() {
     const a = state.viewport.aspect;
-    if (a >= 1.2) return { fov: 40, dist: 1 };
-    if (a >= 0.8) return { fov: 46, dist: 1.08 };
-    return { fov: 52, dist: 1.12 };
+    if (a >= 1.2) return { fovAdd: 0, dist: 1 };
+    if (a >= 0.8) return { fovAdd: 6, dist: 1.08 };
+    return { fovAdd: 12, dist: 1.12 };
   }
+  /** Exposed for the debug overlay. */
+  readonly debugTarget = new THREE.Vector3();
+  baseFov = 40;
 
   update(dt: number) {
     const s = state.scroll;
     const p = state.pointer;
     const reduced = state.reducedMotion;
-    sampleCameraPath(s.progress, this.basePos, this.baseTgt);
+    this.baseFov = sampleCameraPath(s.progress, this.basePos, this.baseTgt);
 
-    const { fov, dist } = this.frame();
+    const { fovAdd, dist } = this.frame();
+    const fov = this.baseFov + fovAdd;
     // pull back relative to target for portrait screens
     this.desiredPos.subVectors(this.basePos, this.baseTgt).multiplyScalar(dist).add(this.baseTgt);
     this.desiredTgt.copy(this.baseTgt);
@@ -87,6 +91,7 @@ export class CameraRig {
       cam.position.addScaledVector(this.tmp, -this.warp * 1.5);
     }
     cam.lookAt(this.curTgt);
+    this.debugTarget.copy(this.curTgt);
     const targetRoll = reduced ? 0 : clamp(-p.vx * 0.004 - s.velocity * 0.006, -0.05, 0.05) + p.targetX * -0.012;
     this.roll = lerp(this.roll, targetRoll, dampFactor(3, dt));
     cam.rotateZ(this.roll);

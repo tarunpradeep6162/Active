@@ -52,7 +52,7 @@ export class Emblem {
   readonly materials: THREE.ShaderMaterial[] = [];
 
   constructor(flip = false) {
-    const ringMat = iridescentMaterial({ base: '#6a1230', envTop: '#ff9ab4', envBottom: '#1c0610', film: 0.55, glow: 0.9 });
+    const ringMat = iridescentMaterial({ base: '#3a0a1c', envTop: '#e87a98', envBottom: '#12040a', film: 0.7, glow: 0.75 });
     const glyphMat = iridescentMaterial({ base: '#5a1230', envTop: '#ffc2d4', envBottom: '#2b0818', film: 0.8, glow: 1.3 });
     const ribbonMat = iridescentMaterial({
       useUvGradient: true,
@@ -65,7 +65,7 @@ export class Emblem {
     });
     this.materials.push(ringMat, glyphMat, ribbonMat);
 
-    this.ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.085, 36, 180), ringMat);
+    this.ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.068, 36, 180), ringMat);
     this.glyph = new THREE.Mesh(glyphGeometry(), glyphMat);
     this.glyph.scale.setScalar(1.05);
     this.core.add(this.ring, this.glyph);

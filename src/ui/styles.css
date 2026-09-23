@@ -104,7 +104,7 @@ body {
 .nav.is-hot .nav__stroke { stroke: rgba(170, 205, 255, 0.8); }
 .nav__row { position: relative; display: flex; align-items: center; justify-content: space-between; height: 100%; padding: 0 30px; }
 .nav__link {
-  font-family: var(--display); font-weight: 560; font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+  font-family: var(--display); font-weight: 560; font-stretch: 112%; font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
   color: var(--ink); text-decoration: none; padding: 14px 0; line-height: 1; white-space: pre;
   font-variant-ligatures: none;
 }
@@ -162,11 +162,12 @@ body {
 /* ------------------------------------------------------------------ manifesto */
 .manifesto {
   position: fixed; inset: 0; opacity: var(--v-manifesto); visibility: visible;
-  transform: translate3d(0, calc((0.5 - var(--manifesto-local)) * 12vh), 0);
+  /* reference: the headline travels with the camera (~47 vh per section length) */
+  transform: translate3d(0, calc((0.17 - var(--manifesto-local)) * 47vh), 0);
 }
 .manifesto__title {
   position: absolute; left: 11.4vw; top: 41.5vh; margin: 0;
-  font-family: var(--display); font-weight: 300; text-transform: uppercase;
+  font-family: var(--display); font-weight: 480; font-stretch: 112%; text-transform: uppercase;
   font-size: clamp(40px, 6.95vw, 150px); line-height: 1.02; letter-spacing: .005em;
   color: #fff; text-shadow: 0 0 18px rgba(255,255,255,.28);
 }
@@ -223,7 +224,7 @@ body {
 
 /* ------------------------------------------------------------------ lab */
 .lab-label { position: fixed; left: 0; right: 0; top: 79vh; opacity: var(--v-lab); display: flex; justify-content: center; gap: clamp(20px, 13vw, 190px); align-items: flex-start; }
-.lab-label__title { font-family: var(--display); font-weight: 400; font-size: clamp(26px, 2.9vw, 48px); line-height: 1.05; letter-spacing: .02em; text-transform: uppercase; margin: 0; text-shadow: 0 0 14px rgba(255,255,255,.35); }
+.lab-label__title { font-family: var(--display); font-weight: 480; font-stretch: 112%; font-size: clamp(26px, 2.9vw, 48px); line-height: 1.05; letter-spacing: .02em; text-transform: uppercase; margin: 0; text-shadow: 0 0 14px rgba(255,255,255,.35); }
 .lab-label__copy { font-size: 11px; line-height: 2.1; letter-spacing: .1em; text-transform: uppercase; max-width: 230px; margin: 0; }
 
 /* ------------------------------------------------------------------ end */
@@ -237,7 +238,7 @@ body {
 .contact__head { position: absolute; top: 25vh; left: 0; right: 0; text-align: center; color: #fff; }
 .contact__cities {
   position: absolute; top: 34vh; left: 5.8vw; right: 5.8vw; margin: 0; display: flex; justify-content: space-between; align-items: center;
-  font-family: var(--display); font-weight: 330; font-size: clamp(40px, 8.8vw, 170px); line-height: 1; letter-spacing: .02em; text-transform: uppercase;
+  font-family: var(--display); font-weight: 480; font-stretch: 112%; font-size: clamp(40px, 8.8vw, 170px); line-height: 1; letter-spacing: .02em; text-transform: uppercase;
   text-shadow: 0 0 22px rgba(255,255,255,.25);
 }
 .contact__arrow { font-family: var(--mono); font-weight: 300; font-size: .5em; opacity: .85; }
