@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import './ui/styles.css';
 import { App } from './ui/App';
+import { state } from './core/state';
 
 function supportsWebGL2() {
   try {
@@ -24,6 +25,6 @@ if (!supportsWebGL2()) {
       mount.insertAdjacentHTML('beforeend', '<div class="fallback" role="alert"><p>Something went wrong while loading.</p></div>');
     });
     if (import.meta.env.DEV || new URLSearchParams(location.search).has('debug'))
-      import('./core/state').then(({ state }) => Object.assign(window, { __exp: exp, __state: state }));
+      Object.assign(window, { __exp: exp, __state: state });
   });
 }
