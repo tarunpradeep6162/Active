@@ -28,6 +28,7 @@
   --scroll-vel: 0;
   --manifesto-local: 0;
   --headline-shift: 0;
+  --v-manifesto-copy: 1;
   color-scheme: dark;
 }
 @media (max-width: 700px) {
@@ -178,6 +179,7 @@ body {
   position: absolute; left: 61.6vw; top: 64.2vh; width: min(380px, 30vw);
   font-size: 12.5px; line-height: 2.2; letter-spacing: .09em; text-transform: uppercase; color: #eef2f5;
 }
+.manifesto__copy { opacity: var(--v-manifesto-copy); }
 .manifesto__copy p { margin: 0 0 1.1em; }
 
 /* ------------------------------------------------------------------ work panel */
@@ -262,7 +264,7 @@ body {
   .nav__link { font-size: 11px; letter-spacing: .12em; }
   .nav__divider { width: 34px; }
   .intro-hint { top: 22vh; }
-  .manifesto__title { left: 5vw; top: 24vh; font-size: clamp(36px, 13.6vw, 72px); }
+  .manifesto__title { left: 5vw; top: 30.7vh; font-size: clamp(36px, 13.6vw, 72px); } /* glyph top: measured 14.7 vh at m 0.5 */
   .manifesto__copy { left: 6vw; right: 6vw; top: auto; bottom: 6vh; width: auto; font-size: 11px; line-height: 2; }
   .work-panel { bottom: calc(44px + var(--safe-bottom)); font-size: 12px; }
   .work-panel__list li { height: 27px; }

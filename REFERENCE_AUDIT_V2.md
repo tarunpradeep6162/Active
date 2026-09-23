@@ -48,8 +48,12 @@ verifiable from outside · **[OURS]** our implementation · **[DIFF]** remaining
 - **[MEASURED]** Phones play 1 259.9 vh of the desktop journey's 2 331 vh (scale 0.5405),
   at 375, 390 and 430 alike. A 768×1024 touch tablet plays the **full** desktop journey.
 - **[DIFF → FIX]** We had used scale 0.54, and applied it on "touch + portrait", which
-  wrongly shortened tablets. Now: scale 0.5405 on phone‑sized screens only
+  wrongly shortened tablets. The phone journey now applies on phone‑sized screens only
   (`min(w,h) < 600`).
+- **[MEASURED, later pass]** The phone split is **not** a uniform scale. Per section it is
+  210 / 105 / 525 / 105 / 105 / 210 vh (`qa/sections.mjs`). The total matched, so the old
+  check passed, but the boundaries were off by up to 264 px. `sectionVh(phone)` now uses
+  the measured table. See `WORK_SCROLL_MAP.md` §6.
 - **[MEASURED]** Reference section boundaries sit at cumulative vh in *pixels*. For
   example, work starts at 4 725 px = 525 vh, and progress is scrollTop / (total − 1 vh).
 - **[DIFF → FIX]** We had normalised boundaries by the total, which compressed every

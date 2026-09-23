@@ -31,8 +31,12 @@ export class UIDriver {
     const mr = rangeOf('manifesto');
     const man = (p - mr.start) / (mr.end - mr.start);
     this.set('--manifesto-local', man);
-    this.set('--headline-shift', headlineShift(man));
-    this.set('--v-work', band('work', -0.045, -0.02, 0.93, 0.965) * (1 - state.overlay) * (1 - state.focus));
+    const phone = Math.min(state.viewport.width, state.viewport.height) < 600;
+    this.set('--headline-shift', headlineShift(man, phone));
+    // phone: the body copy leaves early and the project list arrives by work p −0.07 (measured)
+    this.set('--v-manifesto-copy', phone ? 1 - smoothstep(0.56, 0.64, man) : 1);
+    const wb = phone ? band('work', -0.08, -0.065, 0.86, 0.88) : band('work', -0.045, -0.02, 0.93, 0.965);
+    this.set('--v-work', wb * (1 - state.overlay) * (1 - state.focus));
     this.set('--v-lab', band('portal', 0.15, 0.4, 0.85, 1.0) * free);
     this.set('--v-end', band('outro', 0.82, 0.97, 2, 3) * free);
     this.set('--focus', state.focus);
@@ -51,8 +55,11 @@ export class UIDriver {
  * section length), pinned for m ∈ [0, 0.2], then leaving upward at ≈42 vh per section length.
  * Shared with the headline ring's timing in World.
  */
-export function headlineShift(m: number) {
+export function headlineShift(m: number, phone = false) {
   if (m < 0) return -m * 112;
+  // phone (390×844): no pin, a steady climb of ≈34 vh per section length (1.7 vh per 1 % of work;
+  // the phone headline section spans work p −0.2 … 0, so m = 0.5 at work p −0.1)
+  if (phone) return -m * 34;
   if (m < 0.2) return 0;
   return -(m - 0.2) * 42;
 }

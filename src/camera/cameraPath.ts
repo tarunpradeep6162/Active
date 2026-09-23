@@ -41,10 +41,10 @@ function buildKeys(): Key[] {
   // The headline section is part of it (measured: the reference camera is already on the work
   // orbit there, with the headline layered on top).
   const wp = new THREE.Vector3(), wt = new THREE.Vector3();
-  workTimeline.sample(WorkTimeline.START, wp, wt);
-  keys.push(k('work', WorkTimeline.START, [wp.x, wp.y, wp.z], [wt.x, wt.y, wt.z], 35));
+  workTimeline.sample(workTimeline.start, wp, wt);
+  keys.push(k('work', workTimeline.start, [wp.x, wp.y, wp.z], [wt.x, wt.y, wt.z], workTimeline.config.fov));
   workTimeline.sample(WorkTimeline.END, wp, wt);
-  keys.push(k('work', WorkTimeline.END, [wp.x, wp.y, wp.z], [wt.x, wt.y, wt.z], 35));
+  keys.push(k('work', WorkTimeline.END, [wp.x, wp.y, wp.z], [wt.x, wt.y, wt.z], workTimeline.config.fov));
   // lab framing continues along the heading the work camera exits on (70°, measured)
   const H = THREE.MathUtils.degToRad(EXIT_HEADING_DEG);
   const polar = (r: number, y: number): [number, number, number] => [Math.cos(H) * r, y, Math.sin(H) * r];
@@ -101,7 +101,7 @@ function hermite(out: THREE.Vector3, p0: THREE.Vector3, m0: THREE.Vector3, p1: T
 /** True where the measured Work timeline drives the camera (its framing is already per‑device). */
 export function inWorkTimeline(p: number) {
   const w = rangeOf('work'), len = w.end - w.start;
-  return p >= w.start + WorkTimeline.START * len && p <= w.start + WorkTimeline.END * len;
+  return p >= w.start + workTimeline.start * len && p <= w.start + WorkTimeline.END * len;
 }
 
 /**
@@ -111,7 +111,7 @@ export function inWorkTimeline(p: number) {
 export function workOverlay(p: number, outPos: THREE.Vector3, outTgt: THREE.Vector3): number | null {
   const w = rangeOf('work');
   const t = (p - w.start) / (w.end - w.start);
-  const edge = WorkTimeline.exitWipe(t);
+  const edge = workTimeline.exitWipe(t);
   if (edge === null) return null;
   workTimeline.sampleParked(t, outPos, outTgt);
   return edge;
@@ -121,7 +121,7 @@ export function workOverlay(p: number, outPos: THREE.Vector3, outTgt: THREE.Vect
 export function viewSegment(p: number) {
   const w = rangeOf('work');
   const t = (p - w.start) / (w.end - w.start);
-  return t >= 0.93 && t < 1 ? 1 : 0;
+  return workTimeline.inWipe(t) ? 1 : 0;
 }
 
 /** Read‑only view of the timeline (debug / docs). */
@@ -130,7 +130,7 @@ export const cameraKeys = (): readonly Readonly<Key>[] => KEYS;
 /** Sample the journey camera at progress p (no allocations). Returns the FOV. */
 export function sampleCameraPath(p: number, outPos: THREE.Vector3, outTgt: THREE.Vector3): number {
   const w = rangeOf('work'), len = w.end - w.start;
-  if (p >= w.start + WorkTimeline.START * len && p <= w.start + WorkTimeline.END * len) return workTimeline.sample((p - w.start) / len, outPos, outTgt);
+  if (p >= w.start + workTimeline.start * len && p <= w.start + WorkTimeline.END * len) return workTimeline.sample((p - w.start) / len, outPos, outTgt);
   if (p <= KEYS[0].t) {
     outPos.copy(KEYS[0].pos);
     outTgt.copy(KEYS[0].tgt);

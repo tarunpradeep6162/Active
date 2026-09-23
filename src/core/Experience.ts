@@ -1,4 +1,4 @@
-import { WorkTimeline } from '../work/WorkTimeline';
+import { workTimeline } from '../work/WorkTimeline';
 import * as THREE from 'three';
 import { state, store, events, type Route } from './state';
 import { createRenderer, readViewport } from '../renderer/Renderer';
@@ -325,7 +325,7 @@ export class Experience {
     this.renderer.info.reset();
     const world = this.world && this.world.root.visible ? this.world : null;
     const edge = world ? this.rig.overlayEdge : null;
-    this.post.render(world ? world.scene : this.bootScene, cam, edge === null ? undefined : { camera: this.rig.overlayCamera, edge, slant: WorkTimeline.WIPE_SLANT, toggle: this.toggleBackdropDepth });
+    this.post.render(world ? world.scene : this.bootScene, cam, edge === null ? undefined : { camera: this.rig.overlayCamera, edge, slant: workTimeline.config.seam.wipeSlant, toggle: this.toggleBackdropDepth });
     this.debug?.frame(rawMs);
   }
 }

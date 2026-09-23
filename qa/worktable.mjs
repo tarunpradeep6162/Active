@@ -12,6 +12,12 @@ const stepDeg = phone ? -35 : -50;
 const frames = new Map();
 for (const d of dirs) for (const f of JSON.parse(fs.readFileSync(path.join(d, 'map.json'))).frames) frames.set(f.p.toFixed(3), f);
 const sorted = [...frames.values()].sort((a, b) => a.p - b.p);
+// a frame that never settled (first read after a jump) takes its nearest settled neighbour's state
+sorted.forEach((f, i) => {
+  if (f.settledAfter >= 0) return;
+  const n = sorted.slice(i + 1).find((g) => g.settledAfter >= 0) || sorted.slice(0, i).reverse().find((g) => g.settledAfter >= 0);
+  if (n) sorted[i] = { ...n, p: f.p, held: true };
+});
 
 let prev = null, acc = 0;
 const rows = sorted.map((f) => {
@@ -20,7 +26,7 @@ const rows = sorted.map((f) => {
   if (prev !== null) { let d = ang - prev; d = ((d + 540) % 360) - 180; acc += d; } else acc = ang;
   prev = ang;
   const yaw = ((((Math.atan2(fz, fx) - Math.atan2(-z, -x)) * 180) / Math.PI + 540) % 360) - 180;
-  return [+f.p.toFixed(3), +acc.toFixed(2), +y.toFixed(3), +Math.hypot(x, z).toFixed(3), +yaw.toFixed(2), f.settledAfter];
+  return [+f.p.toFixed(3), +acc.toFixed(2), +y.toFixed(3), +Math.hypot(x, z).toFixed(3), +yaw.toFixed(2), f.held ? -1 : 0];
 });
 // the table must be uniformly spaced for the sampler
 const step = +(rows[1][0] - rows[0][0]).toFixed(3);
@@ -38,7 +44,7 @@ for (let i = 1; i < 14; i++) {
 }
 
 const name = phone ? 'PHONE' : 'DESKTOP';
-const body = rows.map((r) => `  [${r.slice(0, 5).join(', ')}],${r[5] < 0 ? ' // first frame after the jump (not settled by frame count)' : ''}`).join('\n');
+const body = rows.map((r) => `  [${r.slice(0, 5).join(', ')}],${r[5] < 0 ? ' // held: the capture\'s first frame after the jump never settled' : ''}`).join('\n');
 const file = path.resolve('src/work/workCameraData.ts');
 let src = fs.readFileSync(file, 'utf8');
 const tableRe = new RegExp(`(export const WORK_CAMERA_${name}: [^=]+= \\[\\n)[\\s\\S]*?(\\n\\];)`);

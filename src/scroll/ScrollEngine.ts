@@ -1,5 +1,5 @@
 import { state } from '../core/state';
-import { SECTIONS, MOBILE_SCALE, TOTAL_VH, sectionAt, computeRanges } from '../world/journey';
+import { SECTIONS, sectionVh, totalVh, sectionAt, computeRanges } from '../world/journey';
 import { rebuildCameraPath } from '../camera/cameraPath';
 import { setWorkDevice } from '../work/WorkTimeline';
 import { damp, clamp } from '../utils/math';
@@ -30,19 +30,20 @@ export class ScrollEngine {
     this.layout();
   }
 
-  /** Scale of the journey: shorter on phone‑sized screens only (as measured; tablets keep it). */
-  private scale() {
-    return Math.min(state.viewport.width, state.viewport.height) < 600 ? MOBILE_SCALE : 1;
+  /** Phone‑sized screens use the measured phone journey (tablets keep the desktop one). */
+  private phone() {
+    return Math.min(state.viewport.width, state.viewport.height) < 600;
   }
 
   layout() {
     // Use a stable height on mobile so the toolbar showing/hiding doesn't rescale the journey.
     const vh = state.viewport.mobile ? Math.max(window.innerHeight, screen.height * 0.8) / 100 : window.innerHeight / 100;
-    const k = this.scale();
-    const deviceChanged = setWorkDevice(k !== 1);
-    if (computeRanges(k) || deviceChanged) rebuildCameraPath();
-    SECTIONS.forEach((s, i) => (this.sectionEls[i].style.height = `${Math.round(s.vh * k * vh)}px`));
-    const total = Math.round(TOTAL_VH * k * vh);
+    const phone = this.phone();
+    const deviceChanged = setWorkDevice(phone);
+    if (computeRanges(phone) || deviceChanged) rebuildCameraPath();
+    const lens = sectionVh(phone);
+    SECTIONS.forEach((_, i) => (this.sectionEls[i].style.height = `${Math.round(lens[i] * vh)}px`));
+    const total = Math.round(totalVh(phone) * vh);
     this.spacer.style.height = `${total}px`;
     const prev = state.scroll.max;
     state.scroll.max = Math.max(1, total - window.innerHeight);

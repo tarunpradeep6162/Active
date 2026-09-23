@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { PROJECTS, type Project } from '../app/projects';
 import { globalUniforms } from '../world/uniforms';
 import { noise, math, iridescence, fog } from '../shaders/chunks';
-import { WorkTimeline } from '../work/WorkTimeline';
-import { CARD, WORK_ORIGIN, helixSlot } from '../work/WorkLayout';
+import { workTimeline } from '../work/WorkTimeline';
+import { CARD, CARD_SIZE, WORK_ORIGIN, helixSlot } from '../work/WorkLayout';
 import { state } from '../core/state';
 import { damp, clamp } from '../utils/math';
 
@@ -96,7 +96,7 @@ ${iridescence}
 ${fog}
 uniform sampler2D uTitle;
 uniform vec3 uPalA, uPalB, uPalC;
-uniform float uStyle, uHover, uTime, uFocus, uActive, uHighlight, uOpacity, uGhost, uEnter;
+uniform float uStyle, uHover, uTime, uFocus, uActive, uHighlight, uOpacity, uGhost, uEnter, uTitleAspect;
 varying vec3 vN; varying vec3 vLocalN; varying vec3 vWorldPos; varying float vDepth; varying vec2 vCardUv;
 
 vec3 media(vec2 uv){
@@ -133,9 +133,13 @@ void main(){
     // title with scanline glitch on hover
     float band = floor(uv.y * 38.) + floor(uTime * 14.);
     float jitter = (hash11(band) - .5) * .05 * uHover * step(.6, hash11(band * 1.7));
-    vec4 tt = texture2D(uTitle, vec2(uv.x + jitter, uv.y));
-    float tr = texture2D(uTitle, vec2(uv.x + jitter + .004 * (1. + uHover), uv.y)).a;
-    float glow = texture2D(uTitle, uv, 3.).a;
+    // title texture was drawn for the desktop card; keep its aspect on other card shapes
+    // (fit to the card width: the title band gets shorter on squarer cards, never squashed)
+    vec2 tuv = vec2(uv.x, (uv.y - .5) / uTitleAspect + .5);
+    float inT = step(0., tuv.y) * step(tuv.y, 1.);
+    vec4 tt = texture2D(uTitle, vec2(tuv.x + jitter, tuv.y)) * inT;
+    float tr = texture2D(uTitle, vec2(tuv.x + jitter + .004 * (1. + uHover), tuv.y)).a * inT;
+    float glow = texture2D(uTitle, tuv, 3.).a * inT;
     float titleA = tt.a * front;
     col = mix(col * (1. - glow * .35), vec3(1.), titleA);
     col += vec3(.9, .2, .5) * (tr - tt.a) * front * uHover;
@@ -211,6 +215,7 @@ export class ProjectCards {
         uHighlight: { value: 0 },
         uOpacity: { value: 1 },
         uEnter: { value: 0 },
+        uTitleAspect: { value: 1 },
         uGhost: { value: ghost ? 1 : 0 },
         uTime: globalUniforms.uTime,
         uFocus: globalUniforms.uFocus,
@@ -239,7 +244,9 @@ export class ProjectCards {
       const { pos, yaw } = helixSlot(i, v);
       c.base.position.copy(pos).add(WORK_ORIGIN);
       c.base.rotation.set(0, yaw, 0);
-      c.base.scale.setScalar(1);
+      // per‑device card shape (measured) as a mesh scale; the title keeps its own aspect
+      c.base.scale.set(CARD_SIZE.w / CARD_W, CARD_SIZE.h / CARD_H, 1);
+      c.uniforms.uTitleAspect.value = CARD_SIZE.w / CARD_SIZE.h / (CARD_W / CARD_H);
       c.mesh.position.copy(c.base.position);
       c.mesh.quaternion.copy(c.base.quaternion);
       c.mesh.scale.copy(c.base.scale);
@@ -305,9 +312,9 @@ export class ProjectCards {
       m.rotation.x += -(c.uniforms.uHoverUv.value.y - 0.5) * 0.14 * c.hover;
       m.scale.copy(c.base.scale).multiplyScalar(1 + c.hover * 0.025);
       const e = c === this.cards[0] ? this.entry : 0;
-      c.uniforms.uEnter.value = e * 0.85;
+      c.uniforms.uEnter.value = e * workTimeline.card0Dissolve;
       if (e > 0) {
-        m.position.y -= e * WorkTimeline.CARD0_RISE;
+        m.position.y -= e * workTimeline.card0Rise;
         m.rotation.x += e * 0.14;
         m.rotation.z += e * 0.07;
       }

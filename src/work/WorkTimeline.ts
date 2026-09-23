@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { WORK_CAMERA_DESKTOP, CARD_CENTRES_DESKTOP, WORK_CAMERA_PHONE, CARD_CENTRES_PHONE } from './workCameraData';
-import { WORK_ORIGIN, setHelix, HELIX_DESKTOP, HELIX_PHONE } from './WorkLayout';
+import { WORK_ORIGIN, setHelix, HELIX, HELIX_DESKTOP, HELIX_PHONE } from './WorkLayout';
 import { ANCHOR } from '../world/journey';
 
 /**
@@ -11,15 +11,62 @@ import { ANCHOR } from '../world/journey';
  * from the card toward the top of the frame between −0.045 and −0.01.
  */
 const CARD0_RISE = 2.75; // world units (≈0.75 screen heights at the card's depth of 5.8)
-/** Column reveal: local y of the reveal front against work p (measured from the same frames). */
-const SPINE_FRONT: readonly (readonly [number, number])[] = [[-0.05, -20], [-0.045, 0.5], [-0.04, 1.7], [-0.03, 2.2], [-0.02, 4], [-0.01, 8.5]];
 /** Lab framing distance from the axis (reached at the end of the exit wipe). */
 const LAB_DISTANCE = 12.5;
-/** Exit wipe: work p where the lab starts to show under the rising edge, and the edge table. */
-const WIPE_START = 0.93;
-const WIPE_EDGE: readonly (readonly [number, number])[] = [[0.93, 1.1], [0.94, 0.62], [0.95, 0.53], [0.96, 0.45], [0.97, 0.3], [0.98, 0.2], [0.99, 0.05], [1, -0.12]];
 
-function piecewise(f: readonly (readonly [number, number])[], t: number) {
+type Table = readonly (readonly [number, number])[];
+/** Per‑device seam timings (work p), all measured from clean‑settle captures. */
+export interface SeamConfig {
+  /** card 0 rise: fully in place at `card0End`, fully below after a further `card0Span` backwards */
+  card0End: number;
+  card0Span: number;
+  /** rise curve exponent and depth below the slot (world units) */
+  card0Pow: number;
+  card0Rise: number;
+  /** how much of card 0 the entry dissolve eats at its start (0 … 1) */
+  card0Dissolve: number;
+  /** column reveal front (height above card 0) or null = column visible throughout */
+  spineFront: Table | null;
+  /** column crumble [start, end] before the exit wipe */
+  crumble: readonly [number, number];
+  /** exit wipe start and edge table (screen y from the top at the frame centre) */
+  wipeStart: number;
+  wipeEdge: Table;
+  /** how much higher the edge sits at the right than at the left (fraction of the height) */
+  wipeSlant: number;
+}
+const SEAM_DESKTOP: SeamConfig = {
+  card0End: -0.045,
+  card0Span: 0.04,
+  card0Pow: 2,
+  card0Rise: CARD0_RISE,
+  card0Dissolve: 0.85,
+  spineFront: [[-0.05, -20], [-0.045, 0.5], [-0.04, 1.7], [-0.03, 2.2], [-0.02, 4], [-0.01, 8.5]],
+  crumble: [0.915, 0.94],
+  wipeStart: 0.93,
+  wipeEdge: [[0.93, 1.1], [0.94, 0.62], [0.95, 0.53], [0.96, 0.45], [0.97, 0.3], [0.98, 0.2], [0.99, 0.05], [1, -0.12]],
+  wipeSlant: 0.18,
+};
+/**
+ * Phone (390×844): card 0 rises later and more linearly, and the column is visible from the start of
+ * the headline section; the last card centres at 0.88, so the crumble and wipe start earlier
+ * (edge ≈ 0.65 / 0.45 / 0.30 / 0.12 of the height at 0.88 / 0.91 / 0.94 / 0.97).
+ */
+const SEAM_PHONE: SeamConfig = {
+  // offsets ≈ 0.22 / 0.14 / 0.06 screen heights at −0.09 / −0.07 / −0.05 (linear), in place by −0.035
+  card0End: -0.035,
+  card0Span: 0.07,
+  card0Pow: 1,
+  card0Rise: 1.7,
+  card0Dissolve: 0.3, // the phone card arrives nearly solid, only its edges break up
+  spineFront: null,
+  crumble: [0.85, 0.885],
+  wipeStart: 0.86,
+  wipeEdge: [[0.86, 1.1], [0.88, 0.65], [0.91, 0.45], [0.94, 0.3], [0.97, 0.12], [0.99, 0.0], [1, -0.12]],
+  wipeSlant: 0.04,
+};
+
+function piecewise(f: Table, t: number) {
   if (t <= f[0][0]) return f[0][1];
   if (t >= f[f.length - 1][0]) return f[f.length - 1][1];
   let i = 0;
@@ -40,10 +87,11 @@ export interface WorkCameraConfig {
   rows: readonly Row[];
   fov: number;
   cardCentres: readonly number[];
+  seam: SeamConfig;
 }
 
-export const WORK_DESKTOP: WorkCameraConfig = { rows: WORK_CAMERA_DESKTOP, fov: 35, cardCentres: CARD_CENTRES_DESKTOP };
-export const WORK_PHONE: WorkCameraConfig = { rows: WORK_CAMERA_PHONE, fov: 55, cardCentres: CARD_CENTRES_PHONE };
+export const WORK_DESKTOP: WorkCameraConfig = { rows: WORK_CAMERA_DESKTOP, fov: 35, cardCentres: CARD_CENTRES_DESKTOP, seam: SEAM_DESKTOP };
+export const WORK_PHONE: WorkCameraConfig = { rows: WORK_CAMERA_PHONE, fov: 55, cardCentres: CARD_CENTRES_PHONE, seam: SEAM_PHONE };
 
 /**
  * SceneState = f(workProgress): the camera orbits the static spine, descending, always
@@ -54,7 +102,10 @@ export class WorkTimeline {
   constructor(public config: WorkCameraConfig) {}
 
   /** Domain covered by the timeline: the whole headline section (−0.10) through the work exit. */
-  static readonly START = -0.1;
+  /** First measured row: desktop −0.10, phone −0.20 (its headline section is 105 of 525 vh). */
+  get start() {
+    return this.config.rows[0][0];
+  }
   static readonly END = 1;
 
   /**
@@ -67,8 +118,9 @@ export class WorkTimeline {
    * edge by `sampleParked` — so by t = 1 the image is entirely the lab and the path continues.
    */
   sample(t: number, outPos: THREE.Vector3, outTgt: THREE.Vector3) {
-    if (t < WIPE_START) return this.sampleOrbit(t, outPos, outTgt);
-    return this.sampleLab(THREE.MathUtils.clamp((t - WIPE_START) / (1 - WIPE_START), 0, 1), outPos, outTgt);
+    const w0 = this.config.seam.wipeStart;
+    if (t < w0) return this.sampleOrbit(t, outPos, outTgt);
+    return this.sampleLab(THREE.MathUtils.clamp((t - w0) / (1 - w0), 0, 1), outPos, outTgt);
   }
 
   /** The parked orbit view (what sits above the wipe edge). */
@@ -91,26 +143,38 @@ export class WorkTimeline {
    * Exit wipe edge (screen y from the top at the frame centre, 0…1) or null outside the wipe.
    * Measured from the clean‑settle reference frames at 1440×900; the edge rises to the right.
    */
-  static exitWipe(t: number): number | null {
-    if (t < WIPE_START || t >= 1) return null;
-    return piecewise(WIPE_EDGE, t);
+  exitWipe(t: number): number | null {
+    const sc = this.config.seam;
+    if (t < sc.wipeStart || t >= 1) return null;
+    return piecewise(sc.wipeEdge, t);
   }
-  static readonly WIPE_SLANT = 0.18;
+  /** True while the exit wipe (two‑view cut) is active. */
+  inWipe(t: number) {
+    return t >= this.config.seam.wipeStart && t < 1;
+  }
 
   /** Column crumble before the wipe, 0 = intact … 1 = gone. */
-  static spineDissolve(t: number) {
-    return THREE.MathUtils.smoothstep(t, 0.915, 0.94);
+  spineDissolve(t: number) {
+    const [a, b] = this.config.seam.crumble;
+    return THREE.MathUtils.smoothstep(t, a, b);
   }
 
   /** Card 0 entry, 1 = fully below its slot and dissolved, 0 = in place (fit to measured offsets). */
-  static card0Entry(t: number) {
-    return Math.pow(THREE.MathUtils.clamp((-0.045 - t) / 0.04, 0, 1), 2);
+  card0Entry(t: number) {
+    const sc = this.config.seam;
+    return Math.pow(THREE.MathUtils.clamp((sc.card0End - t) / sc.card0Span, 0, 1), sc.card0Pow);
   }
-  static readonly CARD0_RISE = CARD0_RISE;
+  get card0Rise() {
+    return this.config.seam.card0Rise;
+  }
+  get card0Dissolve() {
+    return this.config.seam.card0Dissolve;
+  }
   /** Column reveal front (local y; everything below it is shown), or null when fully shown. */
-  static spineFront(t: number): number | null {
-    if (t >= SPINE_FRONT[SPINE_FRONT.length - 1][0]) return null;
-    return piecewise(SPINE_FRONT, t);
+  spineFront(t: number): number | null {
+    const f = this.config.seam.spineFront;
+    if (!f || t >= f[f.length - 1][0]) return null;
+    return HELIX.startY + piecewise(f, t);
   }
 
   /** Vertical distance from the last work frame to the lab framing. */

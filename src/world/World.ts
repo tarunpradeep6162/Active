@@ -11,10 +11,9 @@ import { Streaks } from '../particles/Streaks';
 import { Nebula } from '../particles/Nebula';
 import type { ParticleResult } from '../workers/particles.worker';
 import { ANCHOR, rangeOf } from './journey';
-import { workTimeline, WorkTimeline } from '../work/WorkTimeline';
+import { workTimeline } from '../work/WorkTimeline';
 import { globalUniforms } from './uniforms';
 import { state, store, type SectionId } from '../core/state';
-import { headlineShift } from '../ui/UIDriver';
 import { smoothstep, clamp, dampFactor } from '../utils/math';
 import type { TierSettings } from '../core/Performance';
 import { PROJECTS } from '../app/projects';
@@ -185,14 +184,16 @@ export class World {
     const d = 3.8;
     const visH = 2 * d * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
     const portrait = state.viewport.aspect < 0.9;
-    const centreVh = portrait ? 46 + Math.min(0, headlineShift(man)) * 0.5 : 50;
+    // phone (measured): ≈ screen‑width ring centred near 45 % of the height, gone by m 0.75
+    const centreVh = portrait ? 45 : 50;
     ring.position.copy(camera.position)
       .addScaledVector(this.ringV.set(0, 0, -1).applyQuaternion(camera.quaternion), d)
       .addScaledVector(this.ringV.set(0, 1, 0).applyQuaternion(camera.quaternion), (0.5 - centreVh / 100) * visH)
       .addScaledVector(this.ringV.set(1, 0, 0).applyQuaternion(camera.quaternion), (portrait ? 0 : 0.05) * visH * state.viewport.aspect);
     // outer diameter (2 × (2.9 + 0.52)) ≈ 68 % of the frame height
-    ring.scale.setScalar(((0.34 * visH) / 3.42) * (portrait ? 1.3 : 1));
-    const fade = 1 - smoothstep(0.62, 0.8, man);
+    const visW = visH * state.viewport.aspect;
+    ring.scale.setScalar(portrait ? (0.48 * visW) / 3.42 : (0.34 * visH) / 3.42);
+    const fade = portrait ? 1 - smoothstep(0.62, 0.75, man) : 1 - smoothstep(0.62, 0.8, man);
     ring.visible = fade > 0.001;
     (ring.material as THREE.ShaderMaterial).uniforms.uOpacity.value = fade;
     // edge‑on before the section → ¾ at m = 0 → nearly face‑on by m ≈ 0.7
@@ -316,9 +317,9 @@ export class World {
     // measured entry seam: column sweep + card 0 rise, both pure functions of work progress
     const wr = rangeOf('work');
     const wt = (state.scroll.progress - wr.start) / (wr.end - wr.start);
-    this.spine.setReveal(WorkTimeline.spineFront(wt));
-    this.cards.setEntry(WorkTimeline.card0Entry(wt));
-    this.spine.setCrumble(WorkTimeline.spineDissolve(wt));
+    this.spine.setReveal(workTimeline.spineFront(wt));
+    this.cards.setEntry(workTimeline.card0Entry(wt));
+    this.spine.setCrumble(workTimeline.spineDissolve(wt));
     this.spine.update(t);
     this.lab.update(t);
     if (++this.rayFrame % 2 === 0) this.raycast(camera);

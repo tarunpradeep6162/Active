@@ -7,7 +7,7 @@ import * as THREE from 'three';
  *  spine    40 vertebrae on the Y axis, 0.65 apart, top at y 7.45, each twisted a further
  *           ≈ 22.95° about Y; one vertebra is ≈ 1.93 × 1.16 × 1.68 units.
  *  cards    14 items on a helix: radius 3.8, −50° and −0.84 in y per item, first at angle 0
- *           (on +X), each facing outward from the axis; 4 × 2.6 units.
+ *           (on +X), each facing outward from the axis; visible 3.04 × 1.98 (phone 2.2 × 2.04).
  *  camera   sits 2 units behind a pivot that orbits the axis and faces it (see WorkTimeline).
  */
 export const WORK_ORIGIN = new THREE.Vector3(0, -60, 0);
@@ -20,13 +20,17 @@ export interface HelixConfig { radius: number; startY: number; stepDeg: number; 
 export const HELIX_DESKTOP: HelixConfig = { radius: 3.8, startY: 0, stepDeg: -50, stepY: -0.84, count: 14 };
 /** Phone helix (measured at 390×844): starts higher, tighter angle, taller pitch. */
 export const HELIX_PHONE: HelixConfig = { radius: 3.8, startY: 4, stepDeg: -35, stepY: -1.12, count: 14 };
-/** Active helix — switched with the device class (see setWorkDevice). */
-export let HELIX: HelixConfig = HELIX_DESKTOP;
-export function setHelix(h: HelixConfig) {
-  HELIX = h;
-}
 // reference transform is 4 × 2.6 but its geometry spans ±0.38, so the visible card is 3.04 × 1.98
 export const CARD = { w: 3.04, h: 1.98 };
+/** Phone card (measured at 390×844: 0.725 × the desktop width, 1.03 × its height — near square). */
+export const CARD_PHONE = { w: 2.2, h: 2.04 };
+/** Active helix and card size — switched with the device class (see setWorkDevice). */
+export let HELIX: HelixConfig = HELIX_DESKTOP;
+export let CARD_SIZE = CARD;
+export function setHelix(h: HelixConfig) {
+  HELIX = h;
+  CARD_SIZE = h === HELIX_PHONE ? CARD_PHONE : CARD;
+}
 export const CHAIN = { top: 3, count: 80 };
 export const GLITTER_CENTER_Y = -4.5;
 

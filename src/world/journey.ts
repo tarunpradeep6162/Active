@@ -11,12 +11,18 @@ export const SECTIONS: { id: SectionId; vh: number }[] = [
 ];
 
 /**
- * Phone journey length relative to desktop. Measured on the reference at 375/390/430 px
- * wide: 1259.9 vh of 2331 vh. Tablets (e.g. 768×1024) keep the full desktop journey.
+ * Phone section lengths (vh), measured per section on the reference's scroll spacers at
+ * 390×844 (qa/sections.mjs): 210 / 105 / 525 / 105 / 105 / 210 = 1260 vh. This is NOT a
+ * uniform scale of the desktop split (the headline keeps its full 105 vh, the tunnel grows).
+ * Tablets (e.g. 768×1024) keep the full desktop journey.
  */
-export const MOBILE_SCALE = 0.5405;
+const PHONE_VH: Record<SectionId, number> = { intro: 210, manifesto: 105, work: 525, lab: 105, portal: 105, outro: 210 };
 
-export const TOTAL_VH = SECTIONS.reduce((a, s) => a + s.vh, 0);
+/** Section lengths (vh) for the device class. */
+export function sectionVh(phone: boolean) {
+  return SECTIONS.map((s) => (phone ? PHONE_VH[s.id] : s.vh));
+}
+export const totalVh = (phone: boolean) => sectionVh(phone).reduce((a, v) => a + v, 0);
 
 export interface SectionRange {
   id: SectionId;
@@ -28,25 +34,26 @@ export interface SectionRange {
  * Normalised [start,end] of each section in *scroll progress* (scrollTop / maxScroll).
  * The reference's section boundaries sit at cumulative vh in pixels, while progress is
  * measured against maxScroll = total − one viewport. So boundary_i = cum_i / (TOTAL − 100)
- * (in vh, scaled on mobile). The last section therefore only plays to ~76 %, exactly as on
- * the reference, and every boundary lands on the same pixel at any viewport height.
+ * (in vh, per device class). The last section therefore only plays partly, exactly as on the
+ * reference, and every boundary lands on the same pixel at any viewport height.
  */
 export const RANGES: SectionRange[] = [];
-let rangeScale = -1;
-export function computeRanges(scale = 1) {
-  if (scale === rangeScale) return false;
-  rangeScale = scale;
-  const denom = TOTAL_VH * scale - 100;
+let rangePhone: boolean | null = null;
+export function computeRanges(phone = false) {
+  if (phone === rangePhone) return false;
+  rangePhone = phone;
+  const vh = sectionVh(phone);
+  const denom = totalVh(phone) - 100;
   let acc = 0;
   RANGES.length = 0;
-  for (const s of SECTIONS) {
-    const start = (acc * scale) / denom;
-    acc += s.vh;
-    RANGES.push({ id: s.id, start, end: s.id === 'outro' ? 1 : (acc * scale) / denom });
-  }
+  SECTIONS.forEach((s, i) => {
+    const start = acc / denom;
+    acc += vh[i];
+    RANGES.push({ id: s.id, start, end: s.id === 'outro' ? 1 : acc / denom });
+  });
   return true;
 }
-computeRanges(1);
+computeRanges(false);
 
 export const rangeOf = (id: SectionId) => RANGES.find((r) => r.id === id)!;
 
