@@ -260,7 +260,7 @@ body {
   .nav__link { font-size: 11px; letter-spacing: .12em; }
   .nav__divider { width: 34px; }
   .intro-hint { top: 22vh; }
-  .manifesto__title { left: 6vw; top: 12vh; font-size: clamp(34px, 11.2vw, 64px); }
+  .manifesto__title { left: 5vw; top: 24vh; font-size: clamp(36px, 13.6vw, 72px); }
   .manifesto__copy { left: 6vw; right: 6vw; top: auto; bottom: 6vh; width: auto; font-size: 11px; line-height: 2; }
   .work-panel { bottom: calc(44px + var(--safe-bottom)); font-size: 12px; }
   .work-panel__list li { height: 27px; }

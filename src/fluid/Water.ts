@@ -101,7 +101,8 @@ export function createWaterFloor(center: THREE.Vector3, size = 40, detail = 1) {
         vec3 toRig = normalize(vec3(uCenter.x, uCenter.y + .5, uCenter.z) - vWorldPos);
         float glow = pow(max(dot(R, toRig), 0.), 18.) * 2.2 + pow(max(dot(R, toRig), 0.), 3.) * .25;
         vec3 env = vec3(1., .12, .25) * glow + vec3(.02, .05, .06) * smoothstep(-.1, .6, R.y);
-        vec3 col = vec3(.004, .006, .008) + env * fres * 1.4;
+        // grazing views (portrait phones) push fresnel to 1 — keep the reflection dark
+        vec3 col = vec3(.004, .006, .008) + env * fres * mix(1.4, .45, smoothstep(.3, .9, fres));
         // light pooled on the surface right under the rig
         col += vec3(.9, .08, .2) * exp(-r * .9) * .12;
         float f = 1. - exp(-uFogDensity * uFogDensity * vDepth * vDepth);

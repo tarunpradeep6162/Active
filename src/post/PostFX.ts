@@ -185,6 +185,19 @@ export class PostFX {
     this.setSize(this.w, this.h);
   }
 
+  /**
+   * After a WebGL context restore the old GL handles died with the old context: create fresh
+   * targets and drop the stale ones *without* dispose() (which would issue GL deletes against
+   * objects that no longer belong to the current context).
+   */
+  rebuildAfterContextLoss() {
+    this.sceneRT = this.makeRT(this.w, this.h, this.settings.msaa);
+    this.blurRT = this.makeRT(Math.max(1, this.w >> 2), Math.max(1, this.h >> 2), 0);
+    this.levels = [];
+    this.ups = [];
+    this.setSize(this.w, this.h);
+  }
+
   setSize(w: number, h: number) {
     this.w = w;
     this.h = h;

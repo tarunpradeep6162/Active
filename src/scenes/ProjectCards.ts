@@ -109,7 +109,7 @@ vec3 media(vec2 uv){
   col = mix(col, uPalC, smoothstep(.5, .95, length(r) * f * 1.35));
   col *= .8 + .35 * vnoise(uv * vec2(90., 14.) + q * 8.);
   // reference media read photographic: muted saturation, deeper shadows
-  col = mix(vec3(luma(col)), col, .62) * .82;
+  col = mix(vec3(luma(col)), col, .62) * .68;
   return col;
 }
 
@@ -135,7 +135,7 @@ void main(){
     float titleA = tt.a * front;
     col = mix(col * (1. - glow * .35), vec3(1.), titleA);
     col += vec3(.9, .2, .5) * (tr - tt.a) * front * uHover;
-    col += glow * front * (.35 + uHover * .6);
+    col += glow * front * (.22 + uHover * .6);
     // inner vignette + glass sheen
     float vig = smoothstep(.95, .2, length((uv - .5) * vec2(1., 1.2)));
     col *= mix(.55, 1., vig);
@@ -257,22 +257,37 @@ export class ProjectCards {
   }
 
   /** Where the camera should sit to frame a card full‑screen‑ish (left panel stays readable). */
-  focusFor(slug: string, outPos: THREE.Vector3, outTgt: THREE.Vector3) {
+  /**
+   * Camera framing for an opened project. On landscape screens the card is sized and
+   * placed so its left edge always clears the DOM info column (58 px gutter + 400 px + margin),
+   * whatever the aspect ratio; on portrait it sits in the upper half above the text.
+   */
+  focusFor(slug: string, outPos: THREE.Vector3, outTgt: THREE.Vector3, fovDeg = 42) {
     const c = this.cards.find((k) => k.project.slug === slug);
     if (!c) return false;
-    const portrait = state.viewport.aspect < 0.9;
+    const { width: W, aspect } = state.viewport;
+    const portrait = aspect < 0.9;
     const n = this.tmpV.set(0, 0, 1).applyQuaternion(c.base.quaternion);
-    const dist = portrait ? 7.8 : 5.7;
+    const tanH = Math.tan(THREE.MathUtils.degToRad(fovDeg) / 2);
+    const scale = c.base.scale.x;
     outTgt.copy(c.base.position);
-    outPos.copy(c.base.position).addScaledVector(n, dist);
     if (!portrait) {
-      // shift framing so the card sits right of centre, leaving room for the info panel
+      const panelRight = ((58 + 400 + 48) / W) * 2 - 1; // NDC x where the info column ends
+      const available = Math.max(0.5, 1 - panelRight - 0.06);
+      const dist = Math.max(5.2, (CARD_W * scale) / (available * tanH * aspect));
+      const centreNdc = panelRight + available / 2;
+      const shift = centreNdc * dist * tanH * aspect;
+      outPos.copy(c.base.position).addScaledVector(n, dist);
       const right = this.tmpV.set(1, 0, 0).applyQuaternion(c.base.quaternion);
-      outPos.addScaledVector(right, -1.75);
-      outTgt.addScaledVector(right, -1.75);
+      outPos.addScaledVector(right, -shift);
+      outTgt.addScaledVector(right, -shift);
     } else {
-      outPos.y -= 0.9;
-      outTgt.y -= 0.9;
+      // fit the card to ~88 % of the width, raised into the upper half
+      const dist = Math.max(6, (CARD_W * scale) / (0.88 * tanH * aspect));
+      outPos.copy(c.base.position).addScaledVector(n, dist);
+      const lift = dist * tanH * 0.42;
+      outPos.y -= lift;
+      outTgt.y -= lift;
     }
     return true;
   }

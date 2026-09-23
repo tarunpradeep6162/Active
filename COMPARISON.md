@@ -1,5 +1,8 @@
 # Visual & Motion Comparison Log
 
+> **Pass 2 (completion pass)** results are at the end of this file. The detailed per‑area
+> audit, with measured values, is in `REFERENCE_AUDIT_V2.md`.
+
 Method: the reference (activetheory.net) and this build were captured with the same
 headless Chromium at the same viewport and the **same normalised scroll positions**
 (the journey length matches the reference to within 0.1 %), then placed side by side.
@@ -90,3 +93,56 @@ it can be repeated.
 - Real‑GPU frame‑rate profiling (desktop and phones) is still needed; the automatic tier governor steps down when frame time is too long, but its thresholds are untested on hardware.
 - Safari, Firefox, Edge, iOS and Android are untested.
 - The reference uses baked PBR scenes (tree room, jellyfish, chain‑link spine models). Here these are procedural stand‑ins, so the materials read cleaner and less organic than the reference.
+
+
+---
+
+## Pass 2 — completion pass
+
+Harness: `qa/compare.mjs` (normalised‑scroll frames, side‑by‑side and diff images),
+`qa/states.mjs`, `qa/validate.mjs` and `qa/multiuser.mjs`. Output goes to `qa/out/`, which
+is git‑ignored.
+
+### Mean per‑pixel difference vs reference (0–255, lower is closer)
+
+Measured at 1440×900 (tier high) before the pass's final work‑column change:
+
+| Region | Samples | v1 build | Pass 2 |
+|---|---|---|---|
+| Intro / storm | 0.00–0.15 | 8.8 · 10.1 · 11.9 · 20.4 · 26.6 | 9.3 · 9.1 · 11.3 · 24.9 · 23.7 |
+| Headline | 0.20 | 36.6 | 39.9 |
+| Work | 0.25–0.65 (9 samples) | avg 44.8 | avg 45.9 (then column tightened: see below) |
+| Lab | 0.70 · 0.75 | 32.6 · 23.2 | 36.1 · 17.7 (0.70 → 16.4 after the lab approach moved earlier) |
+| Tunnel | 0.80 | 24.5 | 15.3 |
+| Closing storm / end | 0.85–1.00 | 19.5 · 21.5 · 18.8 · 12.4 | 23.2 · 22.0 · 22.2 · 12.4 |
+| **All 22 samples** | | **31.2** | **30.9** |
+
+Phone, 390×844 (tier medium): 41.8 before and 41.7 after.
+
+**How to read these numbers.** Per‑pixel difference rewards matching darkness more than
+matching structure. Our content is original, with different cards, text and glyph, so
+a floor of about 30–45 remains even when the composition matches. The structural changes
+are best judged from the `*_side.png` frames. The biggest compositional gains were:
+
+- the emblem held centred during the storm;
+- the lab framed from housing to floor;
+- the tunnel low in frame under the surface;
+- in the final change, large centred cards with their neighbours in frame and the spine
+  behind. After it, work samples read: 0.25 55.4, 0.30 44.7, 0.35 47.0, 0.45 44.1,
+  0.50 55.0, 0.60 49.9. Media was then dimmed further to close a luma gap (ours 60–85 vs
+  reference 52–70).
+
+### Measured parity (pass 2)
+
+| Metric | Reference | Ours |
+|---|---|---|
+| Scroll height 1920 / 1440 / 1366 / 1024 | 25 175 / 20 979 / 17 902 / 17 902 | 25 175 / 20 979 / 17 903 / 17 903 |
+| Scroll height 768×1024 (tablet) | 23 869 | 23 869 (was 12 889) |
+| Scroll height 430 / 390 / 375 | 11 743 / 10 634 / 10 231 | 11 743 / 10 634 / 10 231 |
+| Work landing @1440 | 4 745 px | 4 753 px (was 4 839) |
+| Nav @1440 | 240 px wide at x 1160 | 240 × 46 at (1160, 41) |
+| End of scroll | stops | stops |
+
+### Validation (pass 2 final build)
+
+See `qa/out/validate_final.json` locally; the summary is in `REFERENCE_AUDIT_V2.md` §14.

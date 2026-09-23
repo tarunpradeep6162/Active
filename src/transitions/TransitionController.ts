@@ -183,13 +183,14 @@ export class TransitionController {
         steps.push(
           {
             phase: 'EXITING',
-            duration: this.dur(0.32),
+            duration: this.dur(0.2),
             start: () => {
               this.world.activeSlug = route.slug;
-              this.world.cards.focusFor(route.slug, this.rig.focusPos, this.rig.focusTgt);
+              this.world.cards.focusFor(route.slug, this.rig.focusPos, this.rig.focusTgt, this.rig.camera.fov);
               startFocus = state.focus;
             },
-            tick: (t) => (state.focus = Math.max(startFocus, 0.45 * easeInExpo(t))),
+            // reference: the card rushes forward immediately (void by ~100–200 ms)
+            tick: (t) => (state.focus = Math.max(startFocus, 0.45 * easeOutCubic(t))),
           },
           {
             phase: 'SWITCHING',
@@ -201,7 +202,7 @@ export class TransitionController {
           },
           {
             phase: 'ENTERING',
-            duration: this.dur(0.85),
+            duration: this.dur(0.7),
             tick: (t) => (state.focus = Math.max(state.focus, 0.45 + 0.55 * easeOutCubic(t))),
             end: () => (state.focus = 1),
           },

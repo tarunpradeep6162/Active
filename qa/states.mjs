@@ -22,32 +22,29 @@ const settle = async (ms = 2500) => {
   await page.waitForTimeout(1200);
 };
 
-// 1 · nav pill geometry, measured from pixels: find the pill border on its centre row
+// 1 · nav pill geometry from pixels: the pill's top/bottom borders are the rows with the
+// longest run of light pixels in the top‑right corner; the caps add one pill height.
 await shot(page, 'home');
-const png = await page.screenshot({ clip: { x: Math.round(W * 0.35), y: 0, width: W - Math.round(W * 0.35), height: 140 } });
+const CX = Math.max(0, W - 460), CW = W - CX;
+const png = await page.screenshot({ clip: { x: CX, y: 0, width: CW, height: 140 } });
 res.navPixels = await page.evaluate(async ({ b64, ox }) => {
   const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode();
   const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
   const x = c.getContext('2d'); x.drawImage(img, 0, 0);
   const d = x.getImageData(0, 0, c.width, c.height).data;
-  const L = (i) => d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11;
-  // the border is a thin brighter line: columns/rows whose luminance jumps above the neighbourhood
-  let best = null;
-  for (let y = 10; y < c.height - 10; y++) {
-    let first = -1, last = -1;
-    for (let xx = 2; xx < c.width - 2; xx++) {
-      const i = (y * c.width + xx) * 4;
-      if (L(i) > 70 && L(i) - L(i - 8) > 25) { if (first < 0) first = xx; last = xx; }
-    }
-    if (first >= 0 && last - first > 120 && (!best || last - first > best.w)) best = { y, left: first + ox, right: last + ox, w: last - first };
+  const L = (px, py) => { const i = (py * c.width + px) * 4; return d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11; };
+  const rows = [];
+  for (let y = 0; y < c.height; y++) {
+    let run = 0, best = 0, end = 0;
+    for (let xx = 0; xx < c.width; xx++) { if (L(xx, y) > 55) { run++; if (run > best) { best = run; end = xx; } } else run = 0; }
+    rows.push({ y, best, start: end - best + 1, end });
   }
-  if (!best) return null;
-  // vertical extent at the pill's horizontal centre
-  const cx = Math.round((best.left + best.right) / 2) - ox;
-  let top = -1, bottom = -1;
-  for (let y = 2; y < c.height - 2; y++) { const i = (y * c.width + cx) * 4; if (L(i) > 60) { if (top < 0) top = y; bottom = y; } }
-  return { left: best.left, right: best.right, width: best.right - best.left + 1, top, bottom, height: bottom - top + 1 };
-}, { b64: png.toString('base64'), ox: Math.round(W * 0.35) });
+  const lines = rows.filter((r) => r.best > 110 && r.best < 360);
+  if (lines.length < 2) return null;
+  const top = lines[0], bot = lines[lines.length - 1];
+  const h = bot.y - top.y + 1;
+  return { top: top.y, bottom: bot.y, height: h, left: top.start - Math.round(h / 2) + ox, right: top.end + Math.round(h / 2) + ox, width: top.best + h, straightTop: top.best };
+}, { b64: png.toString('base64'), ox: CX });
 if (!isRef) res.navDom = await page.evaluate(() => document.querySelector('.nav').getBoundingClientRect().toJSON());
 
 // 2 · Work landing via the nav
@@ -67,15 +64,27 @@ if (isRef) { await page.mouse.move(openAt[0], openAt[1], { steps: 4 }); await pa
 else {
   for (const [fx, fy] of [[0.38, 0.42], [0.3, 0.35], [0.6, 0.45], [0.7, 0.4], [0.25, 0.5]]) {
     await page.mouse.move(W * fx, H * fy, { steps: 3 }); await page.waitForTimeout(700);
-    if (await page.evaluate(() => __exp.world.hovered)) { await page.mouse.click(W * fx, H * fy); opened = true; break; }
+    if (await page.evaluate(() => __exp.world.hovered)) { await page.evaluate(() => __exp.qaStep(0)); await page.mouse.click(W * fx, H * fy); opened = true; break; }
   }
 }
-res.projectOpen = { opened, frames: [] };
-for (const ms of [0, 100, 200, 300, 500, 750, 1000, 1500]) {
-  const wait = t0 + ms - Date.now();
-  if (wait > 0) await page.waitForTimeout(wait);
-  await shot(page, `open_${String(ms).padStart(4, '0')}`);
-  res.projectOpen.frames.push({ target: ms, actual: Date.now() - t0 });
+res.projectOpen = { opened, frames: [], clock: isRef ? 'wall (software renderer: frames land late)' : 'simulated (exact)' };
+if (!isRef) {
+  // ours: the click was dispatched while paused → step simulated time exactly
+  let t = 0;
+  for (const ms of [0, 100, 200, 300, 500, 750, 1000, 1500]) {
+    await page.evaluate((d) => __exp.qaStep(d), ms - t);
+    t = ms;
+    await shot(page, `open_${String(ms).padStart(4, '0')}`);
+    res.projectOpen.frames.push({ target: ms, actual: ms, focus: await page.evaluate(() => __state.focus), phase: await page.evaluate(() => __state.transition.phase) });
+  }
+  await page.evaluate(() => __exp.qaResume());
+} else {
+  for (const ms of [0, 100, 200, 300, 500, 750, 1000, 1500]) {
+    const wait = t0 + ms - Date.now();
+    if (wait > 0) await page.waitForTimeout(wait);
+    await shot(page, `open_${String(ms).padStart(4, '0')}`);
+    res.projectOpen.frames.push({ target: ms, actual: Date.now() - t0 });
+  }
 }
 await settle(3000);
 res.projectOpen.url = page.url();

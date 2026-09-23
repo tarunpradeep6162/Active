@@ -19,7 +19,7 @@ const summary = { viewport: [W, H], mobile, samples, sites: {} };
 
 for (const site of ['reference', 'ours']) {
   if (only && only !== site) continue;
-  const { browser, page, logs } = await openSite(site === 'ours' ? 'recreation' : 'reference', { width: W, height: H, mobile, query: site === 'ours' ? 'qa=1&tier=high' : '' });
+  const { browser, page, logs } = await openSite(site === 'ours' ? 'recreation' : 'reference', { width: W, height: H, mobile, query: site === 'ours' ? 'qa=1&tier=' + (process.env.TIER || 'high') : '' });
   summary.sites[site] = { metrics: await metrics(site === 'ours' ? 'recreation' : 'reference', page) };
   for (const f of samples) {
     await scrollTo(site === 'ours' ? 'recreation' : 'reference', page, f);

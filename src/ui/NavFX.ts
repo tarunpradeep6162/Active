@@ -42,7 +42,7 @@ export class NavFX {
     const reduced = state.reducedMotion;
     const v = reduced ? 0 : Math.max(-5, Math.min(5, state.scroll.velocity));
     const b = this.bow.step(v * 3.2, dt);
-    const sk = this.skew.step(v * 1.4 + state.pointer.vx * 0.0, dt);
+    const sk = this.skew.step(v * 1.4, dt);
     const w = this.wave.step(this.waveTarget, dt);
     const W = this.root.clientWidth, H = this.root.clientHeight;
     if (!W || !H) return;

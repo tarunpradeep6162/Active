@@ -1,5 +1,6 @@
 import { state } from '../core/state';
-import { SECTIONS, MOBILE_SCALE, TOTAL_VH, sectionAt } from '../world/journey';
+import { SECTIONS, MOBILE_SCALE, TOTAL_VH, sectionAt, computeRanges } from '../world/journey';
+import { rebuildCameraPath } from '../camera/cameraPath';
 import { damp, clamp } from '../utils/math';
 
 /**
@@ -28,15 +29,16 @@ export class ScrollEngine {
     this.layout();
   }
 
-  /** Scale of the journey: shorter on touch/portrait screens (as measured). */
+  /** Scale of the journey: shorter on phone‑sized screens only (as measured; tablets keep it). */
   private scale() {
-    return state.viewport.mobile && state.viewport.portrait ? MOBILE_SCALE : 1;
+    return Math.min(state.viewport.width, state.viewport.height) < 600 ? MOBILE_SCALE : 1;
   }
 
   layout() {
     // Use a stable height on mobile so the toolbar showing/hiding doesn't rescale the journey.
     const vh = state.viewport.mobile ? Math.max(window.innerHeight, screen.height * 0.8) / 100 : window.innerHeight / 100;
     const k = this.scale();
+    if (computeRanges(k)) rebuildCameraPath();
     SECTIONS.forEach((s, i) => (this.sectionEls[i].style.height = `${Math.round(s.vh * k * vh)}px`));
     const total = Math.round(TOTAL_VH * k * vh);
     this.spacer.style.height = `${total}px`;

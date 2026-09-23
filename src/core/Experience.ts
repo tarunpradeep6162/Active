@@ -49,6 +49,21 @@ export class Experience {
   private debug: DebugOverlay | null = null;
   /** QA harness flag: skip the intro choreography so captures don't wait on software rendering. */
   private qa = new URLSearchParams(location.search).has('qa');
+  private fixedMs: number | null = null;
+
+  /** QA only: freeze the realtime loop and advance simulated time in exact steps. */
+  qaStep(totalMs: number, stepMs = 1000 / 60) {
+    if (!this.qa) return;
+    this.renderer.setAnimationLoop(null);
+    this.fixedMs = stepMs;
+    for (let t = 0; t < totalMs - 1e-3; t += stepMs) this.frame();
+    this.fixedMs = null;
+  }
+  qaResume() {
+    if (!this.qa) return;
+    this.last = performance.now();
+    this.renderer.setAnimationLoop(() => this.frame());
+  }
 
   constructor(private canvas: HTMLCanvasElement) {
     this.renderer = createRenderer(canvas);
@@ -128,6 +143,7 @@ export class Experience {
 
   /** three.js re‑creates its GL state on restore and lazily re‑uploads every resource; we only re‑size targets. */
   private recoverContext() {
+    this.post.rebuildAfterContextLoss();
     this.resize();
   }
 
@@ -236,7 +252,7 @@ export class Experience {
   /* ------------------------------------------------------------ frame */
   private frame() {
     const now = performance.now();
-    const rawMs = now - this.last;
+    const rawMs = this.fixedMs ?? now - this.last;
     const dt = Math.min(0.05, rawMs / 1000);
     this.last = now;
     state.delta = dt;

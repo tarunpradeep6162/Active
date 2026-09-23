@@ -265,7 +265,9 @@ export class World {
     }
     // storms erupt around each emblem as its section scrolls (reference: 25–90 % of the intro)
     const introStorm = smoothstep(0.2, 0.55, intro) * (1 - smoothstep(0.88, 0.97, intro));
-    const outroStorm = smoothstep(0.02, 0.2, outroLocal) * (1 - smoothstep(0.5, 0.78, outroLocal));
+    // closing storm keyed to the whole portal→end span so phones (shorter last section) match
+    const tail = clamp((state.scroll.progress - rangeOf('portal').start) / (1 - rangeOf('portal').start));
+    const outroStorm = smoothstep(0.3, 0.5, tail) * (1 - smoothstep(0.78, 0.92, tail));
     this.setStorm('storm', 0, introStorm);
     this.setStorm('outroStorm', 1, outroStorm);
     const oe = this.fields.outroEmbers;

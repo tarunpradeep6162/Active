@@ -7,6 +7,7 @@ continuous transitions. All content, geometry, shaders, copy and audio here are 
 The studio, projects and clients are fictional placeholders.
 
 - `REFERENCE_AUDIT.md`: what was observed on the reference, and how each part is reproduced
+- `REFERENCE_AUDIT_V2.md`: completion‑pass audit, with measurements, differences and fixes
 - `COMPARISON.md`: side‑by‑side comparison rounds, motion notes and validation results
 
 ## Run
@@ -26,8 +27,27 @@ open "http://localhost:5173/?realtime=ws://localhost:8787"
 # or build with VITE_REALTIME_URL=wss://your-relay
 ```
 
-URL flags: `?tier=high|medium|low` forces a performance tier; `?debug` exposes
-`window.__state` / `window.__exp` for inspection.
+URL flags:
+
+- `?tier=high|medium|low` forces a tier and turns off automatic tiering.
+- `?debug=1` shows the diagnostics overlay: scroll, scene, camera and target, FOV, FPS
+  and p95, draw calls, triangles, memory, and tier with its change history.
+- `?qa=1` is for the QA harness only. It exposes `window.__state` / `window.__exp`, skips
+  the intro choreography and allows deterministic time stepping (`__exp.qaStep(ms)`).
+
+### QA harness (`qa/`)
+
+```bash
+npm run build && npx vite preview --port 4173 &
+RECREATION_URL=http://localhost:4173/ node qa/compare.mjs 1440 900            # 22 samples, both sites
+RECREATION_URL=http://localhost:4173/ node qa/compare.mjs 390 844 mobile quick
+RECREATION_URL=http://localhost:4173/ node qa/states.mjs ours 1440 900          # nav, /work landing, open timeline…
+RECREATION_URL=http://localhost:4173/ node qa/validate.mjs                      # context loss, 50 cycles, tiers, history…
+```
+
+Frames, side‑by‑sides, diffs and JSON summaries go to `qa/out/`. That folder is
+git‑ignored; reference frames are third‑party imagery and must never be committed or
+served.
 
 Routes: `/`, `/work`, `/work/<slug>`, `/contact` (History API; back/forward supported;
 `Esc` closes a project or the contact overlay). The host must serve `index.html` for
@@ -60,7 +80,7 @@ src/
                            PreloaderPortal, shared materials
   particles/               GPU ParticleField, billboard Nebula, Streaks, pooled Sparks
   trails/                  Ribbon (fixed‑capacity world‑space strip) + TrailSystem
-  fluid/Water.ts           caustic water surface
+  fluid/Water.ts           environmental water: lab floor (reflective, rippled) + caustic surface from below
   shaders/chunks.ts        hash, value/simplex noise, fbm, curl‑ish field, rotation,
                            easing, palette, HSV, thin‑film iridescence, fog
   workers/                 particle buffer generation off the main thread
@@ -98,13 +118,23 @@ server/realtime.mjs        WebSocket relay for shared trails (rate‑limited, ro
 | medium | ≤1.25 / ≤1.25 | 60 % | 4 | – | 2 |
 | low | 1.0 | 30 % | 3 | – | 1 |
 
-Tier detection uses the GPU renderer string, core count, device memory and touch. A
-governor steps the tier down after three slow one‑second windows, and never steps back
-up.
+Tier detection starts from the GPU renderer string, core count, device memory and touch.
+After reveal:
+
+1. A benchmark takes the median of the first 90 frames and steps down once if it is
+   badly over budget.
+2. Rolling one‑second windows step down after three slow windows.
+3. A cooldown follows every change.
+4. At most one step back up is allowed, and only after a benchmark‑caused drop.
+
+Tiers change rendering cost only (DPR, particle and nebula counts, MSAA, bloom levels,
+trail strands, hex density), never layout.
 
 ## Typography
 
-The reference's proprietary display face is replaced with **Tourney Variable** at a
-light weight (its hollow inline forms are the closest legally available match). UI and
+The reference's proprietary display face is replaced with **Tourney Variable**, using its
+two‑axis file at **wdth 112 / wght 480**. Its inline letterforms are the closest legally
+available match, and at these settings the width‑to‑cap‑height ratio is about 7.5, against
+the reference's 7.3 (see `REFERENCE_AUDIT_V2.md` §4). UI and
 body text use **Share Tech Mono**. Both are OFL fonts, bundled through Fontsource and
 loaded with the `FontFace` API so they count toward loading progress.

@@ -84,7 +84,7 @@ export function spineMaterial() {
         // oily film varies across the surface, not with a single sweep
         float film = 1.1 + snoise(vWorldPos * .8 + uTime * .03) * .6;
         vec3 tf = thinFilm(ndv, film);
-        vec3 env = fakeEnv(R, vec3(.55, .53, .66), vec3(.04, .035, .07));
+        vec3 env = fakeEnv(R, vec3(.4, .38, .5), vec3(.03, .025, .05));
         vec3 base = vec3(.09, .08, .12);
         // dark body, iridescent specular, faint internal glow in cavities
         vec3 col = base * (.4 + .6 * ndv);

@@ -36,15 +36,18 @@ function buildKeys(): Key[] {
     k('manifesto', 1, [0, workCameraY(0) + 0.9, 9.6], [0, workCameraY(0) + 0.4, 0]),
   ];
   // Descent along the spine with a gentle alternating sway toward each card.
+  // descend the column over the first 94 % of the section, then start dropping toward the lab
+  // (the reference is already entering the lab at 0.70, just before its work section ends)
   const steps = 14;
   for (let i = 0; i <= steps; i++) {
-    const u = 0.002 + (i / steps) * 0.996;
+    const u = 0.002 + (i / steps) * 0.938;
     const y = workCameraY(u);
     const sway = i === 0 || i === steps ? 0 : (i % 2 ? -0.55 : 0.55);
     keys.push(k('work', u, [sway, y, 9.2], [sway * 0.3, y - 0.45, 0]));
   }
   keys.push(
-    k('lab', 0, [0, ANCHOR.lab + 4.5, 13.5], [0, ANCHOR.lab + 1.2, 0]),
+    k('work', 1, [0, ANCHOR.lab + 9, 15], [0, ANCHOR.lab + 3, 0]),
+    k('lab', 0.12, [0, ANCHOR.lab + 4.5, 13.5], [0, ANCHOR.lab + 1.2, 0]),
     k('lab', 0.5, [0.6, ANCHOR.lab + 0.6, 13], [0, ANCHOR.lab + 1, 0]),
     k('lab', 0.86, [0, ANCHOR.lab - 0.2, 12.5], [0, ANCHOR.lab + 0.9, 0]),
     // under the surface: rig visible above through the water, tunnel low in frame
@@ -59,22 +62,29 @@ function buildKeys(): Key[] {
   return keys.sort((a, b) => a.t - b.t);
 }
 
-const KEYS = buildKeys();
-
+let KEYS: Key[] = [];
 // time‑aware tangents for a cubic Hermite spline (Catmull‑Rom style, non‑uniform keys)
-const tangentsPos = KEYS.map(() => new THREE.Vector3());
-const tangentsTgt = KEYS.map(() => new THREE.Vector3());
-for (let i = 0; i < KEYS.length; i++) {
-  const a = KEYS[Math.max(0, i - 1)];
-  const b = KEYS[Math.min(KEYS.length - 1, i + 1)];
-  const dt = b.t - a.t || 1;
-  tangentsPos[i].subVectors(b.pos, a.pos).divideScalar(dt);
-  tangentsTgt[i].subVectors(b.tgt, a.tgt).divideScalar(dt);
-  if (i === 0 || i === KEYS.length - 1) {
-    tangentsPos[i].set(0, 0, 0);
-    tangentsTgt[i].set(0, 0, 0);
+let tangentsPos: THREE.Vector3[] = [];
+let tangentsTgt: THREE.Vector3[] = [];
+
+/** (Re)build the timeline — call after the section ranges change (e.g. mobile journey length). */
+export function rebuildCameraPath() {
+  KEYS = buildKeys();
+  tangentsPos = KEYS.map(() => new THREE.Vector3());
+  tangentsTgt = KEYS.map(() => new THREE.Vector3());
+  for (let i = 0; i < KEYS.length; i++) {
+    const a = KEYS[Math.max(0, i - 1)];
+    const b = KEYS[Math.min(KEYS.length - 1, i + 1)];
+    const dt = b.t - a.t || 1;
+    tangentsPos[i].subVectors(b.pos, a.pos).divideScalar(dt);
+    tangentsTgt[i].subVectors(b.tgt, a.tgt).divideScalar(dt);
+    if (i === 0 || i === KEYS.length - 1) {
+      tangentsPos[i].set(0, 0, 0);
+      tangentsTgt[i].set(0, 0, 0);
+    }
   }
 }
+rebuildCameraPath();
 
 const tmp = new THREE.Vector3();
 function hermite(out: THREE.Vector3, p0: THREE.Vector3, m0: THREE.Vector3, p1: THREE.Vector3, m1: THREE.Vector3, u: number, h: number) {
@@ -88,7 +98,7 @@ function hermite(out: THREE.Vector3, p0: THREE.Vector3, m0: THREE.Vector3, p1: T
 }
 
 /** Read‑only view of the timeline (debug / docs). */
-export const CAMERA_KEYS: readonly Readonly<Key>[] = KEYS;
+export const cameraKeys = (): readonly Readonly<Key>[] => KEYS;
 
 /** Sample the journey camera at progress p (no allocations). Returns the FOV. */
 export function sampleCameraPath(p: number, outPos: THREE.Vector3, outTgt: THREE.Vector3): number {
