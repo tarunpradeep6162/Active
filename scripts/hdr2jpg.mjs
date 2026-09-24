@@ -1,0 +1,15 @@
+import fs from 'node:fs';
+import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
+import * as THREE from 'three';
+import sharp from 'sharp';
+const [src, out, exp = '1'] = process.argv.slice(2);
+const buf = fs.readFileSync(src);
+const loader = new HDRLoader(); loader.setDataType(THREE.FloatType);
+const d = loader.parse(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength));
+const { width: w, height: h, data } = d;
+const px = Buffer.alloc(w * h * 3);
+const aces = (x) => Math.min(1, Math.max(0, (x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14)));
+const srgb = (x) => (x <= 0.0031308 ? 12.92 * x : 1.055 * Math.pow(x, 1 / 2.4) - 0.055);
+for (let i = 0; i < w * h; i++) for (let c = 0; c < 3; c++) px[i * 3 + c] = Math.round(255 * srgb(aces(data[i * 4 + c] * +exp)));
+await sharp(px, { raw: { width: w, height: h, channels: 3 } }).jpeg({ quality: 84, mozjpeg: true }).toFile(out);
+console.log(out, w, h, fs.statSync(out).size);

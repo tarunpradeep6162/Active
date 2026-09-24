@@ -1,42 +1,60 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
+const BASE = '/manor/';
+type Model = { geo: THREE.BufferGeometry; mat: THREE.MeshStandardMaterial; height: number };
+type Item = { p: THREE.Vector3; s: number; r: number };
+
 /**
- * "Someday": an original, fully procedural manor at golden hour for the Future Universe
- * chapter. A cream neoclassical villa (a central block with projecting corner bays, two
- * low side wings, arched windows, cornices and balustraded balconies), an ivy arch over the
- * front door, flowering pink shrubs, two fruit trees, a sunlit path up a grassy rise, and a
- * soft sky with clouds. Everything is built here from primitives; no external models.
+ * "Someday": a photographic manor at golden hour for the Future Universe chapter.
  *
- * It renders into its own canvas, only while on screen, and scales its detail to the device.
+ * An original neoclassical villa of our own design (central block, projecting corner bays,
+ * low wings, arched windows with deep reveals, classical cornices, balustraded balconies, a
+ * porch of columns), dressed with real‑world CC0 assets from Poly Haven (public domain):
+ * photoscanned plaster, grass and gravel materials, a captured partly‑cloudy sky for
+ * image‑based lighting and reflections, and scanned shrubs (tinted to blossom, and grown into
+ * an ivy arch). Rendered physically (ACES, PBR, soft shadows) with ground‑truth ambient
+ * occlusion and a touch of bloom. It renders only while on screen.
  */
 export class ManorScene {
   private renderer: THREE.WebGLRenderer;
+  private composer!: EffectComposer;
   private scene = new THREE.Scene();
-  private camera = new THREE.PerspectiveCamera(34, 16 / 9, 0.1, 400);
+  private camera = new THREE.PerspectiveCamera(32, 16 / 9, 0.1, 600);
   private clock = new THREE.Clock();
   private raf = 0;
   private running = false;
+  private ready = false;
+  private disposed = false;
   private disposables: { dispose(): void }[] = [];
-  private sways: { mesh: THREE.InstancedMesh; base: THREE.Matrix4[]; amp: number }[] = [];
   private pointer = new THREE.Vector2();
   private visible = true;
   private io: IntersectionObserver;
   private ro: ResizeObserver;
   private readonly low: boolean;
   private readonly still: boolean;
+  private tex = new THREE.TextureLoader();
+  private windUniform = { value: 0 };
+  onReady?: () => void;
 
   constructor(private canvas: HTMLCanvasElement) {
     this.low = matchMedia('(pointer: coarse)').matches || (navigator.hardwareConcurrency || 4) <= 4;
     this.still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.low ? 1.5 : 2));
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.low ? 1.25 : 1.75));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 0.98;
+    this.renderer.toneMappingExposure = 1.08;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    this.build();
     this.io = new IntersectionObserver(([e]) => {
       this.visible = e.isIntersecting;
       this.visible ? this.start() : this.stop();
@@ -46,8 +64,15 @@ export class ManorScene {
     this.ro.observe(canvas);
     canvas.addEventListener('pointermove', this.onPointer);
     document.addEventListener('visibilitychange', this.onVisibility);
-    this.resize();
-    this.start();
+    this.build()
+      .then(() => {
+        if (this.disposed) return;
+        this.ready = true;
+        this.resize();
+        this.start();
+        this.onReady?.();
+      })
+      .catch((e) => console.warn('manor:', e));
   }
 
   private onPointer = (e: PointerEvent) => {
@@ -61,139 +86,243 @@ export class ManorScene {
     return x;
   }
 
-  /* ------------------------------------------------------------------ build */
-  private build() {
-    const s = this.scene;
-    const rnd = mulberry(1125);
-
-    // sky: a gradient dome, warm near the horizon, soft blue above, with a sun glow
-    const skyMat = this.track(
-      new THREE.ShaderMaterial({
-        side: THREE.BackSide,
-        depthWrite: false,
-        uniforms: { uSun: { value: new THREE.Vector3(-0.35, 0.28, -1).normalize() } },
-        vertexShader: `varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }`,
-        fragmentShader: `
-          uniform vec3 uSun; varying vec3 vDir;
-          void main(){
-            float h = clamp(vDir.y, -.1, 1.);
-            vec3 top = vec3(.36, .55, .78), mid = vec3(.78, .84, .88), low = vec3(1., .88, .74);
-            vec3 c = mix(low, mid, smoothstep(0., .22, h));
-            c = mix(c, top, smoothstep(.2, .75, h));
-            float sd = max(dot(normalize(vDir), uSun), 0.);
-            c += vec3(1., .82, .6) * (pow(sd, 8.) * .45 + pow(sd, 90.) * 1.2);
-            gl_FragColor = vec4(c, 1.);
-            #include <colorspace_fragment>
-          }`,
+  /** A PBR material from a Poly Haven texture set (diffuse, normal, AO/rough/metal packed). */
+  private pbr(name: string, repeat: number, opts: THREE.MeshStandardMaterialParameters = {}) {
+    const load = (m: string, srgb: boolean) => {
+      const t = this.track(this.tex.load(`${BASE}${name}_${m}.webp`));
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.repeat.set(repeat, repeat);
+      t.anisotropy = 8;
+      if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+      return t;
+    };
+    const arm = load('arm', false);
+    return this.track(
+      new THREE.MeshStandardMaterial({
+        map: load('diff', true),
+        normalMap: load('nor', false),
+        aoMap: arm,
+        roughnessMap: arm,
+        metalnessMap: arm,
+        metalness: 1,
+        ...opts,
       }),
     );
-    s.add(new THREE.Mesh(this.track(new THREE.SphereGeometry(200, 32, 16)), skyMat));
-    s.fog = new THREE.Fog(new THREE.Color('#f3e2cf'), 40, 150);
-
-    // clouds: soft puffs made of a few overlapping transparent spheres
-    const cloudMat = this.track(new THREE.MeshBasicMaterial({ color: '#fff8ee', transparent: true, opacity: 0.55, depthWrite: false, fog: false }));
-    const puff = this.track(new THREE.SphereGeometry(1, 16, 10));
-    for (let i = 0; i < 7; i++) {
-      const c = new THREE.Group();
-      for (let k = 0; k < 6; k++) {
-        const m = new THREE.Mesh(puff, cloudMat);
-        m.position.set((k - 2.5) * 2.2 + rnd() * 1.5, rnd() * 1.2, rnd() * 1.5);
-        m.scale.set(2.6 + rnd() * 1.8, 1.3 + rnd() * 0.8, 1.6);
-        c.add(m);
-      }
-      c.position.set(-70 + i * 24 + rnd() * 8, 34 + rnd() * 16, -120 - rnd() * 30);
-      c.scale.setScalar(1.4 + rnd());
-      s.add(c);
-    }
-
-    // light: a low warm sun from the front‑left, sky/ground fill
-    const sun = new THREE.DirectionalLight('#ffd6a4', 3.1);
-    sun.position.set(-26, 16, 22);
-    sun.castShadow = true;
-    sun.shadow.mapSize.set(this.low ? 1024 : 2048, this.low ? 1024 : 2048);
-    const sc = sun.shadow.camera;
-    sc.left = -30;
-    sc.right = 30;
-    sc.top = 20;
-    sc.bottom = -12;
-    sc.near = 1;
-    sc.far = 80;
-    sun.shadow.bias = -0.0006;
-    sun.shadow.normalBias = 0.03;
-    s.add(sun, new THREE.HemisphereLight('#c4d8ef', '#8e9a5e', 0.75));
-
-    this.buildGround(rnd);
-    this.buildManor();
-    this.buildGarden(rnd);
-
-    this.camera.position.set(0, 3.2, 30);
-    this.camera.lookAt(0, 6, 0);
   }
 
-  private buildGround(rnd: () => number) {
+  /* ------------------------------------------------------------------ build */
+  private async build() {
     const s = this.scene;
-    // a gentle rise toward the house, with a sandy path up the middle
-    const g = this.track(new THREE.PlaneGeometry(160, 120, 120, 90));
+    const pmrem = new THREE.PMREMGenerator(this.renderer);
+    const [hdr, sky, shrubA, shrubB, shrubC] = await Promise.all([
+      new HDRLoader().loadAsync(`${BASE}sky_1k.hdr`),
+      this.tex.loadAsync(`${BASE}sky_2k.jpg`),
+      this.loadModel('shrub_01'),
+      this.loadModel('shrub_02'),
+      this.loadModel('shrub_04'),
+    ]);
+    hdr.mapping = THREE.EquirectangularReflectionMapping;
+    const env = this.track(pmrem.fromEquirectangular(hdr).texture);
+    hdr.dispose();
+    pmrem.dispose();
+    s.environment = env;
+    s.environmentIntensity = 0.85;
+    sky.mapping = THREE.EquirectangularReflectionMapping;
+    sky.colorSpace = THREE.SRGBColorSpace;
+    s.background = this.track(sky);
+    s.backgroundRotation.set(0, Math.PI * 0.62, 0);
+    s.environmentRotation.set(0, Math.PI * 0.62, 0);
+    s.fog = new THREE.Fog(new THREE.Color('#e9e2d6'), 70, 260);
+
+    // warm late‑afternoon sun from the front left, soft shadows
+    const sun = new THREE.DirectionalLight('#ffe6c6', 4.4);
+    sun.position.set(-30, 26, 34);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(this.low ? 1024 : 2048, this.low ? 1024 : 2048);
+    Object.assign(sun.shadow.camera, { left: -32, right: 32, top: 24, bottom: -14, near: 1, far: 120 });
+    sun.shadow.bias = -0.0004;
+    sun.shadow.normalBias = 0.04;
+    sun.shadow.radius = 3;
+    s.add(sun);
+
+    this.buildGround();
+    this.buildManor();
+    this.buildPlanting(shrubA, shrubB, shrubC);
+
+    // post: ground‑truth AO grounds everything; a whisper of bloom on the sunlit plaster
+    this.composer = new EffectComposer(this.renderer);
+    this.composer.addPass(new RenderPass(s, this.camera));
+    if (!this.low) {
+      const ao = new GTAOPass(s, this.camera, 16, 9);
+      ao.updateGtaoMaterial({ radius: 0.9, distanceExponent: 1.6, thickness: 1.2, scale: 1.1, samples: 12 });
+      ao.blendIntensity = 0.6;
+      this.composer.addPass(ao);
+    }
+    this.composer.addPass(new UnrealBloomPass(new THREE.Vector2(256, 256), 0.18, 0.6, 0.92));
+    this.composer.addPass(new OutputPass());
+  }
+
+  private async loadModel(name: string): Promise<Model> {
+    const loader = new GLTFLoader();
+    loader.setMeshoptDecoder(MeshoptDecoder);
+    const g = await loader.loadAsync(`${BASE}${name}.glb`);
+    let found: THREE.Mesh | null = null;
+    g.scene.traverse((o) => {
+      if (!found && (o as THREE.Mesh).isMesh) found = o as THREE.Mesh;
+    });
+    if (!found) throw new Error(`no mesh in ${name}`);
+    const m = found as THREE.Mesh;
+    m.updateWorldMatrix(true, false);
+    // meshopt/quantized attributes are normalized integers: expand to floats before transforming
+    const src = m.geometry;
+    const geo = this.track(new THREE.BufferGeometry());
+    for (const name of ['position', 'normal', 'uv'] as const) {
+      const a = src.getAttribute(name) as THREE.BufferAttribute | undefined;
+      if (!a) continue;
+      const out = new Float32Array(a.count * a.itemSize);
+      for (let i = 0; i < a.count; i++) for (let c = 0; c < a.itemSize; c++) out[i * a.itemSize + c] = a.getComponent(i, c);
+      geo.setAttribute(name, new THREE.BufferAttribute(out, a.itemSize));
+    }
+    if (src.index) geo.setIndex(src.index.clone());
+    geo.applyMatrix4(m.matrixWorld);
+    geo.computeBoundingBox();
+    const bb = geo.boundingBox!;
+    // stand it on the ground, centred
+    geo.translate(-(bb.min.x + bb.max.x) / 2, -bb.min.y, -(bb.min.z + bb.max.z) / 2);
+    geo.computeBoundingBox();
+    return { geo, mat: m.material as THREE.MeshStandardMaterial, height: geo.boundingBox!.max.y };
+  }
+
+  /** Planar (world‑space) UVs so plaster tiles at a real scale on every surface. */
+  private worldUV<G extends THREE.BufferGeometry>(geo: G, scale = 0.35): G {
+    const p = geo.attributes.position as THREE.BufferAttribute;
+    const n = geo.attributes.normal as THREE.BufferAttribute;
+    const uv = new Float32Array(p.count * 2);
+    for (let i = 0; i < p.count; i++) {
+      const ax = Math.abs(n.getX(i)), ay = Math.abs(n.getY(i)), az = Math.abs(n.getZ(i));
+      const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+      const [u, v] = ax > ay && ax > az ? [z, y] : ay > az ? [x, z] : [x, y];
+      uv[i * 2] = u * scale;
+      uv[i * 2 + 1] = v * scale;
+    }
+    geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    return geo;
+  }
+
+  private groundY(z: number) {
+    return z > 7 ? Math.sin(Math.min(1, (z - 7) / 16) * Math.PI) * 1.2 - Math.max(0, z - 23) * 0.1 : 0;
+  }
+
+  private buildGround() {
+    const s = this.scene;
+    // terrace at the house, a gentle rise toward the camera, soft hills at the sides
+    const g = this.track(new THREE.PlaneGeometry(240, 200, 160, 140));
     g.rotateX(-Math.PI / 2);
     const pos = g.attributes.position as THREE.BufferAttribute;
-    const colors = new Float32Array(pos.count * 3);
-    const grass = new THREE.Color('#7fa04a'), grass2 = new THREE.Color('#a7b85c'), sand = new THREE.Color('#e8d3b0');
-    const c = new THREE.Color();
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i), z = pos.getZ(i);
-      // flat terrace at the house, rising toward the camera then dipping away
-      const rise = z > 4 ? Math.sin(Math.min(1, (z - 4) / 14) * Math.PI) * 1.1 - Math.max(0, z - 18) * 0.12 : 0;
-      const hills = Math.max(0, Math.abs(x) - 16) * 0.12 * (z < 6 ? 1 : 0.4);
-      pos.setY(i, rise + hills + (rnd() - 0.5) * 0.04);
-      const path = Math.abs(x + Math.sin(z * 0.08) * 0.6) < 1.9 - Math.max(0, z - 6) * -0.03 && z > 2.6;
-      c.copy(grass).lerp(grass2, rnd() * 0.5 + (hills > 0 ? 0.3 : 0));
-      if (path) c.copy(sand).offsetHSL(0, 0, (rnd() - 0.5) * 0.03);
-      colors.set([c.r, c.g, c.b], i * 3);
+      const hills = Math.max(0, Math.abs(x) - 22) * 0.16 * (z < 8 ? 1 : 0.4) + Math.max(0, -z - 30) * 0.12;
+      pos.setY(i, this.groundY(z) + hills);
     }
-    g.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     g.computeVertexNormals();
-    const m = new THREE.Mesh(g, this.track(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 })));
-    m.receiveShadow = true;
-    s.add(m);
+    const ground = new THREE.Mesh(g, this.pbr('leafy_grass', 60, { color: '#cfe58a', metalness: 0 }));
+    ground.receiveShadow = true;
+    s.add(ground);
+
+    // a gravel path up to the steps, following the ground, with feathered edges
+    const pathW = 3.6, z0 = 5.6, z1 = 60;
+    const pg = this.track(new THREE.PlaneGeometry(pathW, z1 - z0, 8, 80));
+    pg.rotateX(-Math.PI / 2);
+    pg.translate(0, 0, (z0 + z1) / 2);
+    const pp = pg.attributes.position as THREE.BufferAttribute;
+    const edge = new Float32Array(pp.count);
+    for (let i = 0; i < pp.count; i++) {
+      const x = pp.getX(i), z = pp.getZ(i);
+      const widen = 1 + Math.max(0, z - 20) * 0.03;
+      pp.setX(i, x * widen + Math.sin(z * 0.07) * 0.4);
+      pp.setY(i, this.groundY(z) + 0.03);
+      edge[i] = 1 - Math.pow(Math.abs(x) / (pathW / 2), 6);
+    }
+    pg.setAttribute('aEdge', new THREE.BufferAttribute(edge, 1));
+    pg.computeVertexNormals();
+    const gravel = this.pbr('gravel_floor', 1, { color: '#efe3cf', metalness: 0, transparent: true });
+    for (const k of ['map', 'normalMap', 'aoMap', 'roughnessMap', 'metalnessMap'] as const) gravel[k]?.repeat.set(1.2, 16);
+    gravel.onBeforeCompile = (sh) => {
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aEdge; varying float vEdge;').replace('#include <uv_vertex>', '#include <uv_vertex>\nvEdge = aEdge;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vEdge;').replace('#include <dithering_fragment>', '#include <dithering_fragment>\ngl_FragColor.a *= smoothstep(0., .5, vEdge);');
+    };
+    const path = new THREE.Mesh(pg, gravel);
+    path.receiveShadow = true;
+    s.add(path);
   }
 
   private buildManor() {
-    const s = this.scene;
-    const stucco = this.track(new THREE.MeshStandardMaterial({ color: '#f1e6d6', roughness: 0.88 }));
-    const trim = this.track(new THREE.MeshStandardMaterial({ color: '#fbf5ec', roughness: 0.75 }));
-    const shade = this.track(new THREE.MeshStandardMaterial({ color: '#e2d3c0', roughness: 0.9 }));
-    const glass = this.track(new THREE.MeshStandardMaterial({ color: '#4a5566', roughness: 0.18, metalness: 0.35 }));
-    const dark = this.track(new THREE.MeshStandardMaterial({ color: '#2b2522', roughness: 0.8 }));
-    const terracotta = this.track(new THREE.MeshStandardMaterial({ color: '#c98f6e', roughness: 0.85 }));
     const house = new THREE.Group();
-    s.add(house);
-    const box = (w: number, h: number, d: number, x: number, y: number, z: number, mat: THREE.Material) => {
-      const m = new THREE.Mesh(this.track(new THREE.BoxGeometry(w, h, d)), mat);
-      m.position.set(x, y + h / 2, z);
+    this.scene.add(house);
+    // clean, freshly painted plaster (the scan's grain and relief, a warm cream finish)
+    const plaster = this.pbr('painted_plaster_wall', 1, { color: '#fff4e4', metalness: 0, roughness: 0.92 });
+    const trimMat = this.pbr('plastered_wall_02', 1, { color: '#ffffff', metalness: 0, roughness: 0.75 });
+    trimMat.aoMapIntensity = 0.3;
+    const glass = this.track(new THREE.MeshPhysicalMaterial({ color: '#2d3440', metalness: 0, roughness: 0.06, envMapIntensity: 1.3, clearcoat: 1, clearcoatRoughness: 0.05 }));
+    const interior = this.track(new THREE.MeshStandardMaterial({ color: '#1c1b1d', roughness: 1 }));
+    const doorMat = this.track(new THREE.MeshStandardMaterial({ color: '#2a211d', roughness: 0.55 }));
+    const brick = this.track(new THREE.MeshStandardMaterial({ color: '#c99474', roughness: 0.9 }));
+    const iron = this.track(new THREE.MeshStandardMaterial({ color: '#1e1c1b', roughness: 0.45, metalness: 0.8 }));
+
+    const add = (geo: THREE.BufferGeometry, mat: THREE.Material, uv = true) => {
+      const m = new THREE.Mesh(uv ? this.worldUV(geo) : geo, mat);
       m.castShadow = m.receiveShadow = true;
       house.add(m);
       return m;
     };
+    const box = (w: number, h: number, d: number, x: number, y: number, z: number, mat: THREE.Material = plaster) => add(this.track(new THREE.BoxGeometry(w, h, d).translate(x, y + h / 2, z)), mat);
 
-    // masses: central block, two projecting corner bays, two low side wings
-    box(12, 10.2, 7, 0, 0, -1, stucco);
+    // a classical cornice profile (fillets, corona and a cyma curve), run along x
+    const profile = new THREE.Shape();
+    profile.moveTo(0, 0);
+    profile.lineTo(0.12, 0);
+    profile.lineTo(0.12, 0.06);
+    profile.lineTo(0.18, 0.08);
+    profile.lineTo(0.2, 0.14);
+    profile.lineTo(0.28, 0.16);
+    profile.lineTo(0.3, 0.3);
+    profile.bezierCurveTo(0.4, 0.3, 0.38, 0.31, 0.44, 0.33);
+    profile.lineTo(0.46, 0.4);
+    profile.lineTo(0.62, 0.44);
+    profile.lineTo(0.64, 0.5);
+    profile.lineTo(0, 0.5);
+    profile.lineTo(0, 0);
+    const moulding = (len: number, scale: number, x: number, y: number, z: number) => {
+      const g = new THREE.ExtrudeGeometry(profile, { depth: len, bevelEnabled: false, curveSegments: 8 });
+      g.rotateY(-Math.PI / 2);
+      g.scale(1, scale, scale);
+      g.translate(x + len / 2, y, z);
+      add(this.track(g), trimMat);
+    };
+
+    // ── masses
+    const FRONT = 3.2; // z of the central facade
+    box(13, 11, 8, 0, 0, FRONT - 4);
     for (const sx of [-1, 1]) {
-      box(4.2, 11, 7.6, sx * 7.6, 0, -0.7, stucco);
-      box(6, 4.6, 6.2, sx * 12.4, 0, -1.4, shade);
-      // wing roof parapet
-      box(6.3, 0.35, 6.5, sx * 12.4, 4.6, -1.4, trim);
+      box(4.6, 12, 8.8, sx * 8.8, 0, FRONT - 3.6); // corner bays project 0.8
+      box(7, 5, 7, sx * 14.3, 0, FRONT - 5.3);
+      box(7.3, 0.4, 7.3, sx * 14.3, 5, FRONT - 5.3, trimMat);
+      box(4.9, 0.35, 9.1, sx * 8.8, 12, FRONT - 3.6, trimMat);
     }
-    // cornices and string courses
-    box(20, 0.45, 8.3, 0, 10.2, -0.9, trim);
-    for (const sx of [-1, 1]) box(4.8, 0.55, 8.4, sx * 7.6, 11, -0.7, trim);
-    box(11, 0.6, 7.4, 0, 10.65, -1, trim);
-    box(20.2, 0.3, 8.2, 0, 3.9, -0.9, trim);
-    box(20.2, 0.25, 8.2, 0, 7.2, -0.9, trim);
-    box(21, 0.5, 9, 0, 0, -0.9, shade); // plinth
-    // pilasters between the bays
-    for (const x of [-5.3, -2, 2, 5.3]) box(0.45, 10.2, 0.25, x, 0, 2.55, trim);
+    box(23, 0.6, 9.8, 0, -0.3, FRONT - 4.1, trimMat); // plinth
+    // cornices: over the central block, the bays and the wings
+    moulding(13.4, 1.4, 0, 11, FRONT);
+    for (const sx of [-1, 1]) moulding(5, 1.5, sx * 8.8, 12.1, FRONT + 0.8);
+    for (const sx of [-1, 1]) moulding(7.4, 0.9, sx * 14.3, 5.05, FRONT - 1.8);
+    // string courses between floors
+    for (const y of [4.3, 7.8]) {
+      box(13.1, 0.22, 0.2, 0, y, FRONT + 0.1, trimMat);
+      for (const sx of [-1, 1]) box(4.7, 0.22, 0.2, sx * 8.8, y, FRONT + 0.9, trimMat);
+    }
+    // quoins (rusticated corners) on the bays
+    for (const sx of [-1, 1]) for (const cx of [-2.3, 2.3]) for (let i = 0; i < 18; i++) box(0.5 + (i % 2) * 0.25, 0.5, 0.12, sx * 8.8 + cx - Math.sign(cx) * (0.25 + (i % 2) * 0.12), 0.3 + i * 0.64, FRONT + 0.86, trimMat);
 
-    // arched windows (glass inset + frame), instanced across the facade
+    // ── arched windows with deep reveals, frames, glazing bars, sills and keystones
     const arch = (w: number, h: number) => {
       const sh = new THREE.Shape();
       sh.moveTo(-w / 2, 0);
@@ -203,188 +332,229 @@ export class ManorScene {
       sh.lineTo(-w / 2, 0);
       return sh;
     };
-    const winGlass = this.track(new THREE.ShapeGeometry(arch(1.3, 2.3), 12));
-    const frameShape = arch(1.6, 2.6);
-    frameShape.holes.push(new THREE.Path(arch(1.3, 2.3).getPoints(24).map((p) => new THREE.Vector2(p.x, p.y + 0.12))));
-    const winFrame = this.track(new THREE.ExtrudeGeometry(frameShape, { depth: 0.18, bevelEnabled: false, curveSegments: 12 }));
-    // mullions: a cross in each window
-    const mull = this.track(mergeGeometries([new THREE.BoxGeometry(0.07, 2.2, 0.06).translate(0, 1.2, 0), new THREE.BoxGeometry(1.3, 0.07, 0.06).translate(0, 1.45, 0)])!);
+    const W = 1.35, H = 2.5;
+    const surround = arch(W + 0.5, H + 0.3);
+    surround.holes.push(new THREE.Path(arch(W, H).getPoints(40).map((p) => new THREE.Vector2(p.x, p.y + 0.15))));
+    const frameGeo = this.track(new THREE.ExtrudeGeometry(surround, { depth: 0.16, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03, bevelSegments: 2, curveSegments: 20 }));
+    // the reveal is a hollow jamb (so the glass shows), with a dark room behind it
+    const jamb = arch(W + 0.12, H + 0.06);
+    jamb.holes.push(new THREE.Path(arch(W, H).getPoints(40).map((p) => new THREE.Vector2(p.x, p.y + 0.03))));
+    const revealGeo = this.track(
+      mergeGeometries([
+        new THREE.ExtrudeGeometry(jamb, { depth: 0.5, bevelEnabled: false, curveSegments: 20 }).translate(0, 0.12, -0.5),
+        new THREE.ShapeGeometry(arch(W + 0.1, H + 0.05), 20).translate(0, 0.12, -0.52),
+      ].map((g) => g.toNonIndexed()))!,
+    );
+    const glassGeo = this.track(new THREE.ShapeGeometry(arch(W - 0.04, H - 0.02), 20).translate(0, 0.16, -0.32));
+    const bars = this.track(
+      mergeGeometries([
+        new THREE.BoxGeometry(0.05, H - 0.1, 0.05).translate(0, H / 2 + 0.12, -0.3),
+        new THREE.BoxGeometry(W - 0.05, 0.05, 0.05).translate(0, H * 0.62, -0.3),
+        new THREE.BoxGeometry(W - 0.05, 0.05, 0.05).translate(0, H * 0.32, -0.3),
+        new THREE.BoxGeometry(W + 0.08, 0.08, 0.08).translate(0, H - W / 2 + 0.15, -0.28),
+      ])!,
+    );
+    const sillGeo = this.track(new THREE.BoxGeometry(W + 0.7, 0.14, 0.42).translate(0, 0.03, 0.14));
+    const keyGeo = this.track(new THREE.BoxGeometry(0.28, 0.42, 0.14).translate(0, H + 0.26, 0.1));
     const spots: [number, number, number][] = [];
-    for (const y of [0.9, 4.5, 7.8]) {
-      for (const x of [-3.6, -1.1, 1.1, 3.6]) if (!(y < 1 && Math.abs(x) < 2)) spots.push([x, y, 2.52]);
-      for (const sx of [-1, 1]) spots.push([sx * 7.6, y, 3.12]);
+    for (const y of [1.0, 4.9, 8.4]) {
+      for (const x of [-4.2, -1.4, 1.4, 4.2]) if (!(y < 2 && Math.abs(x) < 2)) spots.push([x, y, FRONT]);
+      for (const sx of [-1, 1]) spots.push([sx * 8.8, y, FRONT + 0.8]);
     }
-    for (const sx of [-1, 1]) for (const x of [-1.6, 1.6]) spots.push([sx * 12.4 + x, 0.9, 1.72]);
-    const place = (geo: THREE.BufferGeometry, mat: THREE.Material, dz: number) => {
+    for (const sx of [-1, 1]) for (const x of [-1.6, 1.6]) spots.push([sx * 14.3 + x, 1.0, FRONT - 1.8]);
+    const inst = (geo: THREE.BufferGeometry, mat: THREE.Material, dz = 0) => {
       const im = new THREE.InstancedMesh(geo, mat, spots.length);
       spots.forEach(([x, y, z], i) => im.setMatrixAt(i, new THREE.Matrix4().makeTranslation(x, y, z + dz)));
-      im.castShadow = true;
-      im.receiveShadow = true;
+      im.castShadow = im.receiveShadow = true;
       house.add(im);
+      return im;
     };
-    place(winGlass, glass, 0.01);
-    place(winFrame, trim, -0.02);
-    place(mull, trim, 0.05);
-    // keystones and sills
-    const sill = this.track(new THREE.BoxGeometry(1.9, 0.14, 0.4));
-    const sills = new THREE.InstancedMesh(sill, trim, spots.length);
-    spots.forEach(([x, y, z], i) => sills.setMatrixAt(i, new THREE.Matrix4().makeTranslation(x, y - 0.07, z + 0.18)));
-    sills.castShadow = true;
-    house.add(sills);
+    // the walls are solid boxes, so each window's depth is built outward from the face
+    inst(revealGeo, interior, 0.53);
+    inst(glassGeo, glass, 0.53);
+    inst(bars, trimMat, 0.53);
+    inst(frameGeo, trimMat, 0.5);
+    inst(sillGeo, trimMat, 0.5);
+    inst(keyGeo, trimMat, 0.5);
 
-    // balconies with balustrades: first floor across the centre, small ones on the corner bays
+    // ── balconies: slab, balusters, top and bottom rails, end piers
     const baluster = this.track(
       new THREE.LatheGeometry(
         [
-          [0.09, 0],
-          [0.09, 0.08],
-          [0.05, 0.14],
-          [0.1, 0.36],
-          [0.05, 0.56],
-          [0.08, 0.64],
-          [0.08, 0.7],
+          [0.075, 0],
+          [0.075, 0.06],
+          [0.045, 0.1],
+          [0.06, 0.16],
+          [0.1, 0.34],
+          [0.06, 0.5],
+          [0.04, 0.56],
+          [0.065, 0.6],
+          [0.065, 0.66],
         ].map(([r, y]) => new THREE.Vector2(r, y)),
-        10,
+        24,
       ),
     );
-    const rails: { x0: number; x1: number; y: number; z: number }[] = [
-      { x0: -5.2, x1: 5.2, y: 4.05, z: 3.5 },
-      { x0: -9.5, x1: -5.7, y: 4.05, z: 3.95 },
-      { x0: 5.7, x1: 9.5, y: 4.05, z: 3.95 },
-      { x0: -8.7, x1: -6.5, y: 7.35, z: 3.6 },
-      { x0: 6.5, x1: 8.7, y: 7.35, z: 3.6 },
-      { x0: -15.2, x1: -9.6, y: 4.95, z: 1.8 },
-      { x0: 9.6, x1: 15.2, y: 4.95, z: 1.8 },
+    const rails: { x0: number; x1: number; y: number; z: number; slab: number }[] = [
+      { x0: -6.2, x1: 6.2, y: 4.5, z: FRONT + 2.35, slab: 2.4 },
+      { x0: -10.6, x1: -7, y: 4.5, z: FRONT + 2.35, slab: 1.6 },
+      { x0: 7, x1: 10.6, y: 4.5, z: FRONT + 2.35, slab: 1.6 },
+      { x0: -9.9, x1: -7.7, y: 8, z: FRONT + 1.55, slab: 0.8 },
+      { x0: 7.7, x1: 9.9, y: 8, z: FRONT + 1.55, slab: 0.8 },
+      { x0: -17.6, x1: -11, y: 5.4, z: FRONT - 1.95, slab: 0 },
+      { x0: 11, x1: 17.6, y: 5.4, z: FRONT - 1.95, slab: 0 },
     ];
     const bal: THREE.Matrix4[] = [];
     for (const r of rails) {
-      const n = Math.round((r.x1 - r.x0) / 0.28);
-      for (let i = 0; i <= n; i++) bal.push(new THREE.Matrix4().makeTranslation(r.x0 + ((r.x1 - r.x0) * i) / n, r.y + 0.12, r.z));
-      box(r.x1 - r.x0 + 0.3, 0.14, 0.4, (r.x0 + r.x1) / 2, r.y + 0.82, r.z, trim);
-      box(r.x1 - r.x0 + 0.3, 0.12, 0.42, (r.x0 + r.x1) / 2, r.y, r.z, trim);
-      if (r.y < 5 && r.z > 3) box(r.x1 - r.x0 + 0.4, 0.25, r.z - 2.4, (r.x0 + r.x1) / 2, r.y - 0.25, (r.z + 2.4) / 2 + 0.2, trim); // slab
+      const n = Math.round((r.x1 - r.x0) / 0.26);
+      for (let i = 0; i <= n; i++) bal.push(new THREE.Matrix4().makeTranslation(r.x0 + ((r.x1 - r.x0) * i) / n, r.y + 0.14, r.z));
+      box(r.x1 - r.x0 + 0.4, 0.16, 0.36, (r.x0 + r.x1) / 2, r.y + 0.8, r.z, trimMat);
+      box(r.x1 - r.x0 + 0.3, 0.14, 0.32, (r.x0 + r.x1) / 2, r.y, r.z, trimMat);
+      for (const px of [r.x0 - 0.1, r.x1 + 0.1]) box(0.36, 0.95, 0.36, px, r.y, r.z, trimMat);
+      if (r.slab) {
+        box(r.x1 - r.x0 + 0.6, 0.3, r.slab + 0.2, (r.x0 + r.x1) / 2, r.y - 0.3, r.z - r.slab / 2 + 0.1, trimMat);
+        moulding(r.x1 - r.x0 + 0.6, 0.45, (r.x0 + r.x1) / 2, r.y - 0.52, r.z + 0.2);
+      }
     }
-    const bals = new THREE.InstancedMesh(baluster, trim, bal.length);
+    const bals = new THREE.InstancedMesh(baluster, trimMat, bal.length);
     bal.forEach((m, i) => bals.setMatrixAt(i, m));
-    bals.castShadow = true;
+    bals.castShadow = bals.receiveShadow = true;
     house.add(bals);
-    // porch columns under the centre balcony
-    const col = this.track(new THREE.CylinderGeometry(0.26, 0.3, 3.8, 18));
-    for (const x of [-4.8, -2.4, 2.4, 4.8]) {
-      const m = new THREE.Mesh(col, trim);
-      m.position.set(x, 1.95, 3.25);
-      m.castShadow = true;
-      house.add(m);
+
+    // ── porch: columns with bases and capitals under the central balcony
+    const shaft = this.track(new THREE.CylinderGeometry(0.25, 0.3, 3.6, 32, 1));
+    const cap = this.track(mergeGeometries([new THREE.TorusGeometry(0.3, 0.06, 10, 32).rotateX(Math.PI / 2).translate(0, 3.62, 0), new THREE.BoxGeometry(0.78, 0.16, 0.78).translate(0, 3.78, 0)])!);
+    const base = this.track(mergeGeometries([new THREE.BoxGeometry(0.8, 0.18, 0.8).translate(0, 0.09, 0), new THREE.TorusGeometry(0.33, 0.07, 10, 32).rotateX(Math.PI / 2).translate(0, 0.22, 0)])!);
+    for (const x of [-5.6, -2.8, 2.8, 5.6]) {
+      for (const [g, y] of [
+        [shaft, 1.95],
+        [cap, 0.15],
+        [base, 0],
+      ] as const) {
+        const m = new THREE.Mesh(g, trimMat);
+        m.position.set(x, y, FRONT + 2.2);
+        m.castShadow = m.receiveShadow = true;
+        house.add(m);
+      }
     }
 
-    // entrance: a dark door, steps, gate posts and low rails
-    box(2.2, 2.9, 0.2, 0, 0.5, 2.58, dark);
-    for (let i = 0; i < 5; i++) box(4.4 - i * 0.2, 0.12, 0.5, 0, i * 0.12, 3.9 - i * 0.28, trim);
+    // ── the entrance: a door in a deep arch, steps, gate piers and railings
+    const doorArch = arch(2.3, 3.4);
+    add(this.track(new THREE.ExtrudeGeometry(doorArch, { depth: 0.12, bevelEnabled: false, curveSegments: 20 }).translate(0, 0.5, FRONT - 0.3)), doorMat, false);
+    const doorFrame = arch(2.9, 3.75);
+    doorFrame.holes.push(new THREE.Path(doorArch.getPoints(40).map((p) => new THREE.Vector2(p.x, p.y))));
+    add(this.track(new THREE.ExtrudeGeometry(doorFrame, { depth: 0.2, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03, bevelSegments: 2, curveSegments: 20 }).translate(0, 0.5, FRONT - 0.05)), trimMat, false);
+    for (let i = 0; i < 6; i++) box(4.6 - i * 0.16, 0.14, 0.52, 0, i * 0.12 - 0.3, FRONT + 5.2 - i * 0.48, trimMat);
+    box(4.8, 0.5, 2.6, 0, -0.1, FRONT + 1.3, trimMat);
     for (const sx of [-1, 1]) {
-      box(1, 1.7, 1, sx * 5.8, 0, 6.2, terracotta);
-      box(1.15, 0.14, 1.15, sx * 5.8, 1.7, 6.2, trim);
-      box(3.4, 0.06, 0.06, sx * 3.9, 1.1, 6.2, dark);
-      box(3.4, 0.06, 0.06, sx * 3.9, 0.55, 6.2, dark);
+      box(1, 1.6, 1, sx * 6.6, -0.1, FRONT + 7.6, brick);
+      box(1.2, 0.16, 1.2, sx * 6.6, 1.5, FRONT + 7.6, trimMat);
+      for (const y of [0.55, 1.15]) box(4.4, 0.05, 0.05, sx * 4.2, y, FRONT + 7.6, iron);
+      for (let i = 0; i < 12; i++) box(0.035, 1.1, 0.035, sx * (2.2 + i * 0.36), 0.1, FRONT + 7.6, iron);
     }
   }
 
-  /** instanced leaf clusters (bushes, tree crowns, the ivy arch) with a gentle wind sway */
-  private leaves(points: THREE.Vector3[], size: [number, number], colors: string[], amp: number, rnd: () => number) {
-    const geo = this.track(new THREE.IcosahedronGeometry(1, 0));
-    const mat = this.track(new THREE.MeshStandardMaterial({ roughness: 0.85 }));
-    const im = new THREE.InstancedMesh(geo, mat, points.length);
-    const pal = colors.map((c) => new THREE.Color(c));
-    const c = new THREE.Color();
-    const base: THREE.Matrix4[] = [];
-    points.forEach((p, i) => {
-      const k = size[0] + rnd() * (size[1] - size[0]);
-      const m = new THREE.Matrix4().compose(p, new THREE.Quaternion().setFromEuler(new THREE.Euler(rnd() * 6, rnd() * 6, rnd() * 6)), new THREE.Vector3(k, k * 0.7, k));
-      base.push(m);
-      im.setMatrixAt(i, m);
-      c.copy(pal[(rnd() * pal.length) | 0]).offsetHSL(0, 0, (rnd() - 0.5) * 0.08);
-      im.setColorAt(i, c);
-    });
-    im.castShadow = true;
-    im.receiveShadow = true;
+  /** Scanned shrubs as instanced meshes, with a gentle wind sway in the vertex shader. */
+  private plant(model: Model, items: Item[], tint?: [number, number, number]) {
+    const mat = this.track(model.mat.clone());
+    mat.envMapIntensity = 0.7;
+    const wind = this.windUniform;
+    mat.onBeforeCompile = (sh) => {
+      sh.uniforms.uWind = wind;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uWind;').replace(
+        '#include <begin_vertex>',
+        `#include <begin_vertex>
+        #ifdef USE_INSTANCING
+          vec3 ip = instanceMatrix[3].xyz;
+        #else
+          vec3 ip = vec3(0.);
+        #endif
+        float sway = sin(uWind * 1.3 + ip.x * .35 + ip.z * .2 + position.y * 1.7) * .018 * position.y;
+        transformed.x += sway; transformed.z += sway * .6;`,
+      );
+      if (tint) {
+        // re‑colour the scanned foliage toward blossom, keeping its photographic detail
+        sh.fragmentShader = sh.fragmentShader.replace(
+          '#include <map_fragment>',
+          `#include <map_fragment>
+          {
+            float l = dot(diffuseColor.rgb, vec3(.299, .587, .114));
+            vec3 bloom = vec3(${tint.map((v) => v.toFixed(3)).join(', ')});
+            diffuseColor.rgb = mix(vec3(l), bloom * (l * 3.1 + .16), .92);
+          }`,
+        );
+      }
+    };
+    mat.customProgramCacheKey = () => (tint ? `tint${tint.join()}` : 'plain');
+    const im = new THREE.InstancedMesh(model.geo, mat, items.length);
+    const q = new THREE.Quaternion();
+    const up = new THREE.Vector3(0, 1, 0);
+    items.forEach(({ p, s, r }, i) => im.setMatrixAt(i, new THREE.Matrix4().compose(p, q.setFromAxisAngle(up, r), new THREE.Vector3(s, s * (0.9 + (i % 3) * 0.08), s))));
+    im.castShadow = im.receiveShadow = true;
     this.scene.add(im);
-    if (amp > 0 && !this.still) this.sways.push({ mesh: im, base, amp });
     return im;
   }
 
-  private buildGarden(rnd: () => number) {
-    const q = this.low ? 0.55 : 1;
-    // flowering shrubs flanking the path, and along the house
-    const blossom: THREE.Vector3[] = [];
-    const bushCore = this.track(new THREE.MeshStandardMaterial({ color: '#9c5a6c', roughness: 0.95 }));
-    const coreGeo = this.track(new THREE.SphereGeometry(1, 20, 14));
-    const bush = (cx: number, cz: number, r: number, h: number, n: number) => {
-      // a solid core so the blossom reads as a full shrub, not a cloud of petals
-      const core = new THREE.Mesh(coreGeo, bushCore);
-      core.position.set(cx, h * 0.36, cz);
-      core.scale.set(r * 0.66, h * 0.4, r * 0.54);
-      core.castShadow = core.receiveShadow = true;
-      this.scene.add(core);
-      for (let i = 0; i < n * q; i++) {
-        const a = rnd() * Math.PI * 2, u = Math.pow(rnd(), 0.28); // mostly on the surface
-        const y = rnd() * h;
-        const rr = r * u * (1 - (y / h) * 0.45);
-        blossom.push(new THREE.Vector3(cx + Math.cos(a) * rr, y + 0.2, cz + Math.sin(a) * rr * 0.8));
-      }
+  private buildPlanting(a: Model, b: Model, c: Model) {
+    const rnd = mulberry(2511);
+    const FRONT = 3.2;
+    const at = (x: number, z: number, s: number, jitter = 1): Item => {
+      const px = x + (rnd() - 0.5) * jitter, pz = z + (rnd() - 0.5) * jitter;
+      return { p: new THREE.Vector3(px, this.groundY(pz) - 0.1, pz), s, r: rnd() * Math.PI * 2 };
     };
-    bush(-9.5, 13, 4.4, 4.4, 2300);
-    bush(10, 13, 4.4, 4.4, 2300);
-    bush(-15.5, 8.5, 3.6, 3.4, 1300);
-    bush(16, 8.5, 3.6, 3.4, 1300);
-    bush(-4.6, 4.6, 1.2, 1.6, 420);
-    bush(4.6, 4.6, 1.2, 1.6, 420);
-    this.leaves(blossom, [0.09, 0.17], ['#e6a8b8', '#d98b9d', '#f2c1cb', '#c97a90', '#f6d0d8'], 0.02, rnd);
+    const unit = (m: Model) => 1 / m.height;
 
-    // the ivy arch over the steps (a leafy torus half, then leaves over it)
-    const archCore = new THREE.Mesh(this.track(new THREE.TorusGeometry(2.75, 0.32, 12, 40, Math.PI)), this.track(new THREE.MeshStandardMaterial({ color: '#4d7331', roughness: 0.95 })));
-    archCore.position.set(0, 1.1, 4.7);
-    archCore.scale.set(1, 1.12, 1.4);
-    archCore.castShadow = true;
-    this.scene.add(archCore);
-    const ivy: THREE.Vector3[] = [];
-    for (let i = 0; i < 2200 * q; i++) {
-      const t = rnd() * Math.PI;
-      const R = 2.75 + (rnd() - 0.5) * 0.55;
-      ivy.push(new THREE.Vector3(Math.cos(t) * R, Math.sin(t) * R * 1.12 + 1.1 + (rnd() - 0.5) * 0.2, 4.7 + (rnd() - 0.5) * 0.8));
-      if (rnd() < 0.18) ivy.push(new THREE.Vector3((rnd() < 0.5 ? -1 : 1) * (2.75 + (rnd() - 0.5) * 0.4), rnd() * 1.2, 4.7 + (rnd() - 0.5) * 0.8));
+    // blossom shrubs: soft rose masses along the path and in front of the wings
+    const sB = unit(b);
+    const sFlower = unit(c);
+    const blossom: Item[] = [];
+    const mass = (cx: number, cz: number, n: number, spread: number, size: number) => {
+      for (let i = 0; i < n; i++) blossom.push(at(cx + (rnd() - 0.5) * spread, cz + (rnd() - 0.5) * spread * 0.7, sFlower * size * (0.75 + rnd() * 0.5)));
+    };
+    const q = this.low ? 0.6 : 1;
+    // big masses flank the path in the foreground and sit before the wings; the centre stays open
+    mass(-11.5, FRONT + 16, Math.round(90 * q), 7, 2.4);
+    mass(12, FRONT + 16, Math.round(90 * q), 7, 2.4);
+    mass(-18.5, FRONT + 6, Math.round(60 * q), 5.5, 2.2);
+    mass(19, FRONT + 6, Math.round(60 * q), 5.5, 2.2);
+    mass(-5.2, FRONT + 8.2, 10, 1.4, 1.2);
+    mass(5.2, FRONT + 8.2, 10, 1.4, 1.2);
+    this.plant(c, blossom, [1.0, 0.42, 0.52]);
+
+    // low green shrubs along the facade
+    const sC = unit(c);
+    const hedge: Item[] = [];
+    for (let x = -18; x <= 18; x += 1.6) if (Math.abs(x) > 3.4) hedge.push(at(x, FRONT + (Math.abs(x) > 11 ? -1.2 : 1.1), sC * (1 + rnd() * 0.4), 0.4));
+    this.plant(c, hedge);
+
+    // the ivy arch: leafy shrubs grown along a half‑ellipse over the steps
+    const sA = unit(a);
+    const ivy: Item[] = [];
+    const n = this.low ? 26 : 40;
+    for (let i = 0; i <= n; i++) {
+      const t = (i / n) * Math.PI;
+      ivy.push({ p: new THREE.Vector3(Math.cos(t) * 2.9, Math.sin(t) * 3.6 - 0.2, FRONT + 7.2 + (rnd() - 0.5) * 0.3), s: sA * (0.62 + rnd() * 0.2), r: rnd() * 6.28 });
     }
-    this.leaves(ivy, [0.07, 0.13], ['#5f8a3a', '#7aa24a', '#4c7432', '#8fb45a'], 0.01, rnd);
+    for (const sx of [-1, 1]) for (let k = 0; k < 5; k++) ivy.push({ p: new THREE.Vector3(sx * (2.9 + (rnd() - 0.5) * 0.25), k * 0.55 - 0.2, FRONT + 7.2), s: sA * 0.75, r: rnd() * 6.28 });
+    this.plant(a, ivy);
 
-    // two fruit trees framing the view
-    const bark = this.track(new THREE.MeshStandardMaterial({ color: '#6b5646', roughness: 0.95 }));
-    const fruitMat = this.track(new THREE.MeshStandardMaterial({ color: '#f0a33c', roughness: 0.5, emissive: '#6a3a10', emissiveIntensity: 0.25 }));
-    const fruitGeo = this.track(new THREE.SphereGeometry(0.2, 10, 8));
+    // two broad trees framing the view: a curved trunk and a crown of many leafy shrubs
+    const bark = this.track(new THREE.MeshStandardMaterial({ color: '#5b4b3f', roughness: 0.95 }));
+    const crown: Item[] = [];
     for (const [tx, tz, lean] of [
-      [-19, 6, 0.25],
-      [19.5, 2, -0.2],
+      [-24, 10, 0.3],
+      [25, 6, -0.25],
     ] as const) {
-      const trunkCurve = new THREE.CatmullRomCurve3([new THREE.Vector3(tx, 0, tz), new THREE.Vector3(tx + lean * 3, 4, tz), new THREE.Vector3(tx + lean * 7, 8.5, tz - 1)]);
-      const trunk = new THREE.Mesh(this.track(new THREE.TubeGeometry(trunkCurve, 16, 0.55, 10)), bark);
+      const curve = new THREE.CatmullRomCurve3([new THREE.Vector3(tx, -0.2, tz), new THREE.Vector3(tx + lean * 3, 5, tz), new THREE.Vector3(tx + lean * 7, 10, tz - 1)]);
+      const trunk = new THREE.Mesh(this.track(new THREE.TubeGeometry(curve, 24, 0.7, 14)), bark);
       trunk.castShadow = true;
       this.scene.add(trunk);
-      const crown: THREE.Vector3[] = [];
-      const cx = tx + lean * 7, cy = 11;
-      const crownCore = new THREE.Mesh(this.track(new THREE.SphereGeometry(1, 24, 16)), this.track(new THREE.MeshStandardMaterial({ color: '#4f7430', roughness: 0.95 })));
-      crownCore.position.set(cx, cy, tz - 1);
-      crownCore.scale.set(5.3, 2.9, 3.8);
-      crownCore.castShadow = crownCore.receiveShadow = true;
-      this.scene.add(crownCore);
-      for (let i = 0; i < 3600 * q; i++) {
-        const v = new THREE.Vector3(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).normalize().multiplyScalar(0.72 + Math.pow(rnd(), 0.5) * 0.3);
-        crown.push(new THREE.Vector3(cx + v.x * 7, cy + v.y * 3.8, tz - 1 + v.z * 5));
+      const cx = tx + lean * 7, cy = 12;
+      for (let i = 0; i < (this.low ? 45 : 80); i++) {
+        const v = new THREE.Vector3(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).normalize().multiplyScalar(0.4 + rnd() * 0.6);
+        crown.push({ p: new THREE.Vector3(cx + v.x * 10, cy + v.y * 4.4 - 2.4, tz - 1 + v.z * 8), s: sB * (3.4 + rnd() * 1.8), r: rnd() * 6.28 });
       }
-      this.leaves(crown, [0.12, 0.22], ['#6f9a44', '#88b057', '#5b8436', '#a2c06a'], 0.035, rnd);
-      const fruits = new THREE.InstancedMesh(fruitGeo, fruitMat, 26);
-      for (let i = 0; i < 26; i++) {
-        const v = new THREE.Vector3(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).normalize();
-        fruits.setMatrixAt(i, new THREE.Matrix4().makeTranslation(cx + v.x * 6.6, cy + v.y * 3.4, tz - 1 + Math.abs(v.z) * 4.6));
-      }
-      this.scene.add(fruits);
     }
+    this.plant(b, crown);
   }
 
   /* ------------------------------------------------------------------ run */
@@ -392,17 +562,17 @@ export class ManorScene {
     const w = this.canvas.clientWidth, h = this.canvas.clientHeight;
     if (!w || !h) return;
     this.renderer.setSize(w, h, false);
+    this.composer?.setSize(w, h);
     this.camera.aspect = w / h;
     // keep the whole facade in frame on narrow screens
-    this.camera.fov = w / h < 1.2 ? 52 : 34;
+    this.camera.fov = w / h < 1.2 ? 50 : 32;
     this.camera.updateProjectionMatrix();
-    if (!this.running) this.frame();
+    if (this.ready && !this.running) this.frame();
   }
 
   private start() {
-    if (this.running) return;
+    if (this.running || !this.ready) return;
     this.running = true;
-    this.clock.getDelta();
     const loop = () => {
       if (!this.running) return;
       this.frame();
@@ -416,34 +586,18 @@ export class ManorScene {
   }
 
   private frame() {
-    const t = this.clock.elapsedTime + (this.running ? this.clock.getDelta() : 0);
+    const t = this.clock.getElapsedTime();
+    this.windUniform.value = this.still ? 0 : t;
     // a slow walk up the path toward the door, then a gentle hold; the pointer looks around
-    const k = this.still ? 1 : 1 - Math.exp(-t * 0.09);
-    const z = 50 - k * 12;
-    this.camera.position.set(Math.sin(t * 0.12) * 0.6 - this.pointer.x * 1.2, 2.4 + k * 0.5 + this.pointer.y * 0.4, z);
-    this.camera.lookAt(this.pointer.x * 1.5, 5.6 - k * 0.2, 0);
-    if (this.sways.length) {
-      const tmp = new THREE.Matrix4();
-      for (const s of this.sways) {
-        const n = s.base.length;
-        // only a sixth of the leaves per frame: the eye reads it as wind, the CPU barely notices
-        const off = Math.floor((t * 60) % 6);
-        for (let i = off; i < n; i += 6) {
-          const b = s.base[i];
-          const e = b.elements;
-          const w = Math.sin(t * 1.3 + e[12] * 0.4 + e[13] * 0.6) * s.amp;
-          tmp.copy(b);
-          tmp.elements[12] += w;
-          tmp.elements[14] += w * 0.5;
-          s.mesh.setMatrixAt(i, tmp);
-        }
-        s.mesh.instanceMatrix.needsUpdate = true;
-      }
-    }
-    this.renderer.render(this.scene, this.camera);
+    const k = this.still ? 1 : 1 - Math.exp(-t * 0.08);
+    const z = 52 - k * 14;
+    this.camera.position.set(Math.sin(t * 0.1) * 0.8 - this.pointer.x * 1.4, 2.6 + k * 0.5 + this.pointer.y * 0.4 + this.groundY(z), z);
+    this.camera.lookAt(this.pointer.x * 1.6, 6.6 - k * 0.4, 0);
+    this.composer.render();
   }
 
   dispose() {
+    this.disposed = true;
     this.stop();
     this.io.disconnect();
     this.ro.disconnect();
@@ -451,8 +605,10 @@ export class ManorScene {
     document.removeEventListener('visibilitychange', this.onVisibility);
     this.scene.traverse((o) => {
       if (o instanceof THREE.InstancedMesh) o.dispose();
+      if (o instanceof THREE.Mesh) o.geometry.dispose();
     });
     this.disposables.forEach((d) => d.dispose());
+    this.composer?.dispose();
     this.renderer.dispose();
     this.renderer.forceContextLoss();
   }

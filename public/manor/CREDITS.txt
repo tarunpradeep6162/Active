@@ -1,0 +1,5 @@
+Assets in this folder are CC0 (public domain) from Poly Haven — https://polyhaven.com
+  Models:   shrub_01, shrub_02, shrub_04 (optimised with glTF-Transform: simplified, meshopt, WebP)
+  Textures: plastered_wall_02, painted_plaster_wall, leafy_grass, gravel_floor (converted to WebP)
+  HDRI:     kloofendal_48d_partly_cloudy_puresky (1k HDR; 2k tone-mapped JPEG for the background)
+The manor itself is an original design built in code (src/birthday/ui/ManorScene.ts).
