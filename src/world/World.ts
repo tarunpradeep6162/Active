@@ -4,7 +4,7 @@ import { TulipGarden } from '../scenes/TulipGarden';
 import { getProgress } from '../birthday/progress';
 import { ProjectCards } from '../scenes/ProjectCards';
 import { Lab } from '../scenes/Lab';
-import { HexPortal } from '../scenes/HexPortal';
+import { LanternSky } from '../scenes/LanternSky';
 import { Backdrop } from '../scenes/Backdrop';
 import { iridescentMaterial } from '../scenes/materials';
 import { ParticleField, type FieldOptions } from '../particles/ParticleField';
@@ -14,7 +14,7 @@ import type { ParticleResult } from '../workers/particles.worker';
 import { ANCHOR, rangeOf } from './journey';
 import { workTimeline } from '../work/WorkTimeline';
 import { globalUniforms } from './uniforms';
-import { state, store, type SectionId } from '../core/state';
+import { state, store, events, type SectionId } from '../core/state';
 import { smoothstep, clamp, dampFactor } from '../utils/math';
 import type { TierSettings } from '../core/Performance';
 import { PROJECTS } from '../app/projects';
@@ -78,7 +78,7 @@ export class World {
   gardenReveal = 0;
   readonly cards: ProjectCards;
   readonly lab = new Lab();
-  readonly portal: HexPortal;
+  readonly portal: LanternSky;
   private manifestoRing: THREE.Mesh;
   private fields: Record<string, ParticleField> = {};
   private streaks: Streaks[] = [];
@@ -99,13 +99,14 @@ export class World {
   private nebulaScale: number;
   private visited: boolean[] = [];
   private tmpHead = new THREE.Vector3();
+  private lanternHover = false;
 
   constructor(particles: ParticleResult[], titles: Map<string, THREE.Texture>, settings: TierSettings) {
     this.nebulaScale = Math.max(0.35, settings.particleScale);
     this.scene.add(this.backdrop.mesh, this.root);
     this.cards = new ProjectCards(titles);
     this.garden = new TulipGarden(titles, PROJECTS.map((p) => p.slug), settings.particleScale < 0.7);
-    this.portal = new HexPortal(settings.hexCount);
+    this.portal = new LanternSky(settings.hexCount);
 
     // intro emblem
     this.root.add(this.emblem.group);
@@ -128,7 +129,7 @@ export class World {
     this.cards.group.visible = false;
     this.layoutGarden();
     this.add(this.lab.group, ANCHOR.lab + 4, ANCHOR.lab - 3);
-    this.add(this.portal.group, ANCHOR.portal + 4, ANCHOR.portal - 4);
+    this.add(this.portal.group, ANCHOR.portal + 6, ANCHOR.portal - 18);
 
     this.outroEmblem.group.position.set(0, ANCHOR.outro, 0);
     this.add(this.outroEmblem.group, ANCHOR.outro + 12, ANCHOR.outro - 4);
@@ -295,7 +296,10 @@ export class World {
     }
     // the locked cage is touchable too
     const cageHover = !p.isTouch && p.active && !this.lab.isOpen && state.section === 'lab' && state.focus < 0.01 && this.pickCageAt(p.x, p.y, camera);
-    document.documentElement.classList.toggle('hovering-cage', cageHover);
+    // …and so are the wish lanterns in the sky
+    const lanternHover = !p.isTouch && p.active && state.section === 'portal' && state.focus < 0.01 && this.rayFrame % 4 === 0 ? this.pickLantern(((p.x + 1) / 2) * state.viewport.width, ((1 - p.y) / 2) * state.viewport.height, camera) >= 0 : this.lanternHover;
+    this.lanternHover = lanternHover;
+    document.documentElement.classList.toggle('hovering-cage', cageHover || lanternHover);
     if (hit !== this.hovered) {
       this.hovered = hit;
       store.set({ hoveredProject: hit });
@@ -317,6 +321,23 @@ export class World {
     return this.raycaster.intersectObjects(this.lab.pickables, false).length > 0;
   }
 
+  /** The wish lantern under this point in the lantern sky, or −1. */
+  pickLantern(clientX: number, clientY: number, camera: THREE.Camera) {
+    if (state.section !== 'portal') return -1;
+    this.ndc.set((clientX / state.viewport.width) * 2 - 1, -(clientY / state.viewport.height) * 2 + 1);
+    this.raycaster.setFromCamera(this.ndc, camera);
+    const hit = this.raycaster.intersectObject(this.portal.wishMesh, false)[0];
+    return hit?.instanceId ?? -1;
+  }
+
+  /** Let wish lantern i go and tell the page where it is on screen (for its words). */
+  releaseLantern(i: number, camera: THREE.Camera) {
+    if (i < 0 || !this.portal.release(i)) return false;
+    const v = this.portal.wishPosition(i, this.tmpHead).project(camera);
+    events.emit('lanternWish', { index: i, x: (v.x * 0.5 + 0.5) * state.viewport.width, y: (-v.y * 0.5 + 0.5) * state.viewport.height });
+    return true;
+  }
+
   /** Tap / click picking (touch has no hover). */
   pick(clientX: number, clientY: number, camera: THREE.Camera): string | null {
     if (state.section !== 'work') return null;
@@ -331,6 +352,8 @@ export class World {
     // cull set pieces far from the camera's vertical position
     const cy = camera.position.y;
     for (const p of this.pieces) p.obj.visible = cy < p.yTop + 22 && cy > p.yBottom - 22;
+    // below the lab floor the rig is out of the story; keep its props from peeking into the sky
+    if (cy < ANCHOR.lab - 4.5) this.lab.group.visible = false;
 
     this.blendPalettes(dt, post);
 
@@ -376,6 +399,10 @@ export class World {
     this.cards.setEntry(workTimeline.card0Entry(wt));
     // an open chapter (and the finale's reveal) always sees the whole garden
     this.garden.setCrumble(workTimeline.spineDissolve(wt) * (1 - clamp(state.focus + this.gardenReveal)));
+    if (state.section === 'portal' || state.section === 'lab' || state.section === 'outro') {
+      this.portal.update(t, state.viewport.dpr);
+      state.starsLit = this.portal.starsLit;
+    }
     this.lab.blow = state.cakeBlow;
     this.lab.update(t, state.viewport.dpr);
     state.cakeReady = this.lab.candlesReady;

@@ -111,6 +111,7 @@ export class Experience {
     events.on('toggleAudio', () => this.audio.toggle());
     events.on('openCage', () => this.world?.lab.open());
     events.on('blowCandles', () => this.world?.lab.blowOut());
+    events.on('releaseNextLantern', () => this.world?.releaseLantern(this.world.portal.nextWaiting(), this.rig.camera));
     events.on('wishLight', () => {
       this.world?.garden.pulse(state.time);
       this.thinUntil = state.time + 5.5;
@@ -203,6 +204,7 @@ export class Experience {
     if (t && t.closest('a,button,input,textarea,select,[data-ui]')) return;
     if (!this.world || state.route.name === 'project' || state.route.name === 'contact' || state.transition.phase !== 'IDLE') return;
     if (this.world.pickCage(e.clientX, e.clientY, this.rig.camera)) return this.world.lab.open();
+    if (this.world.releaseLantern(this.world.pickLantern(e.clientX, e.clientY, this.rig.camera), this.rig.camera)) return;
     const slug = this.world.hovered ?? this.world.pick(e.clientX, e.clientY, this.rig.camera);
     if (slug) events.emit('navigate', { name: 'project', slug });
   }

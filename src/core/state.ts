@@ -75,6 +75,8 @@ export const state = {
   wishHold: 0,
   /** 0..1 how hard she is blowing at the cake's candles (hold button or microphone) */
   cakeBlow: 0,
+  /** wish lanterns already turned into stars */
+  starsLit: 0,
   /** the cage has been opened */
   cageOpen: false,
   /** the cake is out of its cage and its candles are burning */
@@ -152,6 +154,10 @@ type Events = {
   openCage: void;
   /** the candles are blown out */
   blowCandles: void;
+  /** a wish lantern was let go (index into the wishes; screen position for its words) */
+  lanternWish: { index: number; x: number; y: number };
+  /** let the next waiting wish lantern go (button / keyboard path) */
+  releaseNextLantern: void;
   /** the wish in chapter 11: light climbs the whole garden */
   wishLight: void;
   /** the finale's pull‑back reveal of the whole garden */

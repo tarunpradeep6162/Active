@@ -357,3 +357,16 @@ html.no-webgl #interface { position: static; pointer-events: auto; }
 }
 
 .cursor-trail { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 70; pointer-events: none; }
+
+/* ── the lantern sky ── */
+.sky-label { position: fixed; left: var(--gutter, 24px); bottom: calc(9vh + var(--safe-bottom, 0px)); opacity: var(--v-sky, 0); display: grid; gap: 6px; justify-items: start; max-width: 300px; color: var(--soft); }
+.sky-label[data-hidden='true'] { visibility: hidden; }
+.sky-label__title { font: italic 500 clamp(30px, 3.2vw, 52px)/1.05 var(--serif); margin: 0; text-shadow: 0 0 18px rgba(230, 180, 110, .35); }
+.sky-label__copy { font: italic 400 17px/1.5 var(--serif); margin: 0; color: rgba(248, 241, 232, .8); }
+.sky-label__count { min-height: 1.4em; font: 11px var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--champagne-2, #e6c989); margin: 4px 0 0; }
+.sky-wishes { position: fixed; inset: 0; pointer-events: none; z-index: 3; }
+.sky-wish { position: absolute; translate: -50% -100%; margin: 0; max-width: min(320px, 80vw); text-align: center; font: italic 500 clamp(20px, 2.2vw, 30px)/1.25 var(--serif); color: var(--soft);
+  text-shadow: 0 0 20px rgba(255, 190, 120, .55), 0 0 2px rgba(0, 0, 0, .6); animation: sky-wish 6.5s ease forwards; }
+@keyframes sky-wish { 0% { opacity: 0; transform: translateY(10px); } 12% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-70px); } }
+@media (prefers-reduced-motion: reduce) { .sky-wish { animation: sky-wish-still 6.5s linear forwards; } @keyframes sky-wish-still { 0%, 85% { opacity: 1; } 100% { opacity: 0; } } }
+@media (max-width: 600px) { .sky-label { left: 16px; right: 16px; bottom: calc(6vh + var(--safe-bottom, 0px)); } }

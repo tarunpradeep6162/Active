@@ -51,10 +51,11 @@ function buildKeys(): Key[] {
   keys.push(
     k('lab', 0.5, polar(13, ANCHOR.lab + 0.6), [0, ANCHOR.lab + 1, 0]),
     k('lab', 0.86, polar(12.5, ANCHOR.lab - 0.2), [0, ANCHOR.lab + 0.9, 0]),
-    // under the surface: rig visible above through the water, tunnel low in frame
-    k('portal', 0.15, [0, ANCHOR.portal + 0.4, 12], [0, ANCHOR.portal + 0.6, -6], 48),
-    k('portal', 0.6, [0, ANCHOR.portal - 0.4, 10], [0, ANCHOR.portal - 0.6, -6], 46),
-    k('portal', 0.9, [0, ANCHOR.portal - 2.4, 7.5], [0, ANCHOR.portal - 3.2, -7], 44),
+    // the lantern sky: looking up into a night full of rising lanterns
+    // (the sky is SKY_Y = portal − 6; the camera stays level so the lab above stays out of frame)
+    k('portal', 0.15, [0, ANCHOR.portal - 5.5, 12], [0, ANCHOR.portal - 4.4, -6], 50),
+    k('portal', 0.6, [0.4, ANCHOR.portal - 6, 10.5], [0, ANCHOR.portal - 4, -6], 48),
+    k('portal', 0.9, [0, ANCHOR.portal - 7, 9], [0, ANCHOR.portal - 5.5, -6], 46),
     k('portal', 1, [0, ANCHOR.portal - 6, 6], [0, ANCHOR.portal - 9, -2]),
     k('outro', 0.22, [0, ANCHOR.outro + 0.9, 11.2], [0, ANCHOR.outro + 0.9, 0]),
     k('outro', 0.6, [0.3, ANCHOR.outro + 0.8, 13.2], [0, ANCHOR.outro + 0.5, 0]),

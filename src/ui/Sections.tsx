@@ -337,6 +337,59 @@ export function LabLabel() {
   );
 }
 
+/**
+ * The lantern sky: touch a lantern (or press the button) to let its wish go. The wish's words
+ * rise from where the lantern was, and the lantern becomes a star.
+ */
+export function LanternSkyLabel() {
+  const c = useContent();
+  const section = useStore((s) => s.section);
+  const hidden = section !== 'portal';
+  const [said, setSaid] = useState<{ key: number; text: string; x: number; y: number }[]>([]);
+  const [lit, setLit] = useState(0);
+  useEffect(() => {
+    const off = events.on('lanternWish', ({ index, x, y }) => {
+        const list = c.lanternWishes.length ? c.lanternWishes : ['A wish, just for you.'];
+        const key = performance.now();
+        const text = list[index % list.length];
+        setSaid((s) => [...s.slice(-2), { key, text, x, y }]);
+        setTimeout(() => setSaid((s) => s.filter((w) => w.key !== key)), 6500);
+    });
+    return () => {
+      off();
+    };
+  }, [c]);
+  useEffect(() => {
+    if (hidden) return;
+    const id = setInterval(() => setLit(state.starsLit), 500);
+    return () => clearInterval(id);
+  }, [hidden]);
+  return (
+    <>
+      <section className="sky-label" aria-labelledby="sky-title" data-hidden={hidden} aria-hidden={hidden}>
+        <h2 className="sky-label__title" id="sky-title">
+          A sky of wishes
+        </h2>
+        <p className="sky-label__copy">Touch a lantern to let its wish go. Each one becomes a star.</p>
+        <button type="button" className="lab-label__open" tabIndex={hidden ? -1 : 0} onClick={() => events.emit('releaseNextLantern', undefined)}>
+          Let a wish go
+        </button>
+        <p className="sky-label__count" aria-live="polite">
+          {lit > 0 && `${lit} of 12 wishes are stars now`}
+        </p>
+      </section>
+      <div className="sky-wishes" aria-live="polite">
+        {!hidden &&
+          said.map((w) => (
+            <p key={w.key} className="sky-wish" style={{ left: `clamp(24px, ${w.x}px, calc(100vw - 24px))`, top: `${Math.max(90, w.y)}px` }}>
+              {w.text}
+            </p>
+          ))}
+      </div>
+    </>
+  );
+}
+
 export function EndCap() {
   const atEnd = useStore((s) => s.atEnd);
   return (
