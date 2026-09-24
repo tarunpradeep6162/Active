@@ -255,29 +255,37 @@ export function Future({ slug, onDone }: ChapterProps) {
 function Manor() {
   const c = useContent();
   const ref = useRef<HTMLCanvasElement>(null);
-  const [failed, setFailed] = useState(false);
+  const [live, setLive] = useState(false);
   useEffect(() => {
-    let scene: { dispose(): void } | null = null;
-    let live = true;
+    let scene: { dispose(): void; onReady?: () => void } | null = null;
+    let alive = true;
     import('../ManorScene')
       .then(({ ManorScene }) => {
-        if (live && ref.current) scene = new ManorScene(ref.current);
+        if (!alive || !ref.current) return;
+        const s = new ManorScene(ref.current);
+        s.onReady = () => alive && setLive(true);
+        scene = s;
       })
-      .catch(() => live && setFailed(true));
+      .catch(() => {
+        /* the still photograph stays as the backdrop */
+      });
     return () => {
-      live = false;
+      alive = false;
       scene?.dispose();
     };
   }, []);
   return (
-    <figure className="bd-manor">
-      {!failed && <canvas ref={ref} className="bd-manor__canvas" role="img" aria-label="A cream manor with arched windows and an ivy arch over the door, pink blossoms along a sunlit path" />}
-      <figcaption className="bd-manor__caption">
+    <>
+      {/* the whole chapter sits in the garden of this manor: a still first, the live scene when ready */}
+      <div className={`bd-manorbg ${live ? 'is-live' : ''}`} role="img" aria-label="A cream manor with arched windows and an ivy arch over the door, pink blossoms along a sunlit path">
+        <canvas ref={ref} className="bd-manorbg__canvas" />
+      </div>
+      <header className="bd-manor__caption">
         <span className="bd-manor__kicker">{c.manor.kicker}</span>
         <span className="bd-manor__title">{c.manor.title}</span>
         <span className="bd-manor__line">{c.manor.line}</span>
-      </figcaption>
-    </figure>
+      </header>
+    </>
   );
 }
 

@@ -59,7 +59,8 @@ export class ManorScene {
     const gl = this.renderer.getContext();
     const dbg = gl.getExtension('WEBGL_debug_renderer_info');
     if (dbg && /swiftshader|llvmpipe|software|basic render/i.test(String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)))) this.low = true;
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.low ? 1 : 1.75));
+    // full‑screen backdrop behind the chapter: a modest pixel ratio is plenty
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.low ? 1 : 1.25));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.08;
@@ -72,7 +73,7 @@ export class ManorScene {
     this.io.observe(canvas);
     this.ro = new ResizeObserver(() => this.resize());
     this.ro.observe(canvas);
-    canvas.addEventListener('pointermove', this.onPointer);
+    window.addEventListener('pointermove', this.onPointer, { passive: true });
     document.addEventListener('visibilitychange', this.onVisibility);
     this.build()
       .then(() => {
@@ -634,7 +635,7 @@ export class ManorScene {
     this.stop();
     this.io.disconnect();
     this.ro.disconnect();
-    this.canvas.removeEventListener('pointermove', this.onPointer);
+    window.removeEventListener('pointermove', this.onPointer);
     document.removeEventListener('visibilitychange', this.onVisibility);
     this.scene.traverse((o) => {
       if (o instanceof THREE.InstancedMesh) o.dispose();
