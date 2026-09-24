@@ -52,12 +52,45 @@ export class MemoryScene extends Stage {
         uniforms: this.u,
         vertexShader: `varying vec2 vUv; void main(){ vUv = uv - .5; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }`,
         fragmentShader: `uniform float uTime; varying vec2 vUv;
-          void main(){ float r = length(vUv); float a = exp(-r * 9.) * (.8 + .2 * sin(uTime * 1.3)) + smoothstep(.05, 0., r) * .8;
-            gl_FragColor = vec4(mix(vec3(1., .72, .5), vec3(1., .95, .85), smoothstep(.2, 0., r)) * a, a); }`,
+          void main(){ float r = length(vUv); float a = exp(-r * 18.) * (.8 + .2 * sin(uTime * 1.3)) + smoothstep(.025, 0., r) * .8;
+            // shafts of light turning slowly out of the core, through the drifting dust
+            float ang = atan(vUv.y, vUv.x);
+            float rays = pow(abs(sin(ang * 7. + uTime * .04)), 14.) + pow(abs(sin(ang * 11. - uTime * .03 + 1.3)), 22.) * .7;
+            a += rays * exp(-r * 4.2) * .16 * smoothstep(.02, .08, r);
+            gl_FragColor = vec4(mix(vec3(1., .72, .5), vec3(1., .95, .85), smoothstep(.1, 0., r)) * a, a); }`,
       }),
     );
-    this.core = new THREE.Mesh(this.track(new THREE.PlaneGeometry(7, 7)), coreMat);
+    this.core = new THREE.Mesh(this.track(new THREE.PlaneGeometry(14, 14)), coreMat);
     this.scene.add(this.core);
+    // dust turning in the core's light
+    const nd = this.low ? 160 : 320;
+    const dd = new Float32Array(nd * 4);
+    for (let i = 0; i < nd; i++) dd.set([Math.random(), Math.random(), Math.random(), Math.random()], i * 4);
+    const dg = this.track(new THREE.BufferGeometry());
+    dg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(nd * 3), 3));
+    dg.setAttribute('aD', new THREE.BufferAttribute(dd, 4));
+    const dust = new THREE.Points(
+      dg,
+      this.track(
+        new THREE.ShaderMaterial({
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+          uniforms: this.u,
+          vertexShader: /* glsl */ `attribute vec4 aD; uniform float uTime, uPx; varying float vA;
+            void main(){
+              float a = aD.x * 6.2832 + uTime * (.02 + aD.y * .03);
+              float r = .6 + pow(aD.z, .7) * 6.;
+              vec3 p = vec3(cos(a) * r, (aD.w - .5) * 4.5 + sin(uTime * .2 + aD.x * 20.) * .3, sin(a) * r * .6);
+              vec4 mv = modelViewMatrix * vec4(p, 1.); gl_Position = projectionMatrix * mv;
+              vA = (.25 + .75 * pow(.5 + .5 * sin(uTime * (.8 + aD.y * 2.) + aD.x * 60.), 3.)) * exp(-r * .22);
+              gl_PointSize = uPx * (.3 + aD.y * .5) / -mv.z; }`,
+          fragmentShader: `varying float vA; void main(){ float d = length(gl_PointCoord - .5); float a = (smoothstep(.5, 0., d) * .4 + smoothstep(.12, 0., d)) * vA; gl_FragColor = vec4(vec3(1., .88, .7) * a, a); }`,
+        }),
+      ),
+    );
+    dust.frustumCulled = false;
+    this.scene.add(dust);
 
     // the polaroids
     const frameMat = this.track(new THREE.MeshPhysicalMaterial({ color: '#f7f1e6', roughness: 0.55, clearcoat: 0.3, clearcoatRoughness: 0.5 }));

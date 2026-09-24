@@ -1,3 +1,4 @@
+import { lightLeak } from './lightLeak';
 import { state, store } from '../core/state';
 import { smoothstep } from '../utils/math';
 import { rangeOf } from '../world/journey';
@@ -55,7 +56,11 @@ export class UIDriver {
     this.set('--progress', p);
     const atEnd = p > 0.985;
     if (store.get().atEnd !== atEnd) store.set({ atEnd });
-    if (store.get().section !== state.section) store.set({ section: state.section });
+    if (store.get().section !== state.section) {
+      // a light leak between scenes (not on the very first frame)
+      if (store.get().section && state.reveal >= 1) lightLeak();
+      store.set({ section: state.section });
+    }
   }
 }
 

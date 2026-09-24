@@ -280,15 +280,22 @@ body {
 .opening { position: fixed; inset: 0; opacity: calc(var(--reveal) * (1 - var(--scroll-intro-out, 0))); pointer-events: none; text-align: center; color: var(--soft); }
 .opening[data-hidden='true'] { visibility: hidden; }
 .opening__date { position: absolute; left: 0; right: 0; top: 14vh; margin: 0; font: 500 clamp(26px, 3.6vw, 44px)/1 var(--serif); letter-spacing: .2em; color: var(--rose-3);
-  animation: op-in 2.2s ease .6s both; }
+  animation: op-date 3s cubic-bezier(.2, .7, .2, 1) .6s both; }
 .opening__line { position: absolute; left: 0; right: 0; top: calc(22vh + var(--i) * 4.4vh); margin: 0; font: italic 500 clamp(17px, 2vw, 24px)/1.3 var(--serif); color: rgba(248, 241, 232, .82);
   animation: op-in 2s ease calc(2.4s + var(--i) * 1.9s) both; padding: 0 20px; }
 .opening__name { position: absolute; left: 0; right: 0; top: 67vh; margin: 0; font: 500 clamp(44px, 9vw, 110px)/1 var(--serif); letter-spacing: .08em; color: var(--soft);
-  text-shadow: 0 0 40px rgba(243, 223, 167, .35); animation: op-in 2.6s ease 7.6s both; }
+  text-shadow: 0 0 40px rgba(243, 223, 167, .35); animation: op-name 3.4s cubic-bezier(.2, .7, .2, 1) 7.6s both;
+  /* a slow sheen of light passing across her name, like light on a title card */
+  background: linear-gradient(100deg, var(--soft) 42%, #fff4d6 50%, var(--soft) 58%) 120% 0 / 260% 100% no-repeat; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.opening[data-hidden='false'] .opening__name { animation: op-name 3.4s cubic-bezier(.2, .7, .2, 1) 7.6s both, op-sheen 7s ease-in-out 11s infinite; }
 .opening__enter { position: absolute; left: 50%; top: 80vh; translate: -50% 0; pointer-events: auto; background: rgba(7, 9, 20, .35); border: 1px solid rgba(230, 201, 137, .45); color: var(--champagne-3);
   border-radius: 999px; min-height: 46px; padding: 0 26px; font: 11px var(--mono); letter-spacing: .28em; text-transform: uppercase; cursor: pointer; animation: op-in 1.6s ease 9.4s both; }
 .opening__enter:hover, .opening__enter:focus-visible { border-color: var(--champagne-2); background: rgba(230, 201, 137, .1); }
 @keyframes op-in { from { opacity: 0; transform: translateY(8px); filter: blur(4px); } }
+@keyframes op-date { from { opacity: 0; letter-spacing: .9em; filter: blur(8px); } }
+@keyframes op-name { from { opacity: 0; letter-spacing: .3em; filter: blur(10px); transform: scale(1.04); } }
+@keyframes op-sheen { 0%, 55% { background-position: 120% 0; } 100% { background-position: -20% 0; } }
+@media (prefers-reduced-motion: reduce) { .opening[data-hidden='false'] .opening__name { animation: op-in 1s ease both; } }
 /* one shooting star crossing the upper sky; tap it for a wish */
 .opening__star { position: absolute; left: 0; top: 0; width: 64px; height: 64px; padding: 0; border: 0; background: none; pointer-events: auto; cursor: pointer;
   animation: star-cross 3.2s cubic-bezier(.3, .1, .6, 1) 4.6s both, star-again 3.2s cubic-bezier(.3, .1, .6, 1) 24s infinite; }
@@ -420,3 +427,11 @@ html.no-webgl #interface { position: static; pointer-events: auto; }
   .finale-sky__last { bottom: calc(58px + var(--safe-bottom)); }
   .endcap { bottom: calc(6px + var(--safe-bottom)); }
 }
+
+/* a warm light leak between scenes (see ui/lightLeak.ts) */
+.lightleak { position: fixed; inset: -10% -30%; z-index: 45; pointer-events: none; opacity: 0; mix-blend-mode: screen;
+  background: radial-gradient(38% 70% at 30% 55%, rgba(255, 168, 108, .5), transparent 70%), radial-gradient(26% 60% at 62% 35%, rgba(255, 120, 150, .32), transparent 72%), linear-gradient(100deg, transparent 30%, rgba(255, 226, 180, .18) 48%, transparent 62%); }
+.lightleak.is-on { animation: leak-l 1.9s cubic-bezier(.3, .6, .3, 1) both; }
+.lightleak.is-on[data-side='r'] { animation-name: leak-r; }
+@keyframes leak-l { 0% { opacity: 0; transform: translateX(-22%); } 28% { opacity: .85; } 100% { opacity: 0; transform: translateX(18%); } }
+@keyframes leak-r { 0% { opacity: 0; transform: translateX(22%) scaleX(-1); } 28% { opacity: .85; } 100% { opacity: 0; transform: translateX(-18%) scaleX(-1); } }

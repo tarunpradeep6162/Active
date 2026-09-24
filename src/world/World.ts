@@ -5,11 +5,12 @@ import { getProgress } from '../birthday/progress';
 import { ProjectCards } from '../scenes/ProjectCards';
 import { Lab } from '../scenes/Lab';
 import { GardenSky } from '../scenes/GardenSky';
+import { StarSky } from '../scenes/StarSky';
+import { PetalWreath } from '../scenes/PetalWreath';
 import { LanternSky } from '../scenes/LanternSky';
 import { Constellation } from '../scenes/Constellation';
 import { getContent } from '../birthday/vault';
 import { Backdrop } from '../scenes/Backdrop';
-import { iridescentMaterial } from '../scenes/materials';
 import { ParticleField, type FieldOptions } from '../particles/ParticleField';
 import { Streaks } from '../particles/Streaks';
 import { Nebula } from '../particles/Nebula';
@@ -82,9 +83,12 @@ export class World {
   readonly lab = new Lab();
   /** the garden's sky, horizon and foreground bokeh */
   readonly gardenSky: GardenSky;
+  /** the opening's night sky (emblem and threshold) */
+  readonly starSky = new StarSky();
   readonly portal: LanternSky;
   readonly finaleSky: Constellation;
-  private manifestoRing: THREE.Mesh;
+  private manifestoRing: THREE.Group;
+  private wreath: PetalWreath;
   private fields: Record<string, ParticleField> = {};
   private streaks: Streaks[] = [];
   private nebulae: Record<string, Nebula> = {};
@@ -112,7 +116,7 @@ export class World {
     this.cards = new ProjectCards(titles);
     this.garden = new TulipGarden(titles, PROJECTS.map((p) => p.slug), settings.particleScale < 0.7);
     this.gardenSky = new GardenSky(settings.particleScale < 0.7);
-    this.scene.add(this.gardenSky.sky, this.gardenSky.bokeh);
+    this.scene.add(this.gardenSky.sky, this.gardenSky.bokeh, this.starSky.mesh);
     this.portal = new LanternSky(settings.hexCount);
     this.finaleSky = new Constellation(getContent().name, getContent().date, settings.particleScale);
 
@@ -120,12 +124,9 @@ export class World {
     this.root.add(this.emblem.group);
     this.add(this.emblem.group, 4, -12);
 
-    // manifesto glass ring (edge‑on)
-    // reference: a chunky, dark glass torus (thick tube), not a thin neon hoop
-    this.manifestoRing = new THREE.Mesh(
-      new THREE.TorusGeometry(2.9, 0.52, 48, 160),
-      iridescentMaterial({ base: '#0b0a12', envTop: '#9a98a8', envBottom: '#06070c', film: 0.25, glow: 0.08, transparent: true }),
-    );
+    // the threshold: a wreath of tulip petals (was a glass ring), edge‑on at first
+    this.wreath = new PetalWreath(settings.particleScale < 0.7);
+    this.manifestoRing = this.wreath.group;
     // camera‑attached (see placeManifestoRing): part of the headline layer over the work scene
     this.manifestoRing.frustumCulled = false;
     this.root.add(this.manifestoRing);
@@ -236,7 +237,7 @@ export class World {
     ring.scale.setScalar(portrait ? (0.48 * visW) / 3.42 : (0.34 * visH) / 3.42);
     const fade = portrait ? 1 - smoothstep(0.62, 0.75, man) : 1 - smoothstep(0.62, 0.8, man);
     ring.visible = fade > 0.001;
-    (ring.material as THREE.ShaderMaterial).uniforms.uOpacity.value = fade;
+    this.wreath.setOpacity(fade);
     // edge‑on before the section → ¾ at m = 0 → nearly face‑on by m ≈ 0.7
     const open = THREE.MathUtils.clamp(1 - man * (man < 0 ? 2.5 : 1), 0.05, Math.PI / 2 - 0.1) + Math.sin(state.time * 0.25) * 0.05 + state.pointer.targetX * 0.08;
     ring.quaternion.copy(camera.quaternion).multiply(this.ringQ.setFromAxisAngle(this.ringV.set(0, 1, 0), open));
@@ -420,6 +421,8 @@ export class World {
     this.cards.setEntry(workTimeline.card0Entry(wt));
     // an open chapter (and the finale's reveal) always sees the whole garden
     this.garden.setCrumble(workTimeline.spineDissolve(wt) * (1 - clamp(state.focus + this.gardenReveal)));
+    // the opening's night, handing over to the garden's own sky as she enters it
+    this.starSky.update(camera, state.reveal * (1 - smoothstep(-0.07, 0.02, wt)), smoothstep(0, 0.4, intro) * (1 - smoothstep(0.7, 1, intro)) + (state.section === 'intro' ? 0.6 : 0));
     // the sky behind the garden: there while the garden is, gone with it into the cake room
     const skyAmt = Math.max(smoothstep(-0.05, 0.04, wt) * (1 - workTimeline.spineDissolve(wt)), this.gardenReveal) * (1 - clamp(state.focus * 1.5));
     this.gardenSky.update(camera, skyAmt, clamp(0.1 + wt * 0.95) * (1 - this.gardenReveal) + this.gardenReveal, state.viewport.dpr);

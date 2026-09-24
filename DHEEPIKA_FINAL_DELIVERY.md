@@ -17,8 +17,8 @@ nothing on the page says it). To change the URL, add a domain or rename the proj
 | # | Moment | Where in the code |
 |---|--------|-------------------|
 | 0 | **Loader**: a small bud gathers light, with "Gathering memories…" | `Preloader` in `src/ui/Sections.tsx` |
-| 1 | **Opening**: stars; *25 · 11*; "Some dates are just dates. / But one changed my world."; a shooting star she can make a wish on; her name; **Enter our garden** | `IntroHint`, the heart + D emblem in `src/scenes/Emblem.ts` |
-| 2 | **Threshold**: "A garden made of memories" | `Manifesto` |
+| 1 | **Opening**: a deep night sky with drifting rose and violet nebulae and a faint Milky Way, opened like a film (letterbox, the date's letters settling in, a slow sheen of light across her name). The mark is a rose‑gold heart holding a champagne *D*, with a warm light inside and gold dust around it, and the first tulip's gold stem and leaves beneath it. *25 · 11*; "Some dates are just dates. / But one changed my world."; a shooting star she can make a wish on; her name; **Enter our garden** | `IntroHint`, the heart + D emblem in `src/scenes/Emblem.ts` |
+| 2 | **Threshold**: "A garden made of memories", framed by a wreath of tulip petals and leaves with gold light flowing round it, a doorway into the garden | `Manifesto`, `src/scenes/PetalWreath.ts` |
 | 3 | **The tulip garden**: 25 tulips open as she scrolls, and 14 of them hold the chapters. Fireflies and a few butterflies. Behind them, a real sky with a horizon: hills in the haze, thin clouds, stars, and a moon that turns into a low golden sun as she descends. Soft out‑of‑focus lights drift past the lens. Each chapter unfolds out of its tulip. | `src/scenes/TulipGarden.ts`, `src/scenes/GardenSky.ts`, `src/birthday/ui/*` |
 | 4 | **The cake in the cage**: a room staged like a film set: a plum velvet drape, strings of warm fairy lights out of focus, a rose‑gold cage, and a spotlight with dust turning in its beam. Touch the lock; the bars rise and the cake comes forward with its candles lit. **Blow out the candles**: hold the button (or, only if she taps for it, use the microphone). The flames lean and go out, smoke curls from every wick, there is a moment of darkness, then gold dust and petals. The candles relight for another wish. | `src/scenes/Lab.ts`, `src/scenes/CakeRoom.ts`, `src/scenes/BirthdayCake.ts`, `LabLabel` |
 | 5 | **The lantern sky**: a still night lake under the Milky Way, with a far shore of hills and pines. Paper lanterns rise off the water and their light shimmers in it. Twelve hover close; touching one lets its wish go. Its words rise, and it climbs into a star that stays in her sky. | `src/scenes/LanternSky.ts`, `src/scenes/NightLake.ts`, `LanternSkyLabel` |
@@ -41,7 +41,7 @@ Without WebGL, the earlier flat versions come back.
 | # | Chapter | The scene |
 |---|---------|-----------|
 | 1 | 25 · 11 | One star in a nebula. Touching it twice makes it burst into a galaxy that gathers into the date. |
-| 2 | Memory Universe | Polaroids orbit a glowing core. The one she touches comes forward. |
+| 2 | Memory Universe | Polaroids orbit a glowing core that sends slow shafts of light through drifting dust. The one she touches comes forward. |
 | 3 | The Letter | An envelope in candlelight. The wax seal breaks and the letter rises. |
 | 4 | 14 Things | The reasons are stars. Threads of light join the ones she finds, then her name is written in stars. |
 | 5 | Catch My Heart | A tulip stands behind the game, its head where the petals fall from. It begins as a closed bud. Each catch brings a petal home and opens it further, and winning makes it bloom fully in a spiral of light petals. |
@@ -77,8 +77,10 @@ Without WebGL, the earlier flat versions come back.
 - **Grade**: plum in the shadows and champagne in the highlights, a soft oval vignette, and gentle
   bloom. The old film grain is gone; only a faint dither remains to stop dark gradients from
   banding.
-- **Letterbox**: bars slide in for the two big moments, the cake leaving its cage and her name
+- **Letterbox**: bars slide in for the opening title and the two big moments, the cake leaving its cage and her name
   forming in the stars.
+- **Light leaks**: a warm leak of light sweeps across the frame at every change of scene and
+  whenever a chapter opens (never with reduced motion).
 - **Lens**: the brightest lights (candles, fairy lights, the sun) stretch into faint horizontal
   streaks, as through a cinema lens.
 - **Camera**: in the cake room it pushes in slowly as the cake comes out of its cage. The lantern sky is framed level, and the finale drifts wide while the stars wander,

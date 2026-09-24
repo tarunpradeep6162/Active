@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { iridescentMaterial, darkLitMaterial } from './materials';
+import { iridescentMaterial, darkLitMaterial, roseGoldMaterial } from './materials';
 import { createWaterFloor } from '../fluid/Water';
 import { ANCHOR } from '../world/journey';
 import { rng, clamp, smoothstep } from '../utils/math';
 import { BirthdayCake } from './BirthdayCake';
-import { CakeRoom, roseGoldMaterial } from './CakeRoom';
+import { CakeRoom } from './CakeRoom';
 
 /** Heading (from the centre) the lab camera looks along — the lock hangs on that side. */
 const FRONT_DEG = 70;

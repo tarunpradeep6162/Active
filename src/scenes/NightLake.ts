@@ -14,11 +14,12 @@ const SKY = /* glsl */ `
   // the far shore, by direction: rolling hills and a ragged line of pines along them
   float shore(vec3 d){
     float az = atan(d.x, -d.z);
-    float h = .012 + .03 * fbm2(vec2(az * 3.2, 1.7)) + .012 * sin(az * 7. + 1.);
+    vec2 ring = vec2(cos(az), sin(az));
+    float h = .012 + .03 * fbm2(ring * 3.2 + 1.7) + .012 * sin(az * 7. + 1.);
     float cell = floor(az * 70.);
     float t = abs(fract(az * 70.) - .5) * 2.;
     float pine = step(.35, hash12(vec2(cell, 3.))) * (1. - t) * (.008 + .012 * hash12(vec2(cell, 9.)));
-    return h + pine * smoothstep(.2, .6, fbm2(vec2(az * 5., 4.)));
+    return h + pine * smoothstep(.2, .6, fbm2(ring * 5. + 4.));
   }
   vec3 skyCol(vec3 d){
     float e = d.y;

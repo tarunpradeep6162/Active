@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { lightLeak } from '../../ui/lightLeak';
 import { PROJECTS, projectBySlug, type Project } from '../../app/projects';
 import { events } from '../../core/state';
 import { useStore } from '../../ui/useStore';
@@ -49,6 +50,9 @@ export function ChapterView() {
   const vault = useVaultState();
   const prog = useProgress();
   const closeRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (open) lightLeak();
+  }, [open]);
   useEffect(() => {
     if (open) window.setTimeout(() => closeRef.current?.focus({ preventScroll: true }), 700);
   }, [open, p?.slug]);

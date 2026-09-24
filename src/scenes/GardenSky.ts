@@ -91,8 +91,10 @@ export class GardenSky {
             float cl = smoothstep(.55, .85, fbm2(cp * .55 + vec2(uTime * .004, 0.))) * smoothstep(.0, .06, e) * smoothstep(.45, .1, e);
             col = mix(col, mix(vec3(.16, .12, .24), vec3(1., .55, .42), w) * (.6 + .6 * exp(-(1. - ca) * 6.)), cl * .55);
             // hills in the haze: a far range and a nearer, darker one, with mist between
-            float h1 = .02 + .055 * fbm2(vec2(az * 2.1, 1.3));
-            float h2 = -.005 + .06 * fbm2(vec2(az * 3.7 + 4., 7.1)) + .02 * sin(az * 5. + 1.);
+            // (sampled around a circle, so the ranges join up seamlessly all the way round)
+            vec2 ring = vec2(cos(az), sin(az));
+            float h1 = .02 + .055 * fbm2(ring * 2.1 + 1.3);
+            float h2 = -.005 + .06 * fbm2(ring * 3.7 + vec2(4., 7.1)) + .02 * sin(az * 5. + 1.);
             vec3 far = mix(hor * .55, hor * .75, w) + vec3(.02, .01, .03);
             vec3 near = mix(vec3(.03, .02, .05), vec3(.12, .05, .06), w);
             col = mix(col, far, smoothstep(h1 + .002, h1 - .004, e));
