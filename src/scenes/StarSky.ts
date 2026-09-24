@@ -51,14 +51,14 @@ export class StarSky {
             // nebulae: two layers of soft cloud drifting past each other
             // (sampled in 3D on the sky sphere, so there is no seam anywhere around it)
             float n1 = fbm3(d * 1.6 + vec3(t, -t * .4, 0.)) * .5 + .5;
-            float n2 = fbm3(d * 3.2 - vec3(t * 1.4, t, 0.) + n1 * 1.3) * .5 + .5;
+            float n2 = snoise(d * 3.2 - vec3(t * 1.4, t, 0.) + n1 * 1.3) * .5 + .5;
             float cloud = smoothstep(.5, 1., n1 * .62 + n2 * .55);
             col += vec3(.16, .045, .12) * cloud * .32 + vec3(.07, .055, .18) * pow(cloud, 2.) * .38;
             // a faint Milky Way across the frame
             vec3 nb = normalize(vec3(.5, .8, .3));
             float bd = dot(d, nb);
             float band = exp(-bd * bd * 18.);
-            col += vec3(.28, .24, .4) * band * (.05 + .12 * (fbm3(d * 5. + 2.) * .5 + .5));
+            col += vec3(.28, .24, .4) * band * (.05 + .12 * n2);
             // a warm breath of light behind the emblem as the opening wakes
             float c = length(vec2(d.x, d.y - .02));
             col += vec3(.9, .45, .45) * exp(-c * c * 30.) * .08 * uGlow;
