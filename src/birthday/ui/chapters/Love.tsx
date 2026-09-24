@@ -7,20 +7,59 @@ import { saveLetterPdf } from '../../keepsakes';
 /* 3 ── A letter I never said out loud: a sealed envelope, then the letter writes itself. */
 export function Letter({ slug, onDone }: ChapterProps) {
   const c = useContent();
-  const [open, setOpen] = useState(false);
+  // sealed → opening (the envelope in 3D breaks its seal) → open (the letter writes itself)
+  const [phase, setPhase] = useState<'sealed' | 'opening' | 'open'>('sealed');
+  const open = phase === 'open';
   const full = [c.letter.greeting, ...c.letter.paragraphs, c.letter.signoff].join('\n\n');
   const text = useTypewriter(full, open, 42);
+  const ref = useRef<HTMLCanvasElement>(null);
+  const stage = useRef<{ open(): void; dispose(): void } | null>(null);
+  const [live, setLive] = useState(false);
   useEffect(() => {
     if (open && text.length === full.length) onDone();
   }, [open, text]);
+  useEffect(() => {
+    let alive = true;
+    import('../stage/LetterScene')
+      .then(({ LetterScene }) => {
+        if (!alive || !ref.current) return;
+        const s = new LetterScene(ref.current);
+        s.onOpened = () => alive && setPhase('open');
+        stage.current = s;
+        setLive(true);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+      stage.current?.dispose();
+      stage.current = null;
+    };
+  }, []);
+  const breakSeal = () => {
+    if (phase !== 'sealed') return;
+    if (stage.current) {
+      setPhase('opening');
+      stage.current.open();
+    } else setPhase('open');
+  };
+  // never wait on the animation forever
+  useEffect(() => {
+    if (phase !== 'opening') return;
+    const id = setTimeout(() => setPhase('open'), 6000);
+    return () => clearTimeout(id);
+  }, [phase]);
   return (
-    <div className="bd-letter">
-      {!open ? (
-        <button type="button" className="bd-envelope" onClick={() => setOpen(true)} aria-label="Open the letter">
+    <div className="bd-letter" data-live={live} data-phase={phase}>
+      <div className="bd-cosmos" aria-hidden="true" onClick={breakSeal}>
+        <canvas ref={ref} className="bd-cosmos__canvas bd-cosmos__canvas--interactive" />
+      </div>
+      {!live && phase === 'sealed' && (
+        <button type="button" className="bd-envelope" onClick={breakSeal} aria-label="Open the letter">
           <span className="bd-envelope__flap" />
           <span className="bd-envelope__seal">♥</span>
         </button>
-      ) : (
+      )}
+      {open && (
         <div className="bd-paper" aria-live="polite">
           {text.split('\n\n').map((p, k) => (
             <p key={k}>{p}</p>
@@ -33,12 +72,12 @@ export function Letter({ slug, onDone }: ChapterProps) {
           Keep this letter (PDF)
         </button>
       )}
-      {!open && (
-        <button type="button" className="bd-btn" onClick={() => setOpen(true)}>
+      {phase === 'sealed' && (
+        <button type="button" className="bd-btn bd-letter__open" onClick={breakSeal}>
           Open my letter
         </button>
       )}
-      {!open && <p className="bd-hint">Sealed. For you only.</p>}
+      {phase === 'sealed' && <p className="bd-hint bd-letter__hint">Sealed. For you only.</p>}
       <HiddenHeart slug={slug} style={{ right: '8%', bottom: '6%' }} />
     </div>
   );

@@ -363,3 +363,12 @@
   .bd-chapter__stage:has(.bd-cosmos__canvas--interactive) .bd-lightbox { inset: auto 8% 6% 8%; top: auto; width: auto; justify-items: center; text-align: center; }
 }
 .bd-memories:has(.bd-lightbox) .bd-orbit__hint { opacity: 0; transition: opacity .4s; }
+
+/* 3 · The Letter — the envelope in candlelight; the paper rises over it once opened */
+.bd-letter[data-live="true"] { min-height: 100%; align-content: end; }
+.bd-letter[data-live="true"][data-phase="open"] { align-content: center; }
+.bd-letter__hint { font: italic 500 clamp(17px, 1.9vw, 21px) var(--serif); color: rgba(248, 241, 232, .8); }
+.bd-letter[data-live="true"] .bd-paper { animation: bd-paper-rise 1.2s cubic-bezier(.2, .8, .2, 1) both; box-shadow: 0 40px 90px rgba(0, 0, 0, .55), 0 0 60px rgba(255, 200, 140, .18); }
+@keyframes bd-paper-rise { from { opacity: 0; transform: translateY(40px) scale(.97); } to { opacity: 1; transform: none; } }
+.bd-letter .bd-cosmos::after { content: ''; position: absolute; inset: 0; background: rgba(7, 9, 20, .62); opacity: 0; transition: opacity 1.4s ease; pointer-events: none; }
+.bd-letter[data-phase="open"] .bd-cosmos::after { opacity: 1; }

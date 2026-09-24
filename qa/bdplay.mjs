@@ -42,7 +42,12 @@ await step(1, async () => {
   await page.click('.bd-tabs button:nth-child(2)'); await page.click('.bd-camera'); await page.waitForSelector('.bd-polaroid__print');
   await page.click('.bd-tabs button:nth-child(3)'); await page.locator('.bd-puzzle__tile').nth(0).click(); await page.locator('.bd-puzzle__tile').nth(1).click();
 });
-await step(2, async () => { await page.click('.bd-envelope', { force: true }); });
+await step(2, async () => {
+  // the 3D envelope ("Open my letter"), or the flat envelope without WebGL
+  if (await page.locator('.bd-letter__open').count()) await page.click('.bd-letter__open');
+  else await page.click('.bd-envelope', { force: true });
+  await page.waitForSelector('.bd-paper', { timeout: 60000 });
+});
 await step(3, async () => { const n = await page.locator('.bd-reason-star').count(); for (let k = 0; k < n; k++) await page.locator('.bd-reason-star').nth(k).click({ force: true }); await page.waitForSelector('.bd-reasons__name button'); await page.locator('.bd-reasons__name button').first().click(); });
 // game: start it (exercise the canvas loop), leave mid‑game, come back and skip
 await open(4); await page.click('.bd-game__overlay .bd-btn'); await page.waitForTimeout(3000);
