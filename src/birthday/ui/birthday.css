@@ -379,3 +379,19 @@
 .bd-reasons[data-live="true"] .bd-reasons__text { font: italic 500 clamp(18px, 2vw, 24px)/1.5 var(--serif); letter-spacing: 0; color: #fff8ee; text-shadow: 0 1px 14px rgba(7, 9, 20, .8); max-width: 30ch; }
 .bd-reasons[data-live="true"].is-constellation .bd-reasons__name button { color: transparent; text-shadow: none; }
 .bd-reasons[data-live="true"] .bd-reasons__name { transition: color 1.6s ease; }
+
+/* chapter 11 · the candle in 3D: words and the button sit below it, her wish line above */
+.bd-wish[data-live="true"] { min-height: 100%; align-content: end; padding-bottom: 2vh; }
+.bd-wish[data-live="true"] .bd-hint { font: italic 500 clamp(16px, 1.8vw, 21px)/1.5 var(--serif); color: #fff8ee; text-shadow: 0 1px 14px rgba(7, 9, 20, .85); }
+.bd-wish[data-live="true"] .bd-wish__line { position: absolute; top: 4%; left: 50%; translate: -50%; }
+.bd-wish[data-live="true"][data-stage="holding"] .bd-hint { opacity: .5; transition: opacity .6s ease; }
+
+/* chapter 14 · Door 25 in 3D: the door stands high in the frame, the words and list below it */
+.bd-cosmos { transition: opacity 2.4s ease; }
+.bd-cosmos--gone { opacity: 0; }
+.bd-door[data-live="true"] { min-height: 100%; align-content: end; padding-bottom: 2vh; }
+.bd-door[data-live="true"] > p { font: italic 500 clamp(16px, 1.8vw, 21px)/1.5 var(--serif); color: #fff8ee; text-shadow: 0 1px 14px rgba(7, 9, 20, .85); margin: 0; }
+.bd-door[data-live="true"] .bd-door__list li { text-shadow: 0 1px 10px rgba(7, 9, 20, .9); }
+.bd-chapter__stage:has(.bd-cosmos) .bd-finale[data-stage='1'] { background: none; }
+.bd-finale:has(> .bd-btn--big) { min-height: 100%; align-content: end; padding-bottom: 6vh; }
+.bd-finale:has(> .bd-btn--big) .bd-finale__date { position: absolute; }

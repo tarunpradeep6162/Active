@@ -3,6 +3,7 @@ import { events, state } from '../../../core/state';
 import { HiddenHeart, ParticleText, useContent, useTypewriter } from '../shared';
 import type { ChapterProps } from '../ChapterView';
 import { saveLetterPdf } from '../../keepsakes';
+import { Backdrop, useStage } from '../stage/useStage';
 
 /* 3 ── A letter I never said out loud: a sealed envelope, then the letter writes itself. */
 export function Letter({ slug, onDone }: ChapterProps) {
@@ -196,9 +197,13 @@ export function Wish({ slug, onDone }: ChapterProps) {
   const [hold, setHold] = useState(0);
   const raf = useRef(0);
   const stopMicRef = useRef<() => void>(() => {});
+  // the candle in 3D: its flame leans and dims as she holds, then smoke and her wish's sparks rise
+  const scene = useStage(() => import('../stage/WishScene').then(({ WishScene }) => (cv: HTMLCanvasElement) => new WishScene(cv)));
+  useEffect(() => scene.stage.current?.setHold(hold), [hold, scene.live]);
   const blowOut = () => {
     stopMicRef.current();
     state.wishHold = 0;
+    scene.stage.current?.blowOut();
     setStage('out');
     // the wish's light climbs the whole garden; every flower already visited glows as it passes
     events.emit('wishLight', undefined);
@@ -271,11 +276,14 @@ export function Wish({ slug, onDone }: ChapterProps) {
     }
   };
   return (
-    <div className="bd-wish" data-stage={stage}>
-      <div className="bd-candle" style={{ ['--hold' as string]: hold }}>
-        <span className="bd-candle__flame" />
-        <span className="bd-candle__body" />
-      </div>
+    <div className="bd-wish" data-stage={stage} data-live={scene.live}>
+      <Backdrop canvas={scene.ref} />
+      {!scene.live && (
+        <div className="bd-candle" style={{ ['--hold' as string]: hold }}>
+          <span className="bd-candle__flame" />
+          <span className="bd-candle__body" />
+        </div>
+      )}
       {stage !== 'out' ? (
         <>
           <p className="bd-hint">Close your eyes. Make a wish. Then hold the candle until it goes out.</p>

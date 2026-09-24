@@ -3,6 +3,7 @@ import { events } from '../../../core/state';
 import { PROJECTS } from '../../../app/projects';
 import { HiddenHeart, Media, ParticleText, filled, reducedMotion, useContent, useProgress, useTypewriter } from '../shared';
 import type { ChapterProps } from '../ChapterView';
+import { Backdrop, useStage } from '../stage/useStage';
 
 /* 1 ── The Beginning: darkness, one star; waking it reveals the date and the line. */
 export function Beginning({ slug, onDone }: ChapterProps) {
@@ -168,9 +169,32 @@ export function Finale({ slug, onDone }: ChapterProps) {
   const locked = doneCount < others.length;
   const allHearts = prog.hearts.length >= PROJECTS.length;
   const [stage, setStage] = useState(0);
+  const [opening, setOpening] = useState(false);
   const timers = useRef<number[]>([]);
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
+  // Door 25 in 3D: lights around the arch count the open chapters; it swings open and the camera
+  // passes through into the light before the finale begins
+  const beginRef = useRef(() => {});
+  const scene = useStage(() =>
+    import('../stage/FinaleScene').then(({ FinaleScene }) => (cv: HTMLCanvasElement) => {
+      const s = new FinaleScene(cv, others.length);
+      s.onThrough = () => beginRef.current();
+      return s;
+    }),
+  );
+  useEffect(() => scene.stage.current?.setProgress(doneCount), [doneCount, scene.live]);
+  const begun = useRef(false);
+  const openDoor = () => {
+    if (opening || begun.current) return;
+    if (!scene.stage.current) return begin();
+    setOpening(true);
+    scene.stage.current.open();
+    timers.current.push(window.setTimeout(() => beginRef.current(), 7000)); // never wait forever
+  };
   const begin = () => {
+    if (begun.current) return;
+    begun.current = true;
+    setOpening(false);
     setStage(1);
     const at = (ms: number, s: number) => timers.current.push(window.setTimeout(() => setStage(s), reducedMotion() ? ms / 3 : ms));
     at(c.finale.voice ? 9000 : 2500, 2); // darkness (+ voice) → memories
@@ -183,35 +207,55 @@ export function Finale({ slug, onDone }: ChapterProps) {
   }, [stage]);
   // leaving the finale always returns the camera to the chapter
   useEffect(() => () => events.emit('gardenReveal', false), []);
+  beginRef.current = begin;
   useEffect(() => {
     if (stage >= 4) onDone();
   }, [stage]);
-  if (locked) {
-    return (
-      <div className="bd-door">
+  return (
+    <>
+      <Backdrop canvas={scene.ref} className={stage >= 5 ? 'bd-cosmos--gone' : ''} />
+      {locked ? (
+        <FinaleLocked slug={slug} live={scene.live} doneCount={doneCount} others={others} done={prog.done} />
+      ) : (
+        <FinaleOpen slug={slug} stage={stage} opening={opening} allHearts={allHearts} onOpen={openDoor} />
+      )}
+    </>
+  );
+}
+
+type LockedProps = { slug: string; live: boolean; doneCount: number; others: typeof PROJECTS; done: string[] };
+function FinaleLocked({ slug, live, doneCount, others, done }: LockedProps) {
+  return (
+    <div className="bd-door" data-live={live}>
+      {!live && (
         <div className="bd-door__frame" aria-hidden="true">
           <span>25</span>
         </div>
-        <p>
-          This door opens when every other door is open. <strong>{doneCount} / {others.length}</strong>
-        </p>
-        <ul className="bd-door__list">
-          {others.map((p) => (
-            <li key={p.slug} data-done={prog.done.includes(p.slug)}>
-              {p.title}
-            </li>
-          ))}
-        </ul>
-        <HiddenHeart slug={slug} style={{ left: '50%', bottom: '3%' }} />
-      </div>
-    );
-  }
+      )}
+      <p>
+        This door opens when every other door is open. <strong>{doneCount} / {others.length}</strong>
+      </p>
+      <ul className="bd-door__list">
+        {others.map((p) => (
+          <li key={p.slug} data-done={done.includes(p.slug)}>
+            {p.title}
+          </li>
+        ))}
+      </ul>
+      <HiddenHeart slug={slug} style={{ left: '50%', bottom: '3%' }} />
+    </div>
+  );
+}
+
+type OpenProps = { slug: string; stage: number; opening: boolean; allHearts: boolean; onOpen: () => void };
+function FinaleOpen({ slug, stage, opening, allHearts, onOpen }: OpenProps) {
+  const c = useContent();
   return (
-    <div className="bd-finale" data-stage={stage}>
+    <div className="bd-finale" data-stage={stage} data-opening={opening}>
       {/* the 14th heart must be findable whether or not the door was ever seen locked */}
       <HiddenHeart slug={slug} style={{ left: '3%', bottom: '3%' }} />
-      {stage === 0 && (
-        <button type="button" className="bd-btn bd-btn--big" onClick={begin}>
+      {stage === 0 && !opening && (
+        <button type="button" className="bd-btn bd-btn--big" onClick={onOpen}>
           Open Door 25
         </button>
       )}
