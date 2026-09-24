@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { chooseThisOrThat } from '../../progress';
 import { HiddenHeart, useContent, useProgress } from '../shared';
 import type { ChapterProps } from '../ChapterView';
+import { saveNextDateCard } from '../../keepsakes';
 
 /* 5 ── Catch My Heart: petals escape the flower; steer a little light to catch them, dodge the clouds. */
 /** A tulip petal (rose, or gold for the double‑value ones), tumbling as it falls. */
@@ -232,6 +233,11 @@ function NextDateCard({ slug }: { slug: string }) {
         ))}
       </ul>
       <p>Saved on this device. I'll take it from here. 😌</p>
+      {chosen.length > 0 && (
+        <button type="button" className="bd-link" onClick={() => saveNextDateCard(chosen)}>
+          Save as an image
+        </button>
+      )}
       <HiddenHeart slug={slug} style={{ right: '3%', bottom: '3%' }} />
     </div>
   );

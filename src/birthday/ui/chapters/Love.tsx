@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { events, state } from '../../../core/state';
 import { HiddenHeart, ParticleText, useContent, useTypewriter } from '../shared';
 import type { ChapterProps } from '../ChapterView';
+import { saveLetterPdf } from '../../keepsakes';
 
 /* 3 ── A letter I never said out loud: a sealed envelope, then the letter writes itself. */
 export function Letter({ slug, onDone }: ChapterProps) {
@@ -26,6 +27,11 @@ export function Letter({ slug, onDone }: ChapterProps) {
           ))}
           <span className="bd-caret" aria-hidden="true" />
         </div>
+      )}
+      {open && text.length === full.length && (
+        <button type="button" className="bd-link" onClick={() => saveLetterPdf(c)}>
+          Keep this letter (PDF)
+        </button>
       )}
       {!open && (
         <button type="button" className="bd-btn" onClick={() => setOpen(true)}>
