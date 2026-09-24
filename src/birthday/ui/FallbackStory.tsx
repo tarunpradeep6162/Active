@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { initVault } from '../vault';
 import { Gate } from './ChapterView';
-import { Media, useContent, useVaultState } from './shared';
+import { Media, filled, useContent, useVaultState } from './shared';
 
 /**
  * The story without 3D (no WebGL 2, or the world failed to start): the same words and
@@ -34,7 +34,7 @@ export function FallbackStory() {
                 <Media media={m.media} label={`Photo ${i + 1}`} />
                 <figcaption>
                   {m.caption}
-                  {m.date || m.place ? <span>{[m.date, m.place].filter(Boolean).join(' · ')}</span> : null}
+                  {filled(m.date) || filled(m.place) ? <span>{[filled(m.date), filled(m.place)].filter(Boolean).join(' · ')}</span> : null}
                 </figcaption>
               </figure>
             ))}

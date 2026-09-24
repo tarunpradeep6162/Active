@@ -139,13 +139,20 @@ export const PLACEHOLDER: BirthdayContent = {
       'The one I can never listen to without smiling.',
     ][i],
   })),
+  // your dates and words (the full, uncut version lives in birthday-private/ for the vault)
+  timelineStory: {
+    intro: 'Sometimes I sit quietly and think about how our love actually began… and suddenly all those dates come alive in my mind like a movie.',
+    outro: 'Every single date you gave me is not just a memory… it’s a piece of my heart that you are carrying.\nAnd when I think of all these moments, I just feel one thing clearly.\nYou are not just a chapter in my story, Dheepika… 💚 you are the whole book ♾️',
+  },
   timeline: [
-    { label: 'Before Us', text: 'Two separate stories, not knowing yet that they were about to become one.' },
-    { label: 'We Met', date: P('date'), text: 'An ordinary day that turned out to be the most important one.' },
-    { label: 'Getting Closer', date: P('date'), text: 'Somewhere in the conversations and the small moments, you became my favourite person.' },
-    { label: 'Us', date: P('date'), text: 'The day I realised this was something I never wanted to lose.' },
-    { label: 'Today', text: 'Here. Still choosing you, still amazed by you, still learning you.' },
-    { label: 'What Comes Next', text: 'Everything we haven’t done yet. I can’t wait for all of it.' },
+    { label: 'The beginning', date: '23 October', text: 'The day our story slowly started writing itself, even though neither of us realised how deep we would fall.' },
+    { label: 'First meet, first kiss', date: '30 October', text: 'Our first meet and first kiss. Those late texts where we both acted normal, but inside something in us had already changed… something had already chosen each other.' },
+    { label: '“I love you”', date: '31 October', text: 'The day I surprised you. You kissed me and whispered “I love you” against my lips.\nThat single moment still feels like it is carved into my chest. I didn’t just hear it, I felt it.' },
+    { label: 'Ooty', date: '2 November', text: 'Ooty… our first trip together. A trip filled with love, fear, excitement, innocence, and a kind of closeness I didn’t even know I was capable of feeling.\nThat day changed something in both of us, deep inside our hearts.' },
+    { label: 'Your day', date: '25 November', text: 'Your day. I can never forget it.\nA day that started painfully, but ended with tears… not the sad ones, the ones that come only when someone matters too much.\nThat day taught me that even our fights have love inside them.' },
+    { label: 'The rain', date: '29 November', text: 'The shopping, the gifts, the rain… and that moment where we pulled each other close because the world around us became too cold.\nI still remember your warmth in that rain, like something only you can give me.' },
+    { label: 'The lake', date: '30 November', text: 'We laughed on the pedal boat, enjoying the lake. Your hair clip moment still makes me smile 😂\nAnd the way we held each other and trusted each other… that memory will always feel special to me.' },
+    { label: 'Two souls', date: '11 & 12 December', text: 'Those late night moments where we were both too shy to admit how much we wanted each other.\nYou made me feel wanted, not just in the moment, but in my heart. Those days weren’t just passion, they were two souls craving each other.' },
   ],
   emptyFrame: 'Next memory goes here.',
   gifts: [

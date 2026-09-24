@@ -72,7 +72,7 @@ export function ChapterView() {
         <span className="bd-meta" title="Hidden hearts found">
           ♥ {prog.hearts.length} / {PROJECTS.length}
         </span>
-        {vault === 'preview' && <span className="bd-meta bd-preview">Preview — placeholder content</span>}
+        
         <button type="button" className="bd-btn" tabIndex={open ? 0 : -1} onClick={() => events.emit('navigate', { name: 'project', slug: next.slug })}>
           Next: {next.title} →
         </button>

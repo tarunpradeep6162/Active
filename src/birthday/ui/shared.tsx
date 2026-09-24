@@ -6,6 +6,8 @@ import { findHeart, getProgress, subscribeProgress } from '../progress';
 export const useContent = () => useSyncExternalStore(subscribeVault, getContent);
 export const useVaultState = () => useSyncExternalStore(subscribeVault, getVaultState);
 export const useProgress = () => useSyncExternalStore(subscribeProgress, getProgress);
+/** A content value, or '' while it is still a [bracketed] slot waiting for the real fact. */
+export const filled = (s?: string | null) => (s && !/^\s*\[.*\]\s*$/.test(s) ? s : '');
 
 /** True when the user asked the OS for less motion. */
 export const reducedMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;

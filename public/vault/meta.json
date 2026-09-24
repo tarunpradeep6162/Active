@@ -1,7 +1,1 @@
-{
- "v": 1,
- "salt": "MNbWBo2bANw6+Xt14Fo27A==",
- "iterations": 600000,
- "check": "3yn+QZfgzEWoO3C+R6+WehnLbzbMj6TKs7uzakjrYvc12TiFL6lXW1RZ",
- "hint": "Our first stay: the place, then the date (like: place 1 january)"
-}
+{ "v": 1, "vault": false, "note": "No vault yet: the site shows its shipped content. npm run vault replaces this file." }

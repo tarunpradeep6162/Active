@@ -32,6 +32,21 @@ nothing on the page says it). To change the URL, add a domain or rename the proj
 Routes: `/` (the journey), `/garden` and `/garden/<chapter>`, and `/for-you`. The old `/work…` and
 `/contact` links still resolve, so nothing breaks.
 
+## Current state: no passphrase (until the final build)
+
+- The site is live **without a passphrase**. It shows the shipped content. The timeline is your
+  real dates and words, with only the explicit sentences removed for the public version.
+- **Waiting for the final build, in the git‑ignored `birthday-private/content.json`:** your
+  letter (7 paragraphs from your messages) and the full, uncut timeline. They are not on the
+  public site.
+- An encrypted backup of both is in git history (commit `373e08b`, `public/vault/content.bin`),
+  so nothing is lost if this machine is cleared.
+- **Final build:** fill in the remaining facts (photos, song titles, voice note), then run
+  `npm run vault -- --pass "…" --hint "…"`, build, commit `public/vault/`, and deploy.
+  Passphrases are matched ignoring capital letters and extra spaces.
+- Slots still waiting for a real fact ([date], [place], song titles) are hidden on the site
+  until they're filled.
+
 ## Cinematic language
 
 - **Act cards**: each world opens with a quiet title, like a film's act break: *I · Our Garden*,

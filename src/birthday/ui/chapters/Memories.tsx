@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { events } from '../../../core/state';
 import { chooseGift } from '../../progress';
 import { mediaUrl } from '../../vault';
-import { HiddenHeart, Media, useContent, useProgress } from '../shared';
+import { HiddenHeart, Media, filled, useContent, useProgress } from '../shared';
 import type { ChapterProps } from '../ChapterView';
 
 /* 2 ── Memory Universe: floating memories, a Polaroid camera and a photo puzzle. */
@@ -45,7 +45,7 @@ export function MemoryUniverse({ slug, onDone }: ChapterProps) {
             <div className="bd-lightbox" role="dialog" aria-label="Memory">
               <Media media={m.media} label={`Photo ${open! + 1}`} className="bd-lightbox__media" />
               <p className="bd-lightbox__caption">{m.caption}</p>
-              <p className="bd-meta">{[m.date, m.place].filter(Boolean).join(' · ')}</p>
+              <p className="bd-meta">{[filled(m.date), filled(m.place)].filter(Boolean).join(' · ')}</p>
               {m.note && <p>{m.note}</p>}
               <button type="button" className="bd-btn" onClick={() => setOpen(null)}>
                 Close

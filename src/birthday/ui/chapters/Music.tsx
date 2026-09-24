@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { HiddenHeart, Media, useContent } from '../shared';
+import { HiddenHeart, Media, filled, useContent } from '../shared';
 import type { ChapterProps } from '../ChapterView';
 
 /**
@@ -18,7 +18,7 @@ export function MusicRoom({ slug, onDone }: ChapterProps) {
     <div className="bd-music">
       <div className={`bd-record ${s ? 'is-playing' : ''}`} aria-hidden="true">
         <div className="bd-record__disc">
-          <div className="bd-record__label">{s ? s.title : '♪'}</div>
+          <div className="bd-record__label">{s && filled(s.title) ? s.title : '♪'}</div>
         </div>
         <div className="bd-record__arm" />
       </div>
@@ -26,8 +26,8 @@ export function MusicRoom({ slug, onDone }: ChapterProps) {
         {c.songs.map((song, k) => (
           <li key={k}>
             <button type="button" aria-current={i === k} onClick={() => { setI(k); setHeard((h) => h + 1); }}>
-              <span className="bd-songs__title">{song.title}</span>
-              <span className="bd-songs__artist">{song.artist}</span>
+              <span className="bd-songs__title">{filled(song.title) || `Song ${['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'][k] ?? k + 1}`}</span>
+              <span className="bd-songs__artist">{filled(song.artist)}</span>
             </button>
           </li>
         ))}
@@ -35,7 +35,7 @@ export function MusicRoom({ slug, onDone }: ChapterProps) {
       {s && (
         <div className="bd-songnote" aria-live="polite">
           <p>{s.note}</p>
-          {s.audio ? <Media media={s.audio} label={s.title} autoPlay /> : <p className="bd-meta">[Add an audio file for this song, or play it together.]</p>}
+          {s.audio ? <Media media={s.audio} label={s.title} autoPlay /> : <p className="bd-meta">Play this one together.</p>}
         </div>
       )}
       <HiddenHeart slug={slug} style={{ left: '3%', bottom: '3%' }} />

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { events } from '../../../core/state';
 import { PROJECTS } from '../../../app/projects';
-import { HiddenHeart, Media, ParticleText, reducedMotion, useContent, useProgress, useTypewriter } from '../shared';
+import { HiddenHeart, Media, ParticleText, filled, reducedMotion, useContent, useProgress, useTypewriter } from '../shared';
 import type { ChapterProps } from '../ChapterView';
 
 /* 1 ── The Beginning: darkness, one star; waking it reveals the date and the line. */
@@ -68,7 +68,7 @@ export function Timeline({ slug, onDone }: ChapterProps) {
             {/* real content without a photo simply tells the story; the preview keeps the slot visible */}
             {(s.media || c.placeholder) && <Media media={s.media} label={`${s.label} — photo or clip`} className="bd-timeline__media" />}
             <h3>{s.label}</h3>
-            {s.date && <p className="bd-meta">{s.date}</p>}
+            {filled(s.date) && <p className="bd-meta">{s.date}</p>}
             <p>{s.text}</p>
           </>
         )}
