@@ -83,6 +83,29 @@ const steps = {
     await page.waitForTimeout(3000);
     await shot('opened');
   },
+  'know-us': async () => {
+    for (let q = 0; q < 12; q++) {
+      const quiz = await page.$('.bd-quiz .bd-choice:not([disabled])');
+      if (quiz) {
+        await quiz.click();
+        await page.waitForTimeout(1500);
+        if (q === 0) await shot('answered');
+        await click('.bd-quiz__reaction .bd-btn');
+        await page.waitForTimeout(1200);
+        continue;
+      }
+      const tot = await page.$('.bd-tot .bd-choice');
+      if (tot) {
+        if (!info.tot) { info.tot = true; await shot('tot'); }
+        await tot.click();
+        await page.waitForTimeout(1200);
+        continue;
+      }
+      break;
+    }
+    await page.waitForTimeout(3000);
+    await shot('card');
+  },
   'for-dheepika': async () => {
     info.locked = await page.evaluate(() => !!document.querySelector('.bd-door'));
     if (info.locked) return;

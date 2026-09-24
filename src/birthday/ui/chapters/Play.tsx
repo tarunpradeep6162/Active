@@ -4,6 +4,7 @@ import { HiddenHeart, useContent, useProgress } from '../shared';
 import type { ChapterProps } from '../ChapterView';
 import { pulseSky } from '../MoodSky';
 import { saveNextDateCard } from '../../keepsakes';
+import { Backdrop, useStage } from '../stage/useStage';
 
 /* 5 ── Catch My Heart: petals escape the flower; steer a little light to catch them, dodge the clouds. */
 /** A tulip petal (rose, or gold for the double‑value ones), tumbling as it falls. */
@@ -153,48 +154,82 @@ export function Quiz({ slug, onDone }: ChapterProps) {
     // nothing to ask: go straight on (content may leave the quiz empty)
     if (part === 'quiz' && !c.quiz.length) setPart(c.thisOrThat.length ? 'tot' : 'card');
   }, [part, c.quiz.length]);
-  if (part === 'quiz' && !q) return null;
-  if (part === 'tot') return <ThisOrThat slug={slug} onFinish={() => { setPart('card'); onDone(); }} />;
-  if (part === 'card') return <NextDateCard slug={slug} />;
+  // two glass hearts in 3D that draw closer with every answer, and meet at the end
+  const [tot, setTot] = useState(0);
+  const scene = useStage(() => import('../stage/QuizScene').then(({ QuizScene }) => (cv: HTMLCanvasElement) => new QuizScene(cv)));
+  const total = c.quiz.length + c.thisOrThat.length || 1;
+  const answered = part === 'card' ? total : part === 'tot' ? c.quiz.length + tot : i + (picked !== null ? 1 : 0);
+  useEffect(() => {
+    scene.stage.current?.setProgress(answered / total);
+    if (part === 'card') scene.stage.current?.unite();
+  }, [answered, part, scene.live]);
+  const body =
+    part === 'quiz' && !q ? null : part === 'tot' ? (
+      <ThisOrThat
+        slug={slug}
+        onPick={() => {
+          setTot((n) => n + 1);
+          scene.stage.current?.pulse(true);
+        }}
+        onFinish={() => {
+          setPart('card');
+          onDone();
+        }}
+      />
+    ) : part === 'card' ? (
+      <NextDateCard slug={slug} />
+    ) : (
+      quizQuestion()
+    );
   return (
-    <div className="bd-quiz">
-      <p className="bd-meta">
-        Question {i + 1} / {c.quiz.length}
-      </p>
-      <h3 className="bd-quiz__q">{q.q}</h3>
-      <div className="bd-quiz__options">
-        {q.options.map((o, k) => (
-          <button key={k} type="button" className={`bd-choice ${picked === k ? 'is-picked' : ''}`} disabled={picked !== null} onClick={() => {
-            setPicked(k);
-            if (q.answer === null || q.answer === k) pulseSky();
-          }}>
-            {o}
-          </button>
-        ))}
-      </div>
-      {picked !== null && (
-        <div className="bd-quiz__reaction" aria-live="polite">
-          <p>{q.answer === null || q.answer === picked ? q.yes : q.no}</p>
-          {q.answer !== null && q.answer !== picked && <p className="bd-meta">My answer: {q.options[q.answer]}</p>}
-          <button
-            type="button"
-            className="bd-btn"
-            onClick={() => {
-              setPicked(null);
-              if (i + 1 < c.quiz.length) setI(i + 1);
-              else setPart('tot');
-            }}
-          >
-            {i + 1 < c.quiz.length ? 'Next question' : 'Now: this or that?'}
-          </button>
-        </div>
-      )}
-      <HiddenHeart slug={slug} style={{ right: '3%', bottom: '3%' }} />
-    </div>
+    <>
+      <Backdrop canvas={scene.ref} />
+      {body}
+    </>
   );
+  function quizQuestion() {
+    return (
+      <div className="bd-quiz">
+        <p className="bd-meta">
+          Question {i + 1} / {c.quiz.length}
+        </p>
+        <h3 className="bd-quiz__q">{q.q}</h3>
+        <div className="bd-quiz__options">
+          {q.options.map((o, k) => (
+            <button key={k} type="button" className={`bd-choice ${picked === k ? 'is-picked' : ''}`} disabled={picked !== null} onClick={() => {
+              setPicked(k);
+              const ok = q.answer === null || q.answer === k;
+              if (ok) pulseSky();
+              scene.stage.current?.pulse(ok);
+            }}>
+              {o}
+            </button>
+          ))}
+        </div>
+        {picked !== null && (
+          <div className="bd-quiz__reaction" aria-live="polite">
+            <p>{q.answer === null || q.answer === picked ? q.yes : q.no}</p>
+            {q.answer !== null && q.answer !== picked && <p className="bd-meta">My answer: {q.options[q.answer]}</p>}
+            <button
+              type="button"
+              className="bd-btn"
+              onClick={() => {
+                setPicked(null);
+                if (i + 1 < c.quiz.length) setI(i + 1);
+                else setPart('tot');
+              }}
+            >
+              {i + 1 < c.quiz.length ? 'Next question' : 'Now: this or that?'}
+            </button>
+          </div>
+        )}
+        <HiddenHeart slug={slug} style={{ right: '3%', bottom: '3%' }} />
+      </div>
+    );
+  }
 }
 
-function ThisOrThat({ slug, onFinish }: { slug: string; onFinish: () => void }) {
+function ThisOrThat({ slug, onFinish, onPick }: { slug: string; onFinish: () => void; onPick?: () => void }) {
   const c = useContent();
   const [i, setI] = useState(0);
   useEffect(() => {
@@ -204,6 +239,7 @@ function ThisOrThat({ slug, onFinish }: { slug: string; onFinish: () => void }) 
   const [a, b] = c.thisOrThat[i];
   const pick = (k: 0 | 1) => {
     chooseThisOrThat(i, k);
+    onPick?.();
     if (i + 1 < c.thisOrThat.length) setI(i + 1);
     else onFinish();
   };
