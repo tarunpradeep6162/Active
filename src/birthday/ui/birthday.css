@@ -395,3 +395,10 @@
 .bd-chapter__stage:has(.bd-cosmos) .bd-finale[data-stage='1'] { background: none; }
 .bd-finale:has(> .bd-btn--big) { min-height: 100%; align-content: end; padding-bottom: 6vh; }
 .bd-finale:has(> .bd-btn--big) .bd-finale__date { position: absolute; }
+
+/* chapter 8 · the record player in 3D stands in the record's place */
+.bd-music[data-live="true"] { width: min(1040px, 100%); grid-template-columns: minmax(260px, 480px) 1fr; }
+.bd-music[data-live="true"] .bd-record > * { visibility: hidden; }
+.bd-music[data-live="true"] .bd-songs button { text-shadow: 0 1px 10px rgba(7, 9, 20, .9); }
+.bd-music[data-live="true"] .bd-songnote p:first-child { font: italic 500 clamp(17px, 1.9vw, 22px)/1.5 var(--serif); color: #fff8ee; text-shadow: 0 1px 14px rgba(7, 9, 20, .85); }
+@media (max-width: 720px) { .bd-music[data-live="true"] { grid-template-columns: 1fr; } .bd-music[data-live="true"] .bd-record { width: min(340px, 86vw); } }

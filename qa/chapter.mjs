@@ -12,6 +12,7 @@ const ALL = ['the-beginning', 'memory-universe', 'the-letter', 'fourteen-things'
 const done = process.env.DONE === 'all' ? ALL : (process.env.DONE ?? '').split(',').filter(Boolean);
 await page.evaluate((done) => localStorage.setItem('bday-progress-v1', JSON.stringify({ done, hearts: [], thisOrThat: {} })), done);
 await page.reload({ waitUntil: 'domcontentloaded' });
+logs.length = 0; // the first load is cut short by the reload
 await page.waitForFunction(() => window.__state && window.__state.reveal >= 1, null, { timeout: 600000 });
 await page.evaluate((slug) => { history.pushState({}, '', `/garden/${slug}`); dispatchEvent(new PopStateEvent('popstate')); }, slug);
 await page.waitForSelector('.bd-chapter.is-open', { timeout: 240000 });
@@ -36,6 +37,16 @@ const steps = {
     await page.waitForTimeout(4000);
     await shot('wish');
     info.stage = await page.evaluate(() => document.querySelector('.bd-wish')?.dataset.stage);
+  },
+  'music-room': async () => {
+    await page.click('.bd-songs li:nth-child(1) button');
+    await page.waitForTimeout(1200);
+    await shot('arm');
+    await page.waitForTimeout(3000);
+    await shot('playing');
+    await page.click('.bd-songs li:nth-child(3) button');
+    await page.waitForTimeout(3000);
+    await shot('second');
   },
   'for-dheepika': async () => {
     info.locked = await page.evaluate(() => !!document.querySelector('.bd-door'));
