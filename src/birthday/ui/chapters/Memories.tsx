@@ -25,33 +25,23 @@ export function MemoryUniverse({ slug, onDone }: ChapterProps) {
         ))}
       </div>
       {tab === 'float' && (
-        <div className="bd-float">
-          {c.memories.map((mem, k) => (
-            <button
-              key={k}
-              type="button"
-              className="bd-float__item"
-              style={ellipse(k, c.memories.length)}
-              onClick={() => {
-                setOpen(k);
-                setSeen((s) => new Set(s).add(k));
-              }}
-              aria-label={`Open memory ${k + 1}`}
-            >
-              <Media media={mem.media} label={`Photo ${k + 1}`} />
-            </button>
-          ))}
-          {m && (
-            <div className="bd-lightbox" role="dialog" aria-label="Memory">
-              <Media media={m.media} label={`Photo ${open! + 1}`} className="bd-lightbox__media" />
-              <p className="bd-lightbox__caption">{m.caption}</p>
-              <p className="bd-meta">{[filled(m.date), filled(m.place)].filter(Boolean).join(' · ')}</p>
-              {m.note && <p>{m.note}</p>}
-              <button type="button" className="bd-btn" onClick={() => setOpen(null)}>
-                Close
-              </button>
-            </div>
-          )}
+        <MemoryOrbit
+          onOpen={(k) => {
+            setOpen(k);
+            setSeen((s) => new Set(s).add(k));
+          }}
+          focus={open}
+        />
+      )}
+      {tab === 'float' && m && (
+        <div className="bd-lightbox" role="dialog" aria-label="Memory">
+          {m.media && <Media media={m.media} label={`Photo ${open! + 1}`} className="bd-lightbox__media" />}
+          <p className="bd-lightbox__caption">{m.caption}</p>
+          <p className="bd-meta">{[filled(m.date), filled(m.place)].filter(Boolean).join(' · ')}</p>
+          {m.note && <p>{m.note}</p>}
+          <button type="button" className="bd-btn" onClick={() => setOpen(null)}>
+            Close
+          </button>
         </div>
       )}
       {tab === 'polaroid' && <Polaroid />}
@@ -62,6 +52,70 @@ export function MemoryUniverse({ slug, onDone }: ChapterProps) {
 }
 
 /** Places item k of n on an ellipse around the stage centre, alternating near / far. */
+/**
+ * The memories as polaroids in slow orbit (3D), with the flat floating photos as the fallback
+ * and an accessible list for keyboards and screen readers.
+ */
+function MemoryOrbit({ onOpen, focus }: { onOpen: (k: number) => void; focus: number | null }) {
+  const c = useContent();
+  const ref = useRef<HTMLCanvasElement>(null);
+  const stage = useRef<{ open(i: number): void; release(): void; dispose(): void } | null>(null);
+  const [live, setLive] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const urls = await Promise.all(c.memories.map((m) => (m.media && m.media.type === 'image' ? mediaUrl(m.media, 768).catch(() => undefined) : Promise.resolve(undefined))));
+      const { MemoryScene } = await import('../stage/MemoryScene');
+      if (!alive || !ref.current) return;
+      const s = new MemoryScene(
+        ref.current,
+        c.memories.map((m, i) => ({ caption: m.caption, url: urls[i] })),
+      );
+      s.onOpen = onOpen;
+      stage.current = s;
+      setLive(true);
+    })().catch(() => {});
+    return () => {
+      alive = false;
+      stage.current?.dispose();
+      stage.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [c]);
+  useEffect(() => {
+    if (focus === null) stage.current?.release();
+  }, [focus]);
+  return (
+    <>
+      <div className="bd-cosmos" aria-hidden="true">
+        <canvas ref={ref} className="bd-cosmos__canvas bd-cosmos__canvas--interactive" />
+      </div>
+      {live ? (
+        <>
+          <p className="bd-hint bd-orbit__hint">Touch a memory.</p>
+          <ul className="sr-only">
+            {c.memories.map((m, k) => (
+              <li key={k}>
+                <button type="button" onClick={() => (stage.current ? stage.current.open(k) : onOpen(k))}>
+                  Open memory {k + 1}: {m.caption}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <div className="bd-float">
+          {c.memories.map((mem, k) => (
+            <button key={k} type="button" className="bd-float__item" style={ellipse(k, c.memories.length)} onClick={() => onOpen(k)} aria-label={`Open memory ${k + 1}`}>
+              <Media media={mem.media} label={`Photo ${k + 1}`} />
+            </button>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
 function ellipse(k: number, n: number): React.CSSProperties {
   const a = (k / n) * Math.PI * 2 - Math.PI / 2;
   const far = k % 2 ? 0.82 : 1;

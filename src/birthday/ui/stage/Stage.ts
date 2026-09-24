@@ -160,3 +160,64 @@ export const ease = (a: number, b: number, x: number) => {
   const k = Math.min(1, Math.max(0, (x - a) / (b - a)));
   return k * k * (3 - 2 * k);
 };
+
+/** A screen‑filling nebula backdrop (plum and rose clouds on midnight). Drawn behind everything. */
+export function makeNebula(uniforms: { uTime: { value: number }; uAspect: { value: number }; uGlow?: { value: number } }, tint: [string, string] = ['#471a42', '#9e4d61']) {
+  const u = { ...uniforms, uGlow: uniforms.uGlow ?? { value: 0 }, uA: { value: new THREE.Color(tint[0]) }, uB: { value: new THREE.Color(tint[1]) } };
+  const mat = new THREE.ShaderMaterial({
+    depthWrite: false,
+    depthTest: false,
+    uniforms: u,
+    vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.9999, 1.); }`,
+    fragmentShader: `
+      uniform float uTime, uAspect, uGlow; uniform vec3 uA, uB; varying vec2 vUv;
+      float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);
+        return mix(mix(h(i), h(i + vec2(1, 0)), f.x), mix(h(i + vec2(0, 1)), h(i + vec2(1, 1)), f.x), f.y); }
+      float fbm(vec2 p){ float v = 0., a = .5; for (int i = 0; i < 5; i++){ v += a * n(p); p = p * 2.03 + 11.7; a *= .5; } return v; }
+      void main(){
+        vec2 p = (vUv - .5) * vec2(uAspect, 1.);
+        float t = uTime * .015;
+        float c1 = fbm(p * 1.6 + vec2(t, -t * .6));
+        float c2 = fbm(p * 3.1 - vec2(t * 1.3, t) + c1 * 1.4);
+        float cloud = smoothstep(.35, .95, c1 * .6 + c2 * .6);
+        vec3 col = mix(vec3(.018, .02, .05), vec3(.03, .025, .07), vUv.y) + uA * .6 * cloud * .55 + uB * .6 * pow(cloud, 2.2) * .35;
+        float r = length(p);
+        col += vec3(.75, .55, .3) * exp(-r * r * 6.) * uGlow * .35;
+        col *= 1. - smoothstep(.45, 1.1, r) * .55;
+        gl_FragColor = vec4(col, 1.);
+      }`,
+  });
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat);
+  mesh.frustumCulled = false;
+  mesh.renderOrder = -10;
+  return mesh;
+}
+
+/** Twinkling background stars. */
+export function makeStarfield(n: number, uniforms: { uTime: { value: number }; uPx: { value: number } }) {
+  const p = new Float32Array(n * 3), s = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    p.set([(Math.random() - 0.5) * 90, (Math.random() - 0.5) * 60, -12 - Math.random() * 60], i * 3);
+    s[i] = Math.random();
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(p, 3));
+  g.setAttribute('aSeed', new THREE.BufferAttribute(s, 1));
+  const pts = new THREE.Points(
+    g,
+    new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      uniforms,
+      vertexShader: `attribute float aSeed; uniform float uTime, uPx; varying float vA;
+        void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.); gl_Position = projectionMatrix * mv;
+          vA = (.25 + .75 * pow(.5 + .5 * sin(uTime * (.6 + aSeed * 2.) + aSeed * 60.), 2.)) * (.3 + aSeed * .7);
+          gl_PointSize = uPx * (.6 + aSeed * 1.4) * 4. / -mv.z; }`,
+      fragmentShader: `varying float vA; void main(){ float d = length(gl_PointCoord - .5); float a = (smoothstep(.5, 0., d) * .3 + smoothstep(.15, 0., d)) * vA; gl_FragColor = vec4(vec3(1., .95, .88) * a, a); }`,
+    }),
+  );
+  pts.frustumCulled = false;
+  return pts;
+}
