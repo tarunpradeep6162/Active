@@ -329,3 +329,4 @@
 @keyframes bd-giftcard { from { opacity: 0; transform: translateY(40px) scale(.96); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
 @media (max-width: 600px) { .bd-giftstage { aspect-ratio: 4 / 5; max-height: 52vh; } .bd-giftcard { margin-top: -2vh; } }
 @media (prefers-reduced-motion: reduce) { .bd-giftcard { animation: none; } }
+.bd-giftcard__again { margin-top: 12px; color: #9a6a3a; font-size: 11px; }

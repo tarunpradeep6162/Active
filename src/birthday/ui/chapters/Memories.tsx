@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { events } from '../../../core/state';
 import { chooseGift } from '../../progress';
 import { mediaUrl } from '../../vault';
-import { HiddenHeart, Media, filled, useContent, useProgress } from '../shared';
+import { HiddenHeart, Media, filled, useContent } from '../shared';
 import type { ChapterProps } from '../ChapterView';
 
 /* 2 ── Memory Universe: floating memories, a Polaroid camera and a photo puzzle. */
@@ -266,23 +266,34 @@ function Scratch({ children, onRevealed }: { children: React.ReactNode; onReveal
 /* 10 ── Choose a Gift: three boxes, one choice. */
 export function Gifts({ slug, onDone }: ChapterProps) {
   const c = useContent();
-  const chosen = useProgress().gift;
+  // every visit starts with three closed boxes: she chooses each time (the last choice is still
+  // remembered for her progress, but never opens a box on its own)
+  const [chosen, setChosen] = useState<number | null>(null);
+  const [round, setRound] = useState(0);
   const ref = useRef<HTMLCanvasElement>(null);
   const scene = useRef<{ choose(i: number): void; dispose(): void } | null>(null);
   const [failed, setFailed] = useState(false);
-  // the message appears once the lid is off and the light has risen (at once on a return visit)
-  const [revealed, setRevealed] = useState(chosen !== null);
+  // the message appears once the lid is off and the light has risen
+  const [revealed, setRevealed] = useState(false);
   const pick = (k: number) => {
-    if (chosen !== null) return;
-    chooseGift(k);
-    onDone();
+    setChosen((cur) => {
+      if (cur !== null) return cur;
+      chooseGift(k);
+      onDone();
+      return k;
+    });
+  };
+  const again = () => {
+    setRevealed(false);
+    setChosen(null);
+    setRound((r) => r + 1);
   };
   useEffect(() => {
     let alive = true;
     import('../GiftScene')
       .then(({ GiftScene }) => {
         if (!alive || !ref.current) return;
-        const s = new GiftScene(ref.current, chosen);
+        const s = new GiftScene(ref.current, null);
         s.onPick = (k) => pick(k);
         s.onRevealed = () => alive && setRevealed(true);
         scene.current = s;
@@ -294,7 +305,7 @@ export function Gifts({ slug, onDone }: ChapterProps) {
       scene.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [round]);
   // no 3D (or not loaded yet): the reveal happens straight away; and it never waits forever
   useEffect(() => {
     if (chosen === null || revealed) return;
@@ -312,7 +323,7 @@ export function Gifts({ slug, onDone }: ChapterProps) {
       <p className="bd-hint bd-gifts__hint">{chosen === null ? 'Three boxes. You may open only one.' : revealed ? 'Your gift' : 'Opening…'}</p>
       {!failed ? (
         <div className={`bd-giftstage ${revealed ? 'is-revealed' : ''}`}>
-          <canvas ref={ref} className="bd-giftstage__canvas" role="img" aria-label="Three gift boxes wrapped in satin with gold ribbons, floating in soft spotlights" />
+          <canvas key={round} ref={ref} className="bd-giftstage__canvas" role="img" aria-label="Three gift boxes wrapped in satin with gold ribbons, floating in soft spotlights" />
           {/* keyboard and screen‑reader path to the same three boxes */}
           <div className="sr-only">
             {c.gifts.map((g, k) => (
@@ -337,6 +348,9 @@ export function Gifts({ slug, onDone }: ChapterProps) {
           <p className="bd-giftcard__kind">{gift.kind === 'promise' ? 'A promise' : gift.kind === 'message' ? 'A message' : gift.kind === 'photo' ? 'A photo' : gift.kind === 'memory' ? 'A memory' : 'A clue'} · {gift.label}</p>
           {gift.media && <Media media={gift.media} label="Your gift" className="bd-gift__media" />}
           <p className="bd-giftcard__text">{gift.text}</p>
+          <button type="button" className="bd-link bd-giftcard__again" onClick={again}>
+            Close the box and choose again
+          </button>
         </div>
       )}
       <HiddenHeart slug={slug} style={{ right: '6%', top: '6%' }} />
