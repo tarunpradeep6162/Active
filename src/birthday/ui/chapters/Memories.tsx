@@ -5,6 +5,7 @@ import { mediaUrl } from '../../vault';
 import { HiddenHeart, Media, filled, useContent } from '../shared';
 import type { ChapterProps } from '../ChapterView';
 import { pulseSky } from '../MoodSky';
+import { Backdrop, useStage } from '../stage/useStage';
 
 /* 2 ── Memory Universe: floating memories, a Polaroid camera and a photo puzzle. */
 export function MemoryUniverse({ slug, onDone }: ChapterProps) {
@@ -203,10 +204,32 @@ export function Secret({ slug, onDone }: ChapterProps) {
   const [wobble, setWobble] = useState(false);
   const all = solved.every(Boolean);
   const clue = c.secret.clues[i];
+  // the cryptex in 3D lies along the page's code row: one engraved ring per clue
+  const code = useRef<HTMLDivElement>(null);
+  const scene = useStage(() => import('../stage/SecretScene').then(({ SecretScene }) => (cv: HTMLCanvasElement) => new SecretScene(cv, c.secret.clues.map((cl) => cl.symbol))));
+  useEffect(() => {
+    if (!scene.live) return;
+    let raf = 0;
+    const tick = () => {
+      const r = code.current?.getBoundingClientRect();
+      if (r && r.width) scene.stage.current?.setAnchor((r.left + r.width / 2) / innerWidth, (r.top + r.height / 2) / innerHeight, r.width / innerWidth);
+      raf = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => cancelAnimationFrame(raf);
+  }, [scene.live]);
+  useEffect(() => {
+    scene.stage.current?.setSolved(solved, i);
+    if (all) scene.stage.current?.open();
+  }, [solved, i, scene.live]);
+  useEffect(() => {
+    if (wobble) scene.stage.current?.shake();
+  }, [wobble]);
   return (
-    <div className="bd-secret">
+    <div className="bd-secret" data-live={scene.live}>
+      <Backdrop canvas={scene.ref} />
       <p className="bd-hint">{c.secret.intro}</p>
-      <div className="bd-code" aria-label="The code so far">
+      <div className="bd-code" aria-label="The code so far" ref={code}>
         {c.secret.clues.map((cl, k) => (
           <span key={k} className={solved[k] ? 'is-open' : ''}>
             {solved[k] ? cl.symbol : '•'}

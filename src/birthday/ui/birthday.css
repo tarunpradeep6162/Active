@@ -159,7 +159,7 @@
 @keyframes bd-wobble { 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
 .bd-clue__text { font-size: 15px; color: var(--bd-cream); text-align: center; }
 .bd-clue input, .bd-gate input { width: min(320px, 80vw); background: rgba(255,255,255,.05); border: 1px solid var(--bd-line); border-radius: 999px; padding: 12px 18px; color: var(--ink); font: 15px var(--mono); text-align: center; }
-.bd-scratch { position: relative; width: min(460px, 90vw); aspect-ratio: 4 / 3; }
+.bd-scratch { position: relative; width: min(460px, 100%); aspect-ratio: 4 / 3; }
 .bd-scratch__under { position: absolute; inset: 0; display: grid; grid-template-rows: 1fr auto; gap: 8px; text-align: center; color: var(--bd-cream); }
 .bd-scratch__cover { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 12px; touch-action: none; cursor: crosshair; transition: opacity 800ms; }
 .bd-scratch__cover.is-done { opacity: 0; pointer-events: none; }
@@ -418,3 +418,8 @@
 .bd-timeline[data-live="true"] :is(.bd-timeline__stop, .bd-timeline__intro, .bd-timeline__outro, .bd-timeline__track button) { text-shadow: 0 1px 14px rgba(7, 9, 20, .95), 0 0 2px rgba(7, 9, 20, .8); }
 .bd-timeline[data-live="true"] .bd-timeline__stop { padding-top: 22vh; }
 .bd-timeline[data-live="true"] .bd-cosmos::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 30%, rgba(7, 9, 20, .55) 70%); pointer-events: none; }
+
+/* chapter 7 · the cryptex in 3D lies where the code row is */
+.bd-secret[data-live="true"] .bd-code { width: min(520px, 86vw); height: clamp(120px, 20vh, 190px); justify-content: center; align-items: center; }
+.bd-secret[data-live="true"] .bd-code span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.bd-secret[data-live="true"] :is(.bd-hint, .bd-clue__text) { font: italic 500 clamp(16px, 1.8vw, 21px)/1.5 var(--serif); color: #fff8ee; text-shadow: 0 1px 14px rgba(7, 9, 20, .9); }

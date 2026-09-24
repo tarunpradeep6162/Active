@@ -68,6 +68,21 @@ const steps = {
       await shot(`stop${k}`);
     }
   },
+  'our-secret': async () => {
+    const answer = async (a) => { await page.fill('#bd-clue-input', a); await page.press('#bd-clue-input', 'Enter'); await page.waitForTimeout(1600); };
+    await answer('wrong');
+    await shot('wrong');
+    await answer('2');
+    await answer('5');
+    await shot('two');
+    await answer('heart');
+    await answer('11');
+    await answer('1');
+    await page.waitForTimeout(2500);
+    await shot('open');
+    await page.waitForTimeout(3000);
+    await shot('opened');
+  },
   'for-dheepika': async () => {
     info.locked = await page.evaluate(() => !!document.querySelector('.bd-door'));
     if (info.locked) return;
