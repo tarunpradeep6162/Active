@@ -1,8 +1,11 @@
 # For Dheepika · 25 · 11: final delivery
 
 The old studio site is gone. What is left is one continuous, cinematic birthday universe, travelled by
-scroll, made only for her. Everything personal ships as clearly marked placeholders until you
-fill it in and encrypt it (see the **Personal content checklist** at the end).
+scroll, made only for her. **Every line of feeling is already written** (the letter, 14 reasons,
+the name letters, quiz, clues, timeline, gifts, 24 wishes, 12 lantern wishes, the last message
+and the secret ending), in a warm voice you can edit freely. Only facts that can't be invented
+stay marked, like dates, places, song titles, photos, videos and your voice note (see the
+**Personal content checklist** at the end).
 
 Preview: https://meridian-field-nine.vercel.app (the Vercel project keeps its old internal name;
 nothing on the page says it). To change the URL, add a domain or rename the project in Vercel.
@@ -27,6 +30,19 @@ nothing on the page says it). To change the URL, add a domain or rename the proj
 
 Routes: `/` (the journey), `/garden` and `/garden/<chapter>`, and `/for-you`. The old `/work…` and
 `/contact` links still resolve, so nothing breaks.
+
+## Cinematic language
+
+- **Act cards**: each world opens with a quiet title, like a film's act break: *I · Our Garden*,
+  *II · Something Sweet*, *III · A Sky of Wishes*, *IV · Your Stars*.
+- **Grade**: plum in the shadows and champagne in the highlights, a soft oval vignette, and gentle
+  bloom. The old film grain is gone; only a faint dither remains to stop dark gradients from
+  banding.
+- **Letterbox**: bars slide in for the two big moments, the cake leaving its cage and her name
+  forming in the stars.
+- **Camera**: the lantern sky is framed level, and the finale drifts wide while the stars wander,
+  then slowly pushes in as they spell DHEEPIKA.
+- **Light**: soft light shafts slant through the garden and warm toward sunset as she scrolls.
 
 ## Art direction
 
@@ -104,13 +120,24 @@ Other targeted checks: `qa/opening.mjs` (loader, opening, threshold, leftover-te
 `qa/finale.mjs` (every stage of the finale sky and One last thing), and `qa/keepsakes.mjs`
 (the PNG and PDF downloads are valid; the music toggles).
 
+## Performance
+
+- Scenes that are off screen skip their per‑frame CPU work: the garden's 25 tulips, the cake, and
+  the emblem.
+- The garden isn't drawn before it starts to grow or after it dissolves into the lab. Measured with
+  `qa/perf.mjs` (medium tier, 1280×800): the threshold went from 83k to 30k triangles, the lab from
+  158k to 110k, and the lantern sky from 50k to 15k.
+- Desktop pixel ratio is capped at 1.5×. The automatic quality governor still steps down on
+  slower devices.
+- The last studio typeface was removed (28 KB less to download). Fonts are the serif, the
+  handwriting face and the small mono.
+
 ## Known limits
 
 - Encryption can't hide that a site exists at the URL; see Privacy above.
 - The finale's constellation is sampled from the name and date in the content. A very long
   name makes the stars denser, not wider.
-- Memories do not yet float out of the tulips as photos in 3D. They open in their chapters,
-  as before.
+- Memories open in their chapters. They don't float out of the tulips as photos in 3D.
 - The lantern stars and the other progress live in her browser. On a new device, the sky
   starts fresh.
 
@@ -118,38 +145,22 @@ Other targeted checks: `qa/opening.mjs` (loader, opening, threshold, leftover-te
 
 ## PERSONAL CONTENT CHECKLIST
 
-Everything below is a clearly marked placeholder until you write it. Nothing here was invented
-for you: no memories, dates, places, quotes, nicknames or promises. Fill these in
-`birthday-private/content.json`, then run `npm run vault`.
+**Written for you (read it, then edit anything that doesn't sound like you):** the opening,
+threshold, letter, 14 reasons, name letters, quiz, the secret clues (answered from the garden
+itself: 2 · 5 · heart · 11 · 1), song notes, timeline texts, the three gifts, the future
+wishes, 24 wishes, 12 lantern wishes, final words, the last message and the secret ending.
+All of it is in `src/content/dheepika.ts`, with a copy in `birthday-private.example/content.json`.
+None of it claims a specific memory, date, place, nickname or promise that you didn't give me.
 
-**Identity and the opening**
-- [ ] `signature`: your name, as you sign it (it appears in Caveat under the letter and the last message)
-- [ ] `birthday.timezone`: her IANA timezone (only if you enable `countdownEnabled`)
-- [ ] `opening.lines`: keep the brief's two lines or write your own
-- [ ] `threshold.lines` and `threshold.copy`
-
-**The garden's chapters (14)**
-- [ ] 1 The Beginning: `beginning.line`
-- [ ] 2 Memory Universe: `memories[]` (photo, caption, date, place and note for each; 8 slots, add more freely), `polaroidPrompt`, `puzzle`
-- [ ] 3 The Letter: `letter.greeting`, `letter.paragraphs[]`, `letter.signoff`
-- [ ] 4 14 Things: `reasons[]` (exactly 14), `nameLetters[]` (one per letter: D H E E P I K A)
-- [ ] 5 Catch My Heart: `game.finish`
-- [ ] 6 Know Us?: `quiz[]` (question, options, your answer index or `null`, two kind reactions), `thisOrThat[]`
-- [ ] 7 Our Secret: `secret.intro`, `secret.clues[]` (clue, accepted answers, symbol), `secret.reveal`
-- [ ] 8 Music Room: `songs[]` (title, artist and your note, never lyrics; `audio` only if you own the rights)
-- [ ] 9 Our Timeline: `timeline[]` (label, date, text, optional photo)
-- [ ] 10 Choose a Gift: `gifts[3]`
-- [ ] 11 Make a Wish: `wish.line`
-- [ ] 12 Future Universe: `future[]`, `wishes[]`
-- [ ] 13 Our Little Movie: `movie.clips[]` (short videos you own), `movie.line`
-- [ ] 14 For Dheepika: `finale.headline` (HAPPY BIRTHDAY is saved for the sky), `finale.secretEnding`, `emptyFrame`
-
-**The sky and the ending**
-- [ ] `lanternWishes[]`: the first four are from the brief; write the other eight (12 lanterns in all)
-- [ ] `finalWords[]`: the three closing lines (the brief's lines are in place)
-- [ ] `finale.voice`: your voice note (audio file in `media/`)
-- [ ] `finale.lastThing`: your most personal message, which is only ever stored encrypted
-- [ ] `futurePrompt`: the prompt above her message to future us
+**Only you can add these (still marked with [brackets]):**
+- [ ] `signature`: your name, as you sign it (it's "Always yours" until you change it)
+- [ ] Photos for `memories[]` (8), with a real `date` and `place` for each; and the `puzzle` photo
+- [ ] `timeline[]` dates for *We Met*, *Getting Closer* and *Us*, and change the texts if your story differs
+- [ ] `songs[]`: the real titles and artists (the notes are written; never paste lyrics; add `audio` only if you own the rights)
+- [ ] `movie.clips[]`: short videos you own
+- [ ] `finale.voice`: your voice note (an audio file in `media/`)
+- [ ] Optional: make the quiz answers truly yours (the `answer` index and the reactions)
+- [ ] Optional: `birthday.timezone`, only if you turn on the countdown
 
 **Before you share**
 - [ ] Choose a passphrase of several words, and a hint that doesn't give it away
