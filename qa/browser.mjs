@@ -59,7 +59,9 @@ export async function openSite(site, { width, height, mobile = false, dpr = 1, q
     if (!fs.existsSync(f)) {
       const [s, c] = (await curl(url, f)).split(' ');
       status = +s || 500; if (c) ct = c;
-      fs.writeFileSync(f + '.meta', JSON.stringify({ status, ct }));
+      // never keep a failed fetch (a transient 502 would otherwise be replayed on every run)
+      if (status >= 200 && status < 400) fs.writeFileSync(f + '.meta', JSON.stringify({ status, ct }));
+      else { const body = fs.existsSync(f) ? fs.readFileSync(f) : ''; fs.rmSync(f, { force: true }); return route.fulfill({ status, contentType: ct, body }); }
     } else { try { ({ status, ct } = JSON.parse(fs.readFileSync(f + '.meta'))); } catch {} }
     return route.fulfill({ status, contentType: ct, body: fs.existsSync(f) ? fs.readFileSync(f) : '' });
   });
