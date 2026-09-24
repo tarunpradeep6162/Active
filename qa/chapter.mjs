@@ -48,6 +48,18 @@ const steps = {
     await page.waitForTimeout(3000);
     await shot('second');
   },
+  'little-movie': async () => {
+    await click('.bd-movie__play');
+    await page.waitForTimeout(900);
+    await shot('parting');
+    await page.waitForTimeout(2500);
+    await shot('clip1');
+    await page.waitForTimeout(3600);
+    await shot('clip2');
+    await page.waitForSelector('.bd-movie.is-end', { timeout: 60000 });
+    await page.waitForTimeout(3500);
+    await shot('end');
+  },
   'for-dheepika': async () => {
     info.locked = await page.evaluate(() => !!document.querySelector('.bd-door'));
     if (info.locked) return;

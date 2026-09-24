@@ -128,6 +128,32 @@ export function Movie({ slug, onDone }: ChapterProps) {
   const [i, setI] = useState(-1);
   const [end, setEnd] = useState(false);
   const count = Math.max(clips.length, 5);
+  // the cinema in 3D: its screen lies under the page's screen box, which holds her clips
+  const box = useRef<HTMLDivElement>(null);
+  const [parting, setParting] = useState(false);
+  const scene = useStage(() => import('../stage/MovieScene').then(({ MovieScene }) => (cv: HTMLCanvasElement) => new MovieScene(cv)));
+  useEffect(() => {
+    if (!scene.live) return;
+    let raf = 0;
+    const tick = () => {
+      const r = box.current?.getBoundingClientRect();
+      if (r && r.width) scene.stage.current?.setAnchor(r.left / innerWidth, r.top / innerHeight, r.width / innerWidth, r.height / innerHeight);
+      raf = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => cancelAnimationFrame(raf);
+  }, [scene.live]);
+  useEffect(() => {
+    if (i >= 0 && !end) scene.stage.current?.clip(i, count);
+    if (end) scene.stage.current?.close();
+  }, [i, end]);
+  const play = () => {
+    if (!scene.stage.current) return setI(0);
+    // house lights down, the curtains part, then the first clip
+    setParting(true);
+    scene.stage.current.open();
+    window.setTimeout(() => setI(0), reducedMotion() ? 300 : 1800);
+  };
   useEffect(() => {
     if (i < 0 || end) return;
     const clip = clips[i];
@@ -142,17 +168,20 @@ export function Movie({ slug, onDone }: ChapterProps) {
     } else setI(i + 1);
   };
   return (
-    <div className={`bd-movie ${end ? 'is-end' : ''}`}>
-      {i < 0 ? (
-        <button type="button" className="bd-btn bd-btn--big" onClick={() => setI(0)}>
+    <div className={`bd-movie ${end ? 'is-end' : ''}`} data-live={scene.live}>
+      <Backdrop canvas={scene.ref} />
+      <div ref={box} className="bd-movie__screen">
+        {i >= 0 && !end && (
+          <div className="bd-movie__frame" key={i}>
+            <Media media={clips[i]} label={`Clip ${i + 1} — photo or video`} className="bd-movie__media" autoPlay onEnded={next} />
+          </div>
+        )}
+        {end && <p className="bd-movie__line">{c.movie.line}</p>}
+      </div>
+      {i < 0 && !parting && (
+        <button type="button" className="bd-btn bd-btn--big bd-movie__play" onClick={play}>
           ▶ Play
         </button>
-      ) : !end ? (
-        <div className="bd-movie__frame" key={i}>
-          <Media media={clips[i]} label={`Clip ${i + 1} — photo or video`} className="bd-movie__media" autoPlay onEnded={next} />
-        </div>
-      ) : (
-        <p className="bd-movie__line">{c.movie.line}</p>
       )}
       {i >= 0 && !end && <p className="bd-movie__caption">{c.movie.line}</p>}
       <HiddenHeart slug={slug} style={{ right: '3%', top: '4%' }} />

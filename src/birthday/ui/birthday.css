@@ -247,6 +247,7 @@
 
 /* 13 movie */
 .bd-movie { position: relative; width: 100%; height: 100%; min-height: 360px; display: grid; place-items: center; background: #000; border-radius: 12px; overflow: hidden; }
+.bd-movie__screen { position: absolute; inset: 0; display: grid; place-items: center; overflow: hidden; }
 .bd-movie__frame { position: absolute; inset: 0; animation: bd-kenburns 3.6s ease-in-out both; }
 .bd-movie__media { border-radius: 0; }
 @keyframes bd-kenburns { from { transform: scale(1.08); opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } to { transform: scale(1); opacity: 0; } }
@@ -402,3 +403,12 @@
 .bd-music[data-live="true"] .bd-songs button { text-shadow: 0 1px 10px rgba(7, 9, 20, .9); }
 .bd-music[data-live="true"] .bd-songnote p:first-child { font: italic 500 clamp(17px, 1.9vw, 22px)/1.5 var(--serif); color: #fff8ee; text-shadow: 0 1px 14px rgba(7, 9, 20, .85); }
 @media (max-width: 720px) { .bd-music[data-live="true"] { grid-template-columns: 1fr; } .bd-music[data-live="true"] .bd-record { width: min(340px, 86vw); } }
+
+/* chapter 13 · the cinema in 3D: the page's screen box lies exactly on the 3D screen */
+.bd-movie[data-live="true"] { background: none; overflow: visible; border-radius: 0; place-items: center; align-content: center; gap: 22px; }
+.bd-movie[data-live="true"] .bd-movie__screen { position: relative; inset: auto; width: min(600px, 56vw, 78vh); aspect-ratio: 16 / 9; margin-top: 5vh; }
+.bd-movie[data-live="true"] .bd-media--empty { opacity: 0; }
+.bd-movie[data-live="true"] .bd-movie__caption { position: static; font: italic 500 clamp(15px, 1.6vw, 19px)/1.5 var(--serif); color: rgba(255, 248, 238, .85); text-shadow: 0 1px 12px rgba(7, 9, 20, .9); margin: 0; }
+.bd-movie[data-live="true"] .bd-movie__line { color: #fff1dc; text-shadow: 0 2px 22px rgba(0, 0, 0, .9); animation: bd-in 2.4s ease 1.6s both; }
+@media (max-width: 720px) { .bd-movie[data-live="true"] .bd-movie__screen { width: 84vw; } }
+.bd-movie[data-live="true"] :is(.bd-movie__play, .bd-movie__caption) { position: absolute; bottom: 3%; left: 50%; translate: -50%; width: max-content; max-width: 90%; text-align: center; }

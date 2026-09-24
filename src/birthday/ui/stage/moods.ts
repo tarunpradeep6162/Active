@@ -7,5 +7,4 @@ export const MOODS: Record<string, Mood> = {
   'know-us': { tint: ['#2a2458', '#8a5a9a'], motif: 'sparks', colors: ['#e6c989', '#f2c1cb'] },
   'our-secret': { tint: ['#1a2a4a', '#5a4a8a'], motif: 'sparks', colors: ['#a8c4ff', '#f3dfa7'], glow: 0.2 },
   'our-timeline': { tint: ['#2a1a3a', '#7a4a5a'], motif: 'sparks', colors: ['#f3dfa7', '#e8a6b5'] },
-  'little-movie': { tint: ['#1a1a2a', '#5a3a4a'], motif: 'snow', colors: ['#f8f1e8', '#e6c989'] },
 };
