@@ -60,7 +60,8 @@ await step(6, async () => {
   for (let q = 0; q < 10; q++) {
     if (!(await page.locator('#bd-clue-input').count())) break;
     await page.fill('#bd-clue-input', 'wrong'); await page.click('.bd-clue .bd-btn'); await page.waitForSelector('.bd-soft');
-    await page.fill('#bd-clue-input', ' ANSWER '); await page.click('.bd-clue .bd-btn');
+    // the shipped clues are answered from the garden itself (see src/content/dheepika.ts)
+    await page.fill('#bd-clue-input', [' 2 ', 'Five', 'a heart', 'November', '1'][q] ?? 'answer'); await page.click('.bd-clue .bd-btn');
   }
   const box = await page.locator('.bd-scratch__cover').boundingBox();
   await page.mouse.move(box.x + 20, box.y + 20); await page.mouse.down();
@@ -92,7 +93,7 @@ results.push({ chapter: chapters[13].title, done: d.done.includes(chapters[13].s
 console.log(JSON.stringify(results.at(-1)));
 // back to the stars, and the WebGL page is still healthy
 await page.click('.bd-chapter__foot .bd-btn:has-text("Back")');
-await page.waitForFunction(() => location.pathname === '/work', null, { timeout: T });
+await page.waitForFunction(() => /^\/(garden|work)$/.test(location.pathname), null, { timeout: T });
 const errors = logs.filter((l) => /error|pageerror/i.test(l));
 console.log('chapters done', d.done.length, '/ 14 · hearts', d.hearts.length, '/ 14 · console errors', errors.length);
 if (errors.length) console.log(errors.slice(0, 10).join('\n'));

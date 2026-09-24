@@ -473,6 +473,37 @@ function LastThing({ onClose }: { onClose: () => void }) {
   );
 }
 
+const ACTS: Partial<Record<string, [string, string]>> = {
+  work: ['I', 'Our Garden'],
+  lab: ['II', 'Something Sweet'],
+  portal: ['III', 'A Sky of Wishes'],
+  outro: ['IV', 'Your Stars'],
+};
+
+/** A quiet title card, like a film's act break, the first time she arrives in each world. */
+export function ActCard() {
+  const section = useStore((s) => s.section);
+  const route = useStore((s) => s.route);
+  const [card, setCard] = useState<{ key: number; act: [string, string] } | null>(null);
+  const seen = useRef(new Set<string>());
+  useEffect(() => {
+    const act = ACTS[section];
+    if (!act || seen.current.has(section) || route.name !== 'home' || state.focus > 0.01) return;
+    seen.current.add(section);
+    const key = performance.now();
+    setCard({ key, act });
+    const id = setTimeout(() => setCard((c) => (c?.key === key ? null : c)), 3400);
+    return () => clearTimeout(id);
+  }, [section]);
+  if (!card) return null;
+  return (
+    <div className="actcard" key={card.key} aria-hidden="true">
+      <span className="actcard__num">{card.act[0]}</span>
+      <span className="actcard__title">{card.act[1]}</span>
+    </div>
+  );
+}
+
 export function EndCap() {
   const atEnd = useStore((s) => s.atEnd);
   return (

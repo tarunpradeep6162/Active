@@ -1,5 +1,3 @@
-// two‑axis (wght + wdth) file: the reference display face is wider than Tourney's default width
-import tourneyUrl from '@fontsource-variable/tourney/files/tourney-latin-standard-normal.woff2?url';
 import monoUrl from '@fontsource/share-tech-mono/files/share-tech-mono-latin-400-normal.woff2?url';
 import serifUrl from '@fontsource/cormorant-garamond/files/cormorant-garamond-latin-500-normal.woff2?url';
 import serifItalicUrl from '@fontsource/cormorant-garamond/files/cormorant-garamond-latin-500-italic.woff2?url';
@@ -85,7 +83,6 @@ export class AssetManager {
       weight: 2,
       run: async (report) => {
         const fonts: [string, string, FontFaceDescriptors][] = [
-          ['Tourney Variable', tourneyUrl, { weight: '100 900', stretch: '75% 125%', style: 'normal', display: 'block' }],
           ['Share Tech Mono', monoUrl, { weight: '400', style: 'normal', display: 'block' }],
           // emotion (serif), a personal touch (handwriting) — the mono above stays for the interface
           ['Cormorant Garamond', serifUrl, { weight: '500', style: 'normal', display: 'block' }],

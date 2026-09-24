@@ -84,10 +84,10 @@ export function ParticleText({ text, phase, className = '', color = '#fff1c9' }:
     off.height = H;
     const o = off.getContext('2d')!;
     let size = Math.min(H * 0.5, (W * 1.6) / Math.max(4, text.length));
-    o.font = `600 ${size}px 'Tourney Variable', 'Arial Narrow', sans-serif`;
+    o.font = `600 ${size}px 'Cormorant Garamond', Georgia, serif`;
     while (o.measureText(text).width > W * 0.92 && size > 8) {
       size *= 0.92;
-      o.font = `600 ${size}px 'Tourney Variable', 'Arial Narrow', sans-serif`;
+      o.font = `600 ${size}px 'Cormorant Garamond', Georgia, serif`;
     }
     o.fillStyle = '#fff';
     o.textAlign = 'center';

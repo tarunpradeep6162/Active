@@ -75,7 +75,7 @@ uniform sampler2D tScene; uniform sampler2D tBloom; uniform sampler2D tBlur;
 uniform float uBloomStrength; uniform float uHasBloom;
 uniform float uTime; uniform vec2 uResolution; uniform float uScrollVelocity;
 uniform float uChromatic; uniform float uBlur; uniform float uDim; uniform float uExposure;
-uniform vec3 uGlowA; uniform vec3 uGlowB; uniform float uReveal;
+uniform vec3 uGlowA; uniform vec3 uGlowB; uniform float uReveal; uniform float uLetterbox;
 ${math}
 ${noise}
 vec3 aces(vec3 x){ const float a = 2.51, b = .03, c = 2.43, d = .59, e = .14; return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0., 1.); }
@@ -96,16 +96,24 @@ void main(){
   vec2 p = c * vec2(aspect, 1.);
   float g1 = exp(-2.2 * length(p - vec2(.62 * aspect, -.55)));
   float g2 = exp(-2.6 * length(p - vec2(-.62 * aspect, .55)));
-  col += uGlowA * g1 * .3 + uGlowB * g2 * .16;
+  col += uGlowA * g1 * .22 + uGlowB * g2 * .12;
   col *= uExposure;
   col = aces(col);
   col = pow(col, vec3(1. / 2.2));
-  // vignette
-  col *= mix(1., smoothstep(1.05, .25, length(c * vec2(1., .9))), .55);
+  // cinematic grade: plum in the shadows, champagne in the highlights, a touch more contrast
+  float l = dot(col, vec3(.2126, .7152, .0722));
+  col += mix(vec3(.018, .004, .03), vec3(.02, .012, -.012), smoothstep(.15, .75, l)) * (1. - abs(l - .5) * 1.2);
+  col = mix(vec3(l), col, 1.06);
+  col = clamp((col - .5) * 1.04 + .5, 0., 1.);
+  // soft vignette (oval, gentle)
+  col *= mix(1., smoothstep(1.1, .22, length(c * vec2(.92, 1.))), .5);
   col *= 1. - uDim;
-  // film grain
-  float gr = hash12(uv * uResolution + fract(uTime * 13.7) * 91.) - .5;
-  col += gr * .045;
+  // a whisper of temporal dither, only enough to keep dark gradients from banding
+  float gr = hash12(uv * uResolution + fract(uTime * 7.3) * 61.) + hash12(uv * uResolution * 1.37 - fract(uTime * 3.1) * 17.) - 1.;
+  col += gr * (.006 + .006 * l);
+  // letterbox for the big moments
+  float bar = uLetterbox * .075;
+  col *= smoothstep(bar, bar + .004, uv.y) * smoothstep(bar, bar + .004, 1. - uv.y);
   col *= uReveal;
   o = vec4(col, 1.);
 }`;
@@ -149,6 +157,7 @@ export class PostFX {
     uBlur: { value: 0 },
     uDim: { value: 0 },
     uExposure: { value: 1 },
+    uLetterbox: { value: 0 },
     uGlowA: { value: new THREE.Color('#1e6f6a') },
     uGlowB: { value: new THREE.Color('#123a44') },
   });

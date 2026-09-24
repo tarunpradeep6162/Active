@@ -272,7 +272,7 @@ function WishSphere({ onPick }: { onPick: () => void }) {
         const X = x * cs - z * sn, Z = x * sn + z * cs;
         const s = (Z + 2) / 3;
         g.globalAlpha = 0.25 + 0.75 * s;
-        g.fillStyle = Z > 0 ? '#fff1c9' : '#8fb6ff';
+        g.fillStyle = Z > 0 ? '#fff1c9' : '#f2c1cb';
         g.fillRect(W / 2 + X * R, H / 2 + y * R, 2 * dpr * s, 2 * dpr * s);
       }
       raf = requestAnimationFrame(tick);

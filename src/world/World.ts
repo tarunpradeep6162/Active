@@ -361,7 +361,7 @@ export class World {
     this.blendPalettes(dt, post);
 
     const intro = state.section === 'intro' ? state.sectionProgress : state.scroll.progress > rangeOf('intro').end ? 1 : 0;
-    this.emblem.update(t, state.reveal, state.pointer.targetX, state.pointer.targetY, smoothstep(0.05, 0.6, intro) * Math.PI);
+    if (this.emblem.group.visible) this.emblem.update(t, state.reveal, state.pointer.targetX, state.pointer.targetY, smoothstep(0.05, 0.6, intro) * Math.PI);
     const outroLocal = state.section === 'outro' ? state.sectionProgress : 0;
     this.finaleSky.update(outroLocal, camera, state.viewport.dpr);
     state.finaleLocal = outroLocal;
@@ -408,11 +408,14 @@ export class World {
       state.starsLit = this.portal.starsLit;
     }
     this.lab.blow = state.cakeBlow;
-    this.lab.update(t, state.viewport.dpr);
+    // off‑screen worlds don't need their per‑frame CPU work (instance matrices, raycasts)
+    if (this.lab.group.visible || this.lab.isOpen) this.lab.update(t, state.viewport.dpr);
     state.cakeReady = this.lab.candlesReady;
     state.cageOpen = this.lab.isOpen;
     state.cakeDark = this.lab.dark;
     if (++this.rayFrame % 2 === 0) this.raycast(camera);
+    const gardenOn = this.garden.group.visible || state.focus > 0.001 || this.activeSlug !== null;
+    if (!gardenOn) return;
     this.cards.update(dt, this.activeSlug, this.highlight, this.hovered, this.hitUv);
     // chapter tulips follow their anchors (hover tilt, chapter‑1 entry rise)
     this.cards.group.updateMatrixWorld();

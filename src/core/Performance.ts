@@ -41,7 +41,7 @@ export function tierSettings(tier: PerformanceTier): TierSettings {
   // Reference renders at 1.5× on DPR‑1 desktop and 1.25× on DPR‑1 mobile.
   if (tier === 'high')
     return {
-      dpr: mobile ? Math.min(Math.max(dpr, 1.25), 1.5) : Math.min(Math.max(dpr, 1.5), 1.75),
+      dpr: mobile ? Math.min(Math.max(dpr, 1.25), 1.5) : Math.min(Math.max(dpr, 1.25), 1.5),
       particleScale: 1,
       bloom: true,
       bloomLevels: 5,

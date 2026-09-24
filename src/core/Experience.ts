@@ -372,6 +372,11 @@ export class Experience {
     cu.uDim.value = state.overlay * 0.35 + veil * 0.3;
     cu.uBloomStrength.value = 0.85 + Math.min(Math.abs(state.scroll.velocity), 3) * 0.12 + this.rig.warp * 0.8;
     if (!this.world) cu.uGlowA.value.setRGB(0, 0, 0), cu.uGlowB.value.setRGB(0, 0, 0);
+    // letterbox for the two big moments: the cake leaving its cage, and her name in the stars
+    const cinema = state.reducedMotion
+      ? 0
+      : Math.max(state.section === 'lab' && state.cageOpen && !state.cakeReady ? 1 : 0, state.section === 'outro' ? Math.min(1, Math.max(0, (state.finaleLocal - 0.5) / 0.1)) * (1 - Math.min(1, Math.max(0, (state.finaleLocal - 0.9) / 0.08))) : 0);
+    cu.uLetterbox.value += (cinema - cu.uLetterbox.value) * Math.min(1, dt * 1.6);
 
     this.ui.update();
     if (this.revealStart >= 0) this.governor.sample(rawMs);
