@@ -357,6 +357,16 @@ export class World {
     for (const p of this.pieces) p.obj.visible = cy < p.yTop + 22 && cy > p.yBottom - 22;
     // below the lab floor the rig is out of the story; keep its props from peeking into the sky
     if (cy < ANCHOR.lab - 4.5) this.lab.group.visible = false;
+    // the garden draws nothing before it starts to grow or once it has fully dissolved into the
+    // lab (unless a chapter or the finale reveal needs it): skip its ~50k triangles there
+    {
+      const wr0 = rangeOf('work');
+      const w0 = (state.scroll.progress - wr0.start) / (wr0.end - wr0.start);
+      const front = workTimeline.spineFront(w0);
+      const gone = workTimeline.spineDissolve(w0) >= 0.999 && state.focus < 0.001 && this.gardenReveal < 0.001 && !this.activeSlug;
+      // desktop: before work −0.05 the growth front sits 20 units below the garden (nothing shows)
+      if ((front !== null && w0 <= -0.05) || gone) this.garden.group.visible = false;
+    }
 
     this.blendPalettes(dt, post);
 
