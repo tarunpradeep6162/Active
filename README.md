@@ -1,10 +1,12 @@
-# Meridian Field — realtime web experience
+# For Dheepika · 25 · 11 — a realtime birthday garden
 
-An independent, high‑fidelity recreation of the *interaction language* of
-[activetheory.net](https://activetheory.net): one persistent WebGL world travelled by
-scroll, with pointer trails, a deforming pill nav, spatial project browsing and
-continuous transitions. All content, geometry, shaders, copy and audio here are original.
-The studio, projects and clients are fictional placeholders.
+A private, cinematic birthday universe for Dheepika: one persistent WebGL world travelled by
+scroll: an opening under the stars, a garden of 25 tulips that holds 14 chapters of memories,
+a cake locked in a cage, a sky of wish lanterns, and a finale where the stars spell her name.
+Its interaction language was inspired by activetheory.net. All content, geometry, shaders,
+copy and audio here are original.
+
+- `DHEEPIKA_FINAL_DELIVERY.md`: what was built, how to add the personal content, how to deploy
 
 - `REFERENCE_AUDIT.md`: what was observed on the reference, and how each part is reproduced
 - `REFERENCE_AUDIT_V2.md`: completion‑pass audit, with measurements, differences and fixes

@@ -18,7 +18,7 @@ const curl = (url, file) => new Promise((res) => execFile('curl', ['-sS', '-L', 
 export const REFERENCE = 'https://activetheory.net/';
 export const RECREATION = process.env.RECREATION_URL || 'https://meridian-field-nine.vercel.app/';
 
-export async function openSite(site, { width, height, mobile = false, dpr = 1, query = '' } = {}) {
+export async function openSite(site, { width, height, mobile = false, dpr = 1, query = '', wait = true } = {}) {
   const base = site === 'reference' ? REFERENCE : RECREATION;
   const local = /localhost|127\.0\.0\.1/.test(base);
   const browser = await chromium.launch({
@@ -73,7 +73,7 @@ export async function openSite(site, { width, height, mobile = false, dpr = 1, q
   await page.goto(base + (query ? (base.includes('?') ? '&' : '?') + query : ''), { waitUntil: 'domcontentloaded', timeout: 120000 });
   // wait for each site's "ready" signal
   if (site === 'reference') { await page.waitForSelector('.FXScroll', { state: 'attached' }); await page.waitForTimeout(16000); }
-  else { await page.waitForFunction(() => window.__state && window.__state.reveal >= 1, null, { timeout: 600000 }); await page.waitForTimeout(500); }
+  else if (wait !== false) { await page.waitForFunction(() => window.__state && window.__state.reveal >= 1, null, { timeout: 600000 }); await page.waitForTimeout(500); }
   return { browser, page, logs };
 }
 

@@ -1,5 +1,5 @@
 import type { BirthdayContent, MediaRef } from './types';
-import { PLACEHOLDER } from './placeholder';
+import { PLACEHOLDER } from '../content/dheepika';
 
 /**
  * Encrypted content vault (built by `scripts/vault.mjs`).
@@ -104,21 +104,31 @@ function sessionPass() {
 }
 
 /** Resolve a media reference to a displayable URL (decrypting vault media on demand). */
-export function mediaUrl(ref: MediaRef): Promise<string> {
-  if (!ref.src.startsWith('vault:')) return Promise.resolve(ref.src);
-  let p = mediaCache.get(ref.src);
+export function mediaUrl(ref: MediaRef, px?: number): Promise<string> {
+  const src = pickVariant(ref, px);
+  if (!src.startsWith('vault:')) return Promise.resolve(src);
+  let p = mediaCache.get(src);
   if (!p) {
     p = (async () => {
       if (!key) throw new Error('locked');
-      const id = ref.src.slice(6);
+      const id = src.slice(6);
       const r = await fetch(`${BASE}${id}.bin`);
       const bytes = await open(key, new Uint8Array(await r.arrayBuffer()));
       const [mime, body] = splitHeader(bytes);
       return URL.createObjectURL(new Blob([body.slice().buffer as ArrayBuffer], { type: mime }));
     })();
-    mediaCache.set(ref.src, p);
+    mediaCache.set(src, p);
   }
   return p;
+}
+
+/** The smallest photo variant that covers `px` device pixels (default: the screen's long edge). */
+function pickVariant(ref: MediaRef, px?: number) {
+  if (!ref.variants) return ref.src;
+  const need = px ?? Math.min(1440, Math.max(innerWidth, innerHeight) * Math.min(devicePixelRatio || 1, 2) * 0.8);
+  const sizes = Object.keys(ref.variants).map(Number).sort((a, b) => a - b);
+  const size = sizes.find((s) => s >= need) ?? sizes[sizes.length - 1];
+  return ref.variants[size] ?? ref.src;
 }
 
 /** Media payload = utf‑8 mime type, NUL, bytes. */

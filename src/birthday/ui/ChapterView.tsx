@@ -85,7 +85,7 @@ export function ChapterView() {
 }
 
 /** Passcode gate: the chapters' real content only exists encrypted until this is right. */
-function Gate() {
+export function Gate() {
   const [value, setValue] = useState('');
   const [busy, setBusy] = useState(false);
   const [wrong, setWrong] = useState(false);

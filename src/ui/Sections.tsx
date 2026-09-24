@@ -1,57 +1,98 @@
 import { useEffect, useRef, useState } from 'react';
 import { events, state } from '../core/state';
 import { useStore } from './useStore';
-import { scramble } from './scramble';
 import { CATEGORIES, PROJECTS, type Project } from '../app/projects';
-import { routePath } from '../app/router';
+import { routePath, isKnownPath } from '../app/router';
+import { rangeOf } from '../world/journey';
+import { useContent, useProgress } from '../birthday/ui/shared';
+import { saveFutureCard, saveLetterPdf, saveNextDateCard } from '../birthday/keepsakes';
 
 export function Preloader() {
   const progress = useStore((s) => s.loadProgress);
   const loaded = useStore((s) => s.loaded);
   const revealed = useStore((s) => s.revealed);
   if (revealed) return null;
+  // one closed tulip bud in the dark, gathering light as the memories load
+  const p = Math.max(0.04, progress);
   return (
-    <div className={`preloader ${loaded ? 'is-done' : ''}`} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} aria-label="Loading">
-      <span className={`preloader__count ${progress <= 0 ? 'is-hidden' : ''}`}>//{Math.max(1, Math.round(progress * 100))}</span>
+    <div className={`preloader ${loaded ? 'is-done' : ''}`} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} aria-label="Gathering memories">
+      <svg className="preloader__bud" viewBox="-40 -60 80 120" aria-hidden="true" style={{ ['--p' as string]: p }}>
+        <defs>
+          <radialGradient id="bud-light" cx="50%" cy="60%" r="60%">
+            <stop offset="0" stopColor="#f3dfa7" stopOpacity={0.35 + p * 0.65} />
+            <stop offset="0.6" stopColor="#e8a6b5" stopOpacity={0.15 + p * 0.5} />
+            <stop offset="1" stopColor="#070914" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <circle cx="0" cy="-12" r={24 + p * 18} fill="url(#bud-light)" />
+        <path d="M0 58 C-3 30 2 16 0 2" />
+        <path d="M0 34 C-12 26 -18 18 -20 10" />
+        <path d="M-15 -6 C-17 -24 -8 -34 0 -38 C8 -34 17 -24 15 -6 C9 1 -9 1 -15 -6 Z" className="preloader__petals" />
+        <path d="M0 -38 C-5 -26 -5 -12 0 -2" />
+      </svg>
+      <p className="preloader__label">Gathering memories…</p>
     </div>
   );
 }
 
+/**
+ * The opening, over the first stars: 25 · 11 → two lines → a shooting star (tap it) → her name
+ * → "Enter our garden". HAPPY BIRTHDAY is saved for the sky at the very end.
+ */
 export function IntroHint() {
+  const c = useContent();
+  const section = useStore((s) => s.section);
+  const [wish, setWish] = useState(false);
+  const starRef = useRef<HTMLButtonElement>(null);
+  const hidden = section !== 'intro';
+  const enter = () => {
+    const r = rangeOf('manifesto');
+    window.scrollTo({ top: r.start * state.scroll.max + 2, behavior: state.reducedMotion ? 'auto' : 'smooth' });
+  };
   return (
-    <p className="intro-hint label" aria-hidden="true">
-      Scroll down
-    </p>
+    <section className="opening" aria-label="Opening" data-hidden={hidden} aria-hidden={hidden}>
+      <p className="opening__date">{c.date}</p>
+      {c.opening.lines.map((l, i) => (
+        <p key={i} className="opening__line" style={{ ['--i' as string]: i }}>
+          {l}
+        </p>
+      ))}
+      <button
+        ref={starRef}
+        type="button"
+        className={`opening__star ${wish ? 'is-wishing' : ''}`}
+        tabIndex={hidden ? -1 : 0}
+        aria-label="A shooting star — make a wish"
+        onClick={() => {
+          setWish(true);
+          window.setTimeout(() => setWish(false), 2800);
+        }}
+      >
+        <span className="opening__star-tail" />
+        {wish && <span className="opening__wish">{c.opening.shootingStar}</span>}
+      </button>
+      <h2 className="opening__name">{c.name}</h2>
+      <button type="button" className="opening__enter" tabIndex={hidden ? -1 : 0} onClick={enter}>
+        {c.opening.enter} <span aria-hidden="true">↓</span>
+      </button>
+    </section>
   );
 }
 
-const HEADLINE = ['Realtime', 'Digital', 'Worlds'];
-
+/** The threshold of the garden (the measured headline section): three serif lines + a whisper. */
 export function Manifesto() {
-  const section = useStore((s) => s.section);
-  const refs = useRef<(HTMLSpanElement | null)[]>([]);
-  const shown = useRef(false);
-  useEffect(() => {
-    const visible = section === 'manifesto';
-    if (visible && !shown.current) {
-      shown.current = true;
-      refs.current.forEach((el, i) => el && setTimeout(() => scramble(el, HEADLINE[i].toUpperCase(), 650, state.reducedMotion), i * 120));
-    }
-    if (section === 'intro') shown.current = false;
-  }, [section]);
+  const c = useContent();
   return (
     <section className="manifesto" aria-labelledby="manifesto-title">
       <h2 className="manifesto__title" id="manifesto-title">
-        {HEADLINE.map((w, i) => (
-          <span key={w} ref={(el) => void (refs.current[i] = el)}>
-            {w.toUpperCase()}
-          </span>
+        {c.threshold.lines.map((w, i) => (
+          <span key={i}>{w}</span>
         ))}
       </h2>
       <div className="manifesto__copy">
-        <p>Independent since 2019</p>
-        <p>We build worlds for the browser — part story, part system, all running live on the device in your hand.</p>
-        <p>Our own realtime toolkit lets a small team ship ambitious work that stays fast on every screen.</p>
+        {c.threshold.copy.map((l, i) => (
+          <p key={i}>{l}</p>
+        ))}
       </div>
     </section>
   );
@@ -168,16 +209,21 @@ export function EndCap() {
   return (
     <div className="endcap" data-hidden={!atEnd}>
       <button type="button" tabIndex={atEnd ? 0 : -1} onClick={() => events.emit('navigate', { name: 'home' })}>
-        Back to the start
+        Back to the first star
       </button>
     </div>
   );
 }
 
+/** "For you": the keepsakes — a message to future us, our next date, the letter as a PDF. */
 export function Contact() {
   const route = useStore((s) => s.route);
   const open = route.name === 'contact';
+  const c = useContent();
+  const prog = useProgress();
   const [mounted, setMounted] = useState(open);
+  const [msg, setMsg] = useState(() => readFuture());
+  const [saved, setSaved] = useState(false);
   useEffect(() => {
     if (open) setMounted(true);
     else {
@@ -189,34 +235,82 @@ export function Contact() {
   useEffect(() => {
     if (open) setTimeout(() => closeRef.current?.focus({ preventScroll: true }), 500);
   }, [open]);
+  const picks = c.thisOrThat.map((pair, k) => (prog.thisOrThat[k] !== undefined ? pair[prog.thisOrThat[k]] : null)).filter(Boolean) as string[];
   return (
-    <section className={`contact ${mounted ? 'is-open' : ''}`} aria-hidden={!open} aria-label="Contact" role="dialog" aria-modal={open}>
-      <p className="contact__head label">✦ Say hello ✦</p>
-      <h2 className="contact__cities">
-        <span>OSL</span>
-        <span className="contact__arrow" aria-hidden="true">
-          →
-        </span>
-        <span>SEL</span>
-        <span className="contact__arrow" aria-hidden="true">
-          →
-        </span>
-        <span>MEX</span>
-      </h2>
-      <p className="contact__email">
-        <a href="mailto:hello@example.com">hello@example.com</a>
-      </p>
-      <nav className="contact__social" aria-label="Social">
-        <a href="#instagram">Instagram</a>
-        <a href="#linkedin">LinkedIn</a>
-        <a href="#newsletter">Newsletter signup</a>
-        <a href="#careers">Careers</a>
-      </nav>
+    <section className={`contact foryou ${mounted ? 'is-open' : ''}`} aria-hidden={!open} aria-label="For you" role="dialog" aria-modal={open}>
+      <p className="foryou__kicker">25 · 11</p>
+      <h2 className="foryou__title">For you</h2>
+      <div className="foryou__grid">
+        <article className="foryou__card">
+          <h3>A message to future us</h3>
+          <label className="sr-only" htmlFor="future-us">
+            {c.futurePrompt}
+          </label>
+          <textarea
+            id="future-us"
+            value={msg}
+            placeholder={c.futurePrompt}
+            maxLength={1200}
+            onChange={(e) => {
+              setMsg(e.target.value);
+              setSaved(false);
+            }}
+          />
+          <div className="foryou__row">
+            <button type="button" onClick={() => setSaved(writeFuture(msg))}>
+              Save
+            </button>
+            <button type="button" onClick={() => saveFutureCard(msg)} disabled={!msg.trim()}>
+              Keep as a card
+            </button>
+          </div>
+          <p className="foryou__note">{saved ? 'Saved — ' : ''}Kept only on this device. Clearing the browser’s data removes it; nothing is sent anywhere.</p>
+        </article>
+        <article className="foryou__card">
+          <h3>Our next date</h3>
+          {picks.length ? (
+            <ul className="foryou__picks">
+              {picks.map((p, i) => (
+                <li key={i}>{p}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="foryou__note">Play “Know Us?” in the garden and your choices will plan it.</p>
+          )}
+          <button type="button" disabled={!picks.length} onClick={() => saveNextDateCard(picks)}>
+            Save as an image
+          </button>
+        </article>
+        <article className="foryou__card">
+          <h3>Keep the letter</h3>
+          <p className="foryou__note">The letter from the garden, as a small PDF to keep.</p>
+          <button type="button" onClick={() => saveLetterPdf(c)}>
+            Keep this letter
+          </button>
+        </article>
+      </div>
       <button ref={closeRef} className="contact__close" type="button" onClick={() => events.emit('navigate', { name: 'home' })}>
-        CLOSE ×
+        Back to our garden ×
       </button>
     </section>
   );
+}
+
+const FUTURE_KEY = 'bday-future-us';
+function readFuture() {
+  try {
+    return localStorage.getItem(FUTURE_KEY) ?? '';
+  } catch {
+    return '';
+  }
+}
+function writeFuture(v: string) {
+  try {
+    localStorage.setItem(FUTURE_KEY, v);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function WebGLLost() {
@@ -225,11 +319,37 @@ export function WebGLLost() {
   return (
     <div className="fallback" role="alert">
       <div>
-        <p>Graphics context lost — restoring…</p>
+        <p>The garden flickered for a moment — bringing it back…</p>
         <button type="button" onClick={() => location.reload()}>
-          Reload
+          Return to our garden
         </button>
       </div>
     </div>
   );
 }
+
+/** Any path that isn’t ours. */
+export function NotFound() {
+  const [lost, setLost] = useState(() => !isKnownPath(location.pathname));
+  useEffect(() => {
+    const check = () => setLost(!isKnownPath(location.pathname));
+    addEventListener('popstate', check);
+    return () => removeEventListener('popstate', check);
+  }, []);
+  if (!lost) return null;
+  return (
+    <div className="notfound" role="alert">
+      <p>Looks like this path wandered out of the garden.</p>
+      <button
+        type="button"
+        onClick={() => {
+          history.replaceState({}, '', '/');
+          setLost(false);
+        }}
+      >
+        Return to our garden
+      </button>
+    </div>
+  );
+}
+

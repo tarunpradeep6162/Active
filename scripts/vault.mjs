@@ -11,6 +11,12 @@
 // it secret), content.bin and one <random id>.bin per media file. Every media path in the JSON
 // is rewritten to "vault:<id>". Without the passcode the .bin files are unreadable; the
 // protection is exactly as strong as the passcode, so use a phrase, not a 4‑digit PIN.
+//
+// Photos go through a pipeline first: auto‑orient from EXIF, strip ALL metadata (GPS, camera,
+// timestamps), resize to 480 / 768 / 1080 / 1440 px on the long edge (never enlarged) and
+// re‑encode as WebP. Every size is encrypted separately; the site fetches only the one that
+// suits the screen. (AVIF is skipped on purpose: WebP decodes everywhere and faster.)
+// Video and audio are encrypted as they are; export them small (≤ 1080p, ≤ 20 MB) yourself.
 import fs from 'node:fs';
 import path from 'node:path';
 import { webcrypto as crypto } from 'node:crypto';
@@ -51,6 +57,25 @@ const MIME = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png',
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });
 
+let sharp = null;
+try {
+  sharp = (await import('sharp')).default;
+} catch {
+  console.warn('sharp is not installed; photos are encrypted as they are (run npm install to enable the photo pipeline).');
+}
+const SIZES = [480, 768, 1080, 1440];
+const PHOTO = /\.(jpe?g|png|webp|avif|heic|heif|tiff?)$/i;
+
+async function sealFile(mime, body) {
+  const payload = new Uint8Array(mime.length + 1 + body.length);
+  payload.set(enc.encode(mime));
+  payload[mime.length] = 0;
+  payload.set(body, mime.length + 1);
+  const id = Buffer.from(crypto.getRandomValues(new Uint8Array(12))).toString('hex');
+  fs.writeFileSync(path.join(OUT, `${id}.bin`), await seal(payload));
+  return `vault:${id}`;
+}
+
 const content = JSON.parse(fs.readFileSync(contentPath, 'utf8'));
 let files = 0;
 async function walk(node) {
@@ -59,15 +84,25 @@ async function walk(node) {
   if (typeof node.src === 'string' && typeof node.type === 'string' && !node.src.startsWith('vault:') && !/^https?:/.test(node.src)) {
     const file = path.join(SRC, node.src);
     if (!fs.existsSync(file)) throw new Error(`Media not found: ${node.src}`);
+    if (sharp && node.type === 'image' && PHOTO.test(file)) {
+      // .rotate() applies the EXIF orientation; sharp drops all metadata unless asked to keep it
+      const img = sharp(file, { failOn: 'none' }).rotate();
+      const { width = 0, height = 0 } = await img.metadata();
+      const long = Math.max(width, height) || 1440;
+      const variants = {};
+      for (const size of SIZES) {
+        if (size > long && size !== SIZES[0]) continue;
+        const out = await sharp(file, { failOn: 'none' }).rotate().resize({ width: size, height: size, fit: 'inside', withoutEnlargement: true }).webp({ quality: size <= 480 ? 72 : 80 }).toBuffer();
+        variants[size] = await sealFile('image/webp', out);
+        files++;
+      }
+      const sizes = Object.keys(variants).map(Number);
+      node.src = variants[Math.max(...sizes.filter((s) => s <= 1080))];
+      node.variants = variants;
+      return;
+    }
     const mime = MIME[path.extname(file).toLowerCase()] ?? 'application/octet-stream';
-    const body = fs.readFileSync(file);
-    const payload = new Uint8Array(mime.length + 1 + body.length);
-    payload.set(enc.encode(mime));
-    payload[mime.length] = 0;
-    payload.set(body, mime.length + 1);
-    const id = Buffer.from(crypto.getRandomValues(new Uint8Array(12))).toString('hex');
-    fs.writeFileSync(path.join(OUT, `${id}.bin`), await seal(payload));
-    node.src = `vault:${id}`;
+    node.src = await sealFile(mime, fs.readFileSync(file));
     files++;
     return;
   }

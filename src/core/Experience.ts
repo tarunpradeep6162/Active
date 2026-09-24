@@ -93,6 +93,8 @@ export class Experience {
     globalUniforms.uReveal.value = 1;
     this.bootScene.add(this.rig.camera);
     this.rig.camera.add(this.preloader.mesh);
+    // the loading screen is the DOM bud now; the old WebGL ring stays hidden
+    this.preloader.mesh.visible = false;
     this.resize();
 
     window.addEventListener('resize', () => this.scheduleResize());
@@ -260,6 +262,9 @@ export class Experience {
 
     this.trails = new TrailSystem(this.settings.trailStrands, this.multi);
     world.scene.add(this.trails.group);
+    // the chrome ribbon trail belonged to the old studio look; the petal + gold dust trail is a DOM
+    // overlay (CursorTrail). Pointer tracking (pointerWorld) keeps feeding the particle fields.
+    this.trails.group.visible = false;
 
     await assets.run({
       weight: 3,

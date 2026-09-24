@@ -42,14 +42,18 @@ const pal = (top: string, bottom: string, accent: string, fog: string, density: 
 });
 
 const PALETTES: Record<SectionId, Palette> = {
-  intro: pal('#0c1317', '#06080a', '#1a5e5b', '#090d10', 0.028, 0, '#1f6d68', '#10363d'),
-  // headline: measured near‑black frame with a teal corner glow (clean‑settle captures)
-  manifesto: pal('#0d1a1f', '#05070b', '#1f5f5a', '#080c12', 0.03, 0.35, '#2f8f8a', '#1c2c4a'),
+  // one night, midnight → rose → champagne → sunrise (the colour journey of the whole site)
+  intro: pal('#0b1020', '#070914', '#2a2448', '#080a16', 0.028, 0, '#2a3160', '#3a2040'),
+  // the garden's threshold: midnight with the first rose light
+  manifesto: pal('#11162a', '#070914', '#4a2a48', '#0a0c18', 0.03, 0.25, '#6a3a5a', '#1c2c4a'),
   // the garden at night (top of Work) …
   work: pal('#0b0d1f', '#07060f', '#2a2458', '#0a0b16', 0.02, 0, '#2a3a6a', '#4a2a5a'),
-  lab: pal('#07090b', '#040506', '#3c0a16', '#060708', 0.06, 0, '#15403f', '#2a0b12'),
-  portal: pal('#061110', '#030707', '#0f4a47', '#041010', 0.05, 0, '#16605a', '#0b2d2e'),
-  outro: pal('#0c1317', '#06080a', '#1a5e5b', '#090d10', 0.028, 0, '#1f6d68', '#10363d'),
+  // the cake room: candle warmth
+  lab: pal('#120c14', '#070508', '#4a1a2a', '#0a070c', 0.06, 0, '#6a3a2a', '#3a1424'),
+  // the lantern sky: deep night with golden lights
+  portal: pal('#0b1020', '#05060e', '#2a2440', '#070914', 0.012, 0, '#8a6a3a', '#2a2448'),
+  // the finale sky (the sunrise is layered on top as it plays)
+  outro: pal('#11162a', '#070914', '#3a2a50', '#090b18', 0.01, 0, '#d98b9d', '#d6b46a'),
 };
 /** … and at sunset (bottom of Work): the light warms as she descends through the garden */
 const WORK_SUNSET = pal('#2a1622', '#0d0708', '#9a4a2a', '#170c12', 0.02, 0, '#c8844a', '#b04a66');
@@ -138,19 +142,19 @@ export class World {
       this.fields[id] = f;
       this.add(f.points, top, bottom);
     };
-    field('embers', { colors: ['#ff6a1f', '#ff2b3d', '#ffc36b'], size: 3.4, turbulence: 0.25, speed: 0.35, drift: [0, 0.35, 0], puff: 0.06 }, 4, -8);
-    field('storm', { colors: ['#ff4a1a', '#ff9a2e', '#ff2a5a'], size: 9, turbulence: 0.45, speed: 0.4, twinkle: 0.3, puff: 0.12 }, 4, -8);
+    field('embers', { colors: ['#e6c989', '#e8a6b5', '#f8f1e8'], size: 3.4, turbulence: 0.25, speed: 0.35, drift: [0, 0.35, 0], puff: 0.06 }, 4, -8);
+    field('storm', { colors: ['#d98b9d', '#e6c989', '#f2c1cb'], size: 9, turbulence: 0.45, speed: 0.4, twinkle: 0.3, puff: 0.12 }, 4, -8);
     // golden motes and dew light drifting through the garden
     field('glitter', { colors: ['#ffd9a0', '#ffb7c5', '#fff1d6'], size: 1.5, turbulence: 0.05, speed: 0.2, twinkle: 0.45, opacity: 0.8 }, ANCHOR.workTop + 8, ANCHOR.workBottom - 8);
     // the red mass inside the cage is now a faint aura behind the cake
-    field('blob', { colors: ['#ff1f4b', '#ff4a6a', '#ff8a5a'], size: 1.4, turbulence: 0.08, speed: 0.3, opacity: 0.35 }, ANCHOR.lab + 4, ANCHOR.lab - 4);
-    field('bubbles', { colors: ['#bfe8e6', '#ffffff', '#7fd6d0'], size: 2.2, turbulence: 0.08, speed: 0.2, drift: [0, 1.2, 0], opacity: 0.5 }, ANCHOR.portal + 4, ANCHOR.portal - 8);
-    field('outroStorm', { colors: ['#ff4a1a', '#ff9a2e', '#ff2a5a'], size: 5.6, turbulence: 0.45, speed: 0.4, twinkle: 0.3, puff: 0.12 }, ANCHOR.outro + 4, ANCHOR.outro - 8);
-    field('outroEmbers', { colors: ['#ff6a1f', '#ff2b3d', '#ffc36b'], size: 3.2, turbulence: 0.25, speed: 0.35, drift: [0, 0.35, 0] }, ANCHOR.outro + 4, ANCHOR.outro - 8);
+    field('blob', { colors: ['#e8a6b5', '#e6c989', '#f2c1cb'], size: 1.4, turbulence: 0.08, speed: 0.3, opacity: 0.35 }, ANCHOR.lab + 4, ANCHOR.lab - 4);
+    field('bubbles', { colors: ['#f3dfa7', '#f8f1e8', '#e6c989'], size: 2.2, turbulence: 0.08, speed: 0.2, drift: [0, 1.2, 0], opacity: 0.5 }, ANCHOR.portal + 4, ANCHOR.portal - 8);
+    field('outroStorm', { colors: ['#f8f1e8', '#f3dfa7', '#f2c1cb'], size: 5.6, turbulence: 0.45, speed: 0.4, twinkle: 0.3, puff: 0.12 }, ANCHOR.outro + 4, ANCHOR.outro - 8);
+    field('outroEmbers', { colors: ['#e6c989', '#e8a6b5', '#f8f1e8'], size: 3.2, turbulence: 0.25, speed: 0.35, drift: [0, 0.35, 0] }, ANCHOR.outro + 4, ANCHOR.outro - 8);
     // foreground energy specks: few, large, hot — the brightest layer of each storm
-    field('specks', { colors: ['#ffd27a', '#ffae3a', '#ff5a2a'], size: 7, turbulence: 0.35, speed: 0.5, twinkle: 0.6 }, 4, -8);
-    field('outroSpecks', { colors: ['#ffd27a', '#ffae3a', '#ff5a2a'], size: 4.2, turbulence: 0.35, speed: 0.5, twinkle: 0.6 }, ANCHOR.outro + 4, ANCHOR.outro - 8);
-    field('dust', { colors: ['#9fd8d8', '#ffffff', '#ff9a7a'], size: 1.1, turbulence: 0.2, speed: 0.2, twinkle: 0.8, opacity: 0.6 }, 10, ANCHOR.outro - 12);
+    field('specks', { colors: ['#f3dfa7', '#e6c989', '#e8a6b5'], size: 7, turbulence: 0.35, speed: 0.5, twinkle: 0.6 }, 4, -8);
+    field('outroSpecks', { colors: ['#f3dfa7', '#e6c989', '#e8a6b5'], size: 4.2, turbulence: 0.35, speed: 0.5, twinkle: 0.6 }, ANCHOR.outro + 4, ANCHOR.outro - 8);
+    field('dust', { colors: ['#f2c1cb', '#f8f1e8', '#e6c989'], size: 1.1, turbulence: 0.2, speed: 0.2, twinkle: 0.8, opacity: 0.6 }, 10, ANCHOR.outro - 12);
     // dust is global: always visible
     this.pieces = this.pieces.filter((p) => p.obj !== this.fields.dust?.points);
 
@@ -166,7 +170,8 @@ export class World {
       this.nebulae[id] = nb;
       this.add(nb.mesh, top, bottom);
     };
-    const warm = ['#ff1840', '#ff3a1c', '#ff2a8a', '#c0102c'];
+    // rose / champagne haze (was a red studio storm)
+    const warm = ['#8a3a5a', '#b06a7a', '#a0784a', '#5a2a4a'];
         neb('storm', { count: 60, seed: 12, center: V(0, -2.2, -0.8), spread: V(9, 2.8, 3), size: [2.5, 7], colors: warm, intensity: 0 }, 4, -8);
     neb('glitter', { count: 70, seed: 13, center: V(0, (ANCHOR.workTop + ANCHOR.workBottom) / 2, 0), spread: V(2.6, 52, 1.6), size: [1.5, 4], colors: ['#3a2a6a', '#8a3a5a', '#b0683a', '#2a2a5a'], intensity: 0.12 }, ANCHOR.workTop + 8, ANCHOR.workBottom - 8);
     neb('lab', { count: 22, seed: 14, center: V(0, ANCHOR.lab + 0.6, -1.2), spread: V(1.6, 1.4, 0.8), size: [1.5, 3.5], colors: warm, intensity: 0.18 }, ANCHOR.lab + 4, ANCHOR.lab - 4);

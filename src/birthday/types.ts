@@ -9,6 +9,8 @@ export interface MediaRef {
   /** vault id (`vault:<id>`) or a plain URL for non‑private media */
   src: string;
   type: 'image' | 'video' | 'audio';
+  /** photo sizes made by `npm run vault` (long edge in px → vault id); the site picks one */
+  variants?: Record<string, string>;
   /** short description for screen readers */
   alt?: string;
 }
@@ -68,6 +70,20 @@ export interface BirthdayContent {
   name: string;
   /** shown as the big date, e.g. "25 · 11" */
   date: string;
+  /** month-day and IANA timezone of the birthday (for an optional countdown) */
+  birthday: { month: number; day: number; timezone: string; countdownEnabled: boolean };
+  /** the opening: lines that appear after the date, and the entry button */
+  opening: { lines: string[]; enter: string; shootingStar: string };
+  /** the threshold of the garden (the old headline section) */
+  threshold: { lines: string[]; copy: string[] };
+  /** your name / signature, written in the handwritten face */
+  signature: string;
+  /** wishes carried by the lanterns in the sky */
+  lanternWishes: string[];
+  /** the last words after the sunrise, one per beat */
+  finalWords: string[];
+  /** prompt for her message to future us */
+  futurePrompt: string;
   beginning: { line: string };
   memories: Memory[];
   polaroidPrompt: string;

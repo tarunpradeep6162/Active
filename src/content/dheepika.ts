@@ -1,6 +1,8 @@
-import type { BirthdayContent } from './types';
+import type { BirthdayContent } from '../birthday/types';
 
 /**
+ * THE one place for all of Dheepika's content (rendering components never hard-code it).
+ *
  * Shipped PLACEHOLDER content — nothing here is real or private. Every bracketed line is a
  * slot for your own words; lines without brackets are the copy you wrote in the brief.
  * Real content goes in `birthday-private/content.json` (same shape, git‑ignored) and is
@@ -12,6 +14,13 @@ export const PLACEHOLDER: BirthdayContent = {
   placeholder: true,
   name: 'Dheepika',
   date: '25 · 11',
+  birthday: { month: 11, day: 25, timezone: '', countdownEnabled: false },
+  opening: { lines: ['Some dates are just dates.', 'But one changed my world.'], enter: 'Enter our garden', shootingStar: 'Make a wish ✦' },
+  threshold: { lines: ['A garden', 'made of', 'memories'], copy: ['Every flower here holds a little of us.', 'Scroll slowly. Touch whatever glows.'] },
+  signature: P('your name'),
+  lanternWishes: ['More reasons to laugh.', 'More places to discover.', 'More peaceful mornings.', 'More dreams becoming real.', ...Array.from({ length: 8 }, (_, i) => P(`Wish ${i + 5} for her`))],
+  finalWords: ['Another year of you.', 'Another year of memories waiting to happen.', 'Happy birthday, Dheepika.'],
+  futurePrompt: 'Write something we should read together next year.',
   beginning: { line: 'The day my favourite person entered this world.' },
   memories: Array.from({ length: 8 }, (_, i) => ({
     caption: P(`Memory ${i + 1}: what you remember about this moment`),

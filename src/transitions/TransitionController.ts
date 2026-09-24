@@ -1,3 +1,4 @@
+import { projectBySlug } from '../app/projects';
 import { state, store, type Route } from '../core/state';
 import { routePath, sameRoute } from '../app/router';
 import { rangeOf } from '../world/journey';
@@ -62,12 +63,12 @@ export class TransitionController {
     store.set({ route });
     document.title =
       route.name === 'project'
-        ? `${route.slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())} · Meridian Field`
+        ? `${projectBySlug(route.slug)?.title ?? 'Our garden'} · For Dheepika`
         : route.name === 'contact'
-          ? 'Contact · Meridian Field'
+          ? 'For you · For Dheepika'
           : route.name === 'work'
-            ? 'Work · Meridian Field'
-            : 'Meridian Field · Realtime Digital Experiences';
+            ? 'Our garden · For Dheepika'
+            : 'For Dheepika · 25 · 11';
   }
 
   private jumpSteps(progress: number): Step[] {

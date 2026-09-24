@@ -70,18 +70,18 @@ export function Nav() {
         <path ref={stroke} className="nav__stroke" />
       </svg>
       <div className="nav__row">
-        <NavLink label="WORK" to="work" current={onWork} />
+        <NavLink label="OUR GARDEN" to="work" current={onWork} />
         <svg className="nav__divider" viewBox="0 0 50 14" aria-hidden="true">
           <path ref={divider} d="M 0 7 L 50 7" />
         </svg>
-        <NavLink label="CONTACT" to="contact" current={route.name === 'contact'} />
+        <NavLink label="FOR YOU" to="contact" current={route.name === 'contact'} />
       </div>
       <div className={`ticker ${onWork ? 'is-visible' : ''}`} aria-hidden={!onWork}>
-        <button type="button" aria-label={audioOn ? 'Mute ambient audio' : 'Play ambient audio'} onClick={() => events.emit('toggleAudio', undefined)} tabIndex={onWork ? 0 : -1}>
+        <button type="button" aria-label={audioOn ? 'Turn the music off' : 'Play soft music'} onClick={() => events.emit('toggleAudio', undefined)} tabIndex={onWork ? 0 : -1}>
           {audioOn ? '■' : '▶'}
         </button>
         <div className="ticker__track">
-          <span>{audioOn ? 'NOW PLAYING — MERIDIAN FIELD · TIDEWATER DRONE (GENERATIVE)' : 'SOUND OFF — PRESS PLAY FOR THE GENERATIVE AMBIENT BED'}</span>
+          <span>{audioOn ? 'NOW PLAYING — A SOFT MUSIC BOX FOR THE GARDEN' : 'SOUND OFF — PRESS PLAY FOR SOFT MUSIC'}</span>
         </div>
       </div>
       {!onWork && (

@@ -1,6 +1,52 @@
 {
   "name": "Dheepika",
   "date": "25 · 11",
+  "birthday": {
+    "month": 11,
+    "day": 25,
+    "timezone": "[IANA timezone, e.g. Europe/London]",
+    "countdownEnabled": false
+  },
+  "opening": {
+    "lines": [
+      "Some dates are just dates.",
+      "But one changed my world."
+    ],
+    "enter": "Enter our garden",
+    "shootingStar": "Make a wish ✦"
+  },
+  "threshold": {
+    "lines": [
+      "A garden",
+      "made of",
+      "memories"
+    ],
+    "copy": [
+      "Every flower here holds a little of us.",
+      "Scroll slowly. Touch whatever glows."
+    ]
+  },
+  "signature": "[your name, as you sign it]",
+  "lanternWishes": [
+    "More reasons to laugh.",
+    "More places to discover.",
+    "More peaceful mornings.",
+    "More dreams becoming real.",
+    "[Wish 5 for her]",
+    "[Wish 6 for her]",
+    "[Wish 7 for her]",
+    "[Wish 8 for her]",
+    "[Wish 9 for her]",
+    "[Wish 10 for her]",
+    "[Wish 11 for her]",
+    "[Wish 12 for her]"
+  ],
+  "finalWords": [
+    "Another year of you.",
+    "Another year of memories waiting to happen.",
+    "Happy birthday, Dheepika."
+  ],
+  "futurePrompt": "Write something we should read together next year.",
   "beginning": {
     "line": "The day my favourite person entered this world."
   },

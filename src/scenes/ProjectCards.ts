@@ -9,7 +9,7 @@ import { damp, clamp } from '../utils/math';
 
 export const CARD_W = CARD.w;
 export const CARD_H = CARD.h;
-const DISPLAY_FONT = '"Tourney Variable", "Tourney", sans-serif';
+const DISPLAY_FONT = '"Cormorant Garamond", Georgia, serif';
 const MONO_FONT = '"Share Tech Mono", monospace';
 
 function roundedRect(w: number, h: number, r: number) {
@@ -42,12 +42,11 @@ export function titleTexture(p: Project) {
   g.globalAlpha = 0.85;
   g.fillText(p.kicker, W / 2, H * 0.3);
   g.globalAlpha = 1;
-  const words = p.title.toUpperCase().split(' ');
+  const words = p.title.split(' ');
   const lines: string[] = [];
   let line = '';
   const size = 118;
-  g.font = `480 ${size}px ${DISPLAY_FONT}`;
-  (g as CanvasRenderingContext2D & { fontStretch?: string }).fontStretch = 'semi-expanded';
+  g.font = `italic 500 ${size}px ${DISPLAY_FONT}`;
   for (const w of words) {
     const test = line ? line + ' ' + w : w;
     if (g.measureText(test).width > W * 0.78 && line) {

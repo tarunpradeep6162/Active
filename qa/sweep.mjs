@@ -18,19 +18,20 @@ for (const dir of [1, -1]) {
 const nav = [];
 // each navigation must actually arrive (transitions run on the capped animation clock, so wait for
 // the route + an idle transition rather than a fixed time)
-const expect = { '/work': 'work', '/contact': 'contact', '/': 'home' };
+const expect = { '/garden': 'work', '/work': 'work', '/for-you': 'contact', '/contact': 'contact', '/': 'home' };
 const arrive = async (want) => {
   const t0 = Date.now();
   const ok = await page.waitForFunction((w) => __state.route.name === w && __state.transition.phase === 'IDLE', want, { timeout: 180000 }).then(() => true, () => false);
   const st = ok ? '' : ' (' + (await page.evaluate(() => `path ${location.pathname}, route ${__state.route.name}, phase ${__state.transition.phase}`)) + ')';
   return `${want}: ${ok ? 'arrived' : 'NEVER ARRIVED'} in ${Math.round((Date.now() - t0) / 1000)}s${st}`;
 };
-for (const path of ['/work', '/work/music-room', '/contact', '/', '/work/for-dheepika', '/work']) {
+for (const path of ['/garden', '/garden/music-room', '/for-you', '/', '/work/for-dheepika', '/garden', '/contact', '/nowhere-at-all', '/']) {
   await page.evaluate((p) => { history.pushState({}, '', p); dispatchEvent(new PopStateEvent('popstate')); }, path);
-  nav.push(`${path} → ${await arrive(expect[path] ?? 'project')}`);
+  nav.push(`${path} → ${await arrive(expect[path] ?? (path.startsWith('/nowhere') ? 'home' : 'project'))}`);
 }
-await page.goBack(); nav.push('back → ' + (await arrive('project')));
-await page.goForward(); nav.push('forward → ' + (await arrive('work')));
+nav.push('404 shown: ' + (await page.evaluate(() => !!document.querySelector('.notfound'))));
+await page.goBack(); nav.push('back → ' + (await arrive('home')));
+await page.goForward(); nav.push('forward → ' + (await arrive('home')));
 const errors = logs.filter((l) => /error/i.test(l));
 console.log(JSON.stringify({ viewport: [W, H], sections: [...seen], nav, errors }, null, 1));
 await browser.close();

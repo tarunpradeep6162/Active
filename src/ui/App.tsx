@@ -1,7 +1,8 @@
 import { Nav } from './Nav';
-import { Preloader, IntroHint, Manifesto, WorkPanel, LabLabel, EndCap, Contact, WebGLLost } from './Sections';
+import { Preloader, IntroHint, Manifesto, WorkPanel, LabLabel, EndCap, Contact, WebGLLost, NotFound } from './Sections';
 import { useStore } from './useStore';
 import { ChapterView } from '../birthday/ui/ChapterView';
+import { CursorTrail } from './CursorTrail';
 import '../birthday/ui/birthday.css';
 
 export function App() {
@@ -12,10 +13,10 @@ export function App() {
       {revealed && (
         <>
           <a className="sr-only sr-only-focusable" href="#ask-input">
-            Skip to work search
+            Skip to the garden's chapters
           </a>
           <main>
-            <h1 className="sr-only">Meridian Field — realtime digital experiences</h1>
+            <h1 className="sr-only">For Dheepika — a garden of memories, 25 · 11</h1>
             <IntroHint />
             <Manifesto />
             <WorkPanel />
@@ -28,6 +29,8 @@ export function App() {
         </>
       )}
       <WebGLLost />
+      <NotFound />
+      <CursorTrail />
     </>
   );
 }
