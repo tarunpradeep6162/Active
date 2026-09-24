@@ -196,6 +196,7 @@ export function Wish({ slug, onDone }: ChapterProps) {
   const [stage, setStage] = useState<'ready' | 'holding' | 'out'>('ready');
   const [hold, setHold] = useState(0);
   const raf = useRef(0);
+  const holdFrom = useRef(0);
   const stopMicRef = useRef<() => void>(() => {});
   // the candle in 3D: its flame leans and dims as she holds, then smoke and her wish's sparks rise
   const scene = useStage(() => import('../stage/WishScene').then(({ WishScene }) => (cv: HTMLCanvasElement) => new WishScene(cv)));
@@ -212,7 +213,7 @@ export function Wish({ slug, onDone }: ChapterProps) {
   const startHold = () => {
     if (stage !== 'ready') return; // key repeat / double pointerdown must not start a second loop
     setStage('holding');
-    const t0 = performance.now();
+    const t0 = (holdFrom.current = performance.now());
     const tick = () => {
       const h = Math.min(1, (performance.now() - t0) / 1800);
       setHold(h);
@@ -224,6 +225,8 @@ export function Wish({ slug, onDone }: ChapterProps) {
   };
   const stopHold = () => {
     cancelAnimationFrame(raf.current);
+    // held long enough, even if a slow device never drew the frame that would have ended it
+    if (stage === 'holding' && performance.now() - holdFrom.current >= 1800) return blowOut();
     if (stage === 'holding') {
       setStage('ready');
       setHold(0);
