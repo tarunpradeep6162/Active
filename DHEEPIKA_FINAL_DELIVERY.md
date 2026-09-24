@@ -32,6 +32,29 @@ nothing on the page says it). To change the URL, add a domain or rename the proj
 Routes: `/` (the journey), `/garden` and `/garden/<chapter>`, and `/for-you`. The old `/work…` and
 `/contact` links still resolve, so nothing breaks.
 
+## The fourteen chapters
+
+Each chapter opens out of its tulip onto its own 3D scene. They live in
+`src/birthday/ui/stage/`. Each loads only when its chapter opens and pauses when off screen.
+Without WebGL, the earlier flat versions come back.
+
+| # | Chapter | The scene |
+|---|---------|-----------|
+| 1 | 25 · 11 | One star in a nebula. Touching it twice makes it burst into a galaxy that gathers into the date. |
+| 2 | Memory Universe | Polaroids orbit a glowing core. The one she touches comes forward. |
+| 3 | The Letter | An envelope in candlelight. The wax seal breaks and the letter rises. |
+| 4 | 14 Things | The reasons are stars. Threads of light join the ones she finds, then her name is written in stars. |
+| 5 | Catch My Heart | A tulip stands behind the game, its head where the petals fall from. It begins as a closed bud. Each catch brings a petal home and opens it further, and winning makes it bloom fully in a spiral of light petals. |
+| 6 | Know Us? | Two glass hearts (rose and gold) joined by a thread of light. Each answer draws them closer: a right one makes them glow, a wrong one makes them tremble. They meet above her next‑date card. |
+| 7 | Our Secret | A brass cryptex with one engraved ring per clue. A right answer turns its ring to the symbol and lights it; a wrong one makes it shudder. With all five aligned it opens and light pours out. |
+| 8 | Music Room | A walnut record player. Choosing a song writes the title on the label, the tonearm finds the groove, the record spins up and notes rise. |
+| 9 | Our Timeline | A river of light winding into the stars, with a lantern at every date. Moving through the story carries the camera along it, and the last stop opens onto a horizon. |
+| 10 | Choose a Gift | Three satin boxes. The one she chooses opens. |
+| 11 | Make a Wish | One candle. Its flame leans while she holds, then goes out in a curl of smoke, and her wish climbs as a spiral of gold sparks. |
+| 12 | Future Universe | The manor at golden hour, behind the possibilities. |
+| 13 | Our Little Movie | A velvet cinema. The house lights dim, the curtains part and a projector beam lights the screen. Until her clips are added, the screen runs a film‑leader countdown. |
+| 14 | For Dheepika | Door 25: a gold arched door whose lights count the open chapters. It swings open, hearts and light pour through, and the camera passes into the light before the finale. |
+
 ## Current state: no passphrase (until the final build)
 
 - The site is live **without a passphrase**. It shows the shipped content. The timeline is your
@@ -143,7 +166,8 @@ Last full run, on the local build and then on the live site:
 | `manor` 1280×800 and 390×844 (local and live) | renders, 0 errors |
 | Live headers | `X-Robots-Tag: noindex, nofollow, noarchive`, `Referrer-Policy: no-referrer`; `/vault/meta.json` served as JSON (no 404) |
 
-Other targeted checks: `qa/opening.mjs` (loader, opening, threshold, leftover-text scan),
+`qa/chapter.mjs <slug> [w h]` opens one chapter and walks through its scene, capturing each
+step (`STILL=1` checks the final framing with reduced motion). Other targeted checks: `qa/opening.mjs` (loader, opening, threshold, leftover-text scan),
 `qa/cake.mjs` (cage, candles, blowing, darkness, burst, microphone never requested unasked),
 `qa/lanterns.mjs` (a real tap on a lantern, its words, the star, persistence),
 `qa/finale.mjs` (every stage of the finale sky and One last thing), and `qa/keepsakes.mjs`
