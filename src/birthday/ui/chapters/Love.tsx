@@ -228,6 +228,7 @@ export function Future({ slug, onDone }: ChapterProps) {
   }, [n]);
   return (
     <div className="bd-future">
+      <Manor />
       <div className="bd-orbs">
         {c.future.map((f, k) => (
           <button key={k} type="button" className={`bd-orb ${open === k ? 'is-open' : ''}`} onClick={() => { setOpen(k); setN((x) => x + 1); }} style={{ ['--k' as string]: k }}>
@@ -247,6 +248,36 @@ export function Future({ slug, onDone }: ChapterProps) {
       </p>
       <HiddenHeart slug={slug} style={{ left: '46%', top: '2%' }} />
     </div>
+  );
+}
+
+/** "Someday": the manor, rendered in its own canvas and loaded only when this chapter opens. */
+function Manor() {
+  const c = useContent();
+  const ref = useRef<HTMLCanvasElement>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    let scene: { dispose(): void } | null = null;
+    let live = true;
+    import('../ManorScene')
+      .then(({ ManorScene }) => {
+        if (live && ref.current) scene = new ManorScene(ref.current);
+      })
+      .catch(() => live && setFailed(true));
+    return () => {
+      live = false;
+      scene?.dispose();
+    };
+  }, []);
+  return (
+    <figure className="bd-manor">
+      {!failed && <canvas ref={ref} className="bd-manor__canvas" role="img" aria-label="A cream manor with arched windows and an ivy arch over the door, pink blossoms along a sunlit path" />}
+      <figcaption className="bd-manor__caption">
+        <span className="bd-manor__kicker">{c.manor.kicker}</span>
+        <span className="bd-manor__title">{c.manor.title}</span>
+        <span className="bd-manor__line">{c.manor.line}</span>
+      </figcaption>
+    </figure>
   );
 }
 

@@ -103,6 +103,8 @@ export interface BirthdayContent {
   gifts: [Gift, Gift, Gift];
   wish: { line: string };
   future: { title: string; text: string }[];
+  /** the manor in the Future Universe: a home for "someday" */
+  manor: { kicker: string; title: string; line: string };
   wishes: string[];
   movie: { clips: MediaRef[]; line: string };
   finale: {

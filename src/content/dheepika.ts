@@ -161,6 +161,11 @@ export const PLACEHOLDER: BirthdayContent = {
     { title: 'A midnight adventure', text: 'No plan, a full tank, and a playlist we both pretend to hate.' },
     { title: 'One dream for us', text: 'A life where every ordinary day still feels a little like this garden.' },
   ],
+  manor: {
+    kicker: 'Someday',
+    title: 'A home with a garden',
+    line: 'Tall windows full of morning light, a path lined with blossoms, and a door that is always open for the two of us.',
+  },
   wishes: [
     'A year full of reasons to smile.',
     'Mornings that start slow and soft.',
