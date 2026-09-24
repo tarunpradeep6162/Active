@@ -33,13 +33,18 @@ export function Timeline({ slug, onDone }: ChapterProps) {
   const [i, setI] = useState(0);
   const stops = [...c.timeline, { label: 'Next', text: c.emptyFrame, empty: true as const }];
   const s = stops[i];
+  const track = useRef<HTMLOListElement>(null);
   useEffect(() => {
     if (i === stops.length - 1) onDone();
+    // keep the current date in view on narrow screens (the strip scrolls sideways)
+    const el = track.current?.children[i] as HTMLElement | undefined;
+    const t = track.current;
+    if (el && t && t.scrollWidth > t.clientWidth) t.scrollTo({ left: el.offsetLeft - t.clientWidth / 2 + el.clientWidth / 2, behavior: 'smooth' });
   }, [i]);
   return (
     <div className="bd-timeline">
       {c.timelineStory?.intro && i === 0 && <p className="bd-timeline__intro">{c.timelineStory.intro}</p>}
-      <ol className="bd-timeline__track" aria-label="Our timeline">
+      <ol className="bd-timeline__track" aria-label="Our timeline" ref={track}>
         {stops.map((t, k) => (
           <li key={k}>
             <button type="button" aria-current={k === i} onClick={() => setI(k)}>
@@ -60,7 +65,8 @@ export function Timeline({ slug, onDone }: ChapterProps) {
           </>
         ) : (
           <>
-            <Media media={s.media} label={`${s.label} — photo or clip`} className="bd-timeline__media" />
+            {/* real content without a photo simply tells the story; the preview keeps the slot visible */}
+            {(s.media || c.placeholder) && <Media media={s.media} label={`${s.label} — photo or clip`} className="bd-timeline__media" />}
             <h3>{s.label}</h3>
             {s.date && <p className="bd-meta">{s.date}</p>}
             <p>{s.text}</p>
