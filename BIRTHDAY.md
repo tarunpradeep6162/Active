@@ -63,7 +63,7 @@ Nothing personal is ever committed.
 
 ## Checking it
 
-- `npm run build && npx vite preview`, then open `/work/the-beginning`.
+- `npm run build && npx vite preview`, then open `/garden/the-beginning`.
 - Without a vault the footer shows "Preview — placeholder content". With a vault the
   passcode gate appears first.
 - `RECREATION_URL=http://localhost:4173/ node qa/bdtour.mjs 1280 800` (or `390 844`)
