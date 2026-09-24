@@ -181,9 +181,9 @@ export function makeNebula(uniforms: { uTime: { value: number }; uAspect: { valu
         float c1 = fbm(p * 1.6 + vec2(t, -t * .6));
         float c2 = fbm(p * 3.1 - vec2(t * 1.3, t) + c1 * 1.4);
         float cloud = smoothstep(.35, .95, c1 * .6 + c2 * .6);
-        vec3 col = mix(vec3(.018, .02, .05), vec3(.03, .025, .07), vUv.y) + uA * .6 * cloud * .55 + uB * .6 * pow(cloud, 2.2) * .35;
+        vec3 col = mix(vec3(.02, .022, .055), vec3(.035, .03, .08), vUv.y) + uA * cloud * .75 + uB * pow(cloud, 2.) * .55;
         float r = length(p);
-        col += vec3(.75, .55, .3) * exp(-r * r * 6.) * uGlow * .35;
+        col += vec3(.75, .55, .3) * exp(-r * r * 5.) * uGlow * .45 + uB * exp(-r * r * 2.) * .08;
         col *= 1. - smoothstep(.45, 1.1, r) * .55;
         gl_FragColor = vec4(col, 1.);
       }`,
