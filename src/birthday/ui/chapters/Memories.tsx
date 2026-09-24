@@ -267,32 +267,76 @@ function Scratch({ children, onRevealed }: { children: React.ReactNode; onReveal
 export function Gifts({ slug, onDone }: ChapterProps) {
   const c = useContent();
   const chosen = useProgress().gift;
+  const ref = useRef<HTMLCanvasElement>(null);
+  const scene = useRef<{ choose(i: number): void; dispose(): void } | null>(null);
+  const [failed, setFailed] = useState(false);
+  // the message appears once the lid is off and the light has risen (at once on a return visit)
+  const [revealed, setRevealed] = useState(chosen !== null);
+  const pick = (k: number) => {
+    if (chosen !== null) return;
+    chooseGift(k);
+    onDone();
+  };
+  useEffect(() => {
+    let alive = true;
+    import('../GiftScene')
+      .then(({ GiftScene }) => {
+        if (!alive || !ref.current) return;
+        const s = new GiftScene(ref.current, chosen);
+        s.onPick = (k) => pick(k);
+        s.onRevealed = () => alive && setRevealed(true);
+        scene.current = s;
+      })
+      .catch(() => alive && setFailed(true));
+    return () => {
+      alive = false;
+      scene.current?.dispose();
+      scene.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // no 3D (or not loaded yet): the reveal happens straight away; and it never waits forever
+  useEffect(() => {
+    if (chosen === null || revealed) return;
+    if (failed || !scene.current) return setRevealed(true);
+    const id = setTimeout(() => setRevealed(true), 5000);
+    return () => clearTimeout(id);
+  }, [failed, chosen, revealed]);
+  const gift = chosen !== null ? c.gifts[chosen] : null;
+  const card = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (revealed) setTimeout(() => card.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 500);
+  }, [revealed]);
   return (
     <div className="bd-gifts">
-      <p className="bd-hint">{chosen === null ? 'Three boxes. You may open only one.' : 'Your gift:'}</p>
-      <div className="bd-gifts__row">
-        {c.gifts.map((g, k) => (
-          <button
-            key={k}
-            type="button"
-            className={`bd-gift ${chosen === k ? 'is-open' : chosen !== null ? 'is-shut' : ''}`}
-            disabled={chosen !== null}
-            onClick={() => {
-              chooseGift(k);
-              onDone();
-            }}
-            aria-label={`Gift ${g.label}`}
-          >
-            <span className="bd-gift__lid" />
-            <span className="bd-gift__box">{g.label}</span>
-          </button>
-        ))}
-      </div>
-      {chosen !== null && (
-        <div className="bd-gift__content">
-          <p className="bd-meta">{c.gifts[chosen].kind}</p>
-          <Media media={c.gifts[chosen].media} label="Gift photo or clip" className="bd-gift__media" />
-          <p>{c.gifts[chosen].text}</p>
+      <p className="bd-hint bd-gifts__hint">{chosen === null ? 'Three boxes. You may open only one.' : revealed ? 'Your gift' : 'Opening…'}</p>
+      {!failed ? (
+        <div className={`bd-giftstage ${revealed ? 'is-revealed' : ''}`}>
+          <canvas ref={ref} className="bd-giftstage__canvas" role="img" aria-label="Three gift boxes wrapped in satin with gold ribbons, floating in soft spotlights" />
+          {/* keyboard and screen‑reader path to the same three boxes */}
+          <div className="sr-only">
+            {c.gifts.map((g, k) => (
+              <button key={k} type="button" disabled={chosen !== null} onClick={() => (scene.current ? scene.current.choose(k) : pick(k))}>
+                Open gift {g.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="bd-gifts__row">
+          {c.gifts.map((g, k) => (
+            <button key={k} type="button" className={`bd-gift ${chosen === k ? 'is-open' : chosen !== null ? 'is-shut' : ''}`} disabled={chosen !== null} onClick={() => pick(k)} aria-label={`Gift ${g.label}`}>
+              <span className="bd-gift__lid" />
+              <span className="bd-gift__box">{g.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      {gift && revealed && (
+        <div className="bd-giftcard" aria-live="polite" ref={card}>
+          <p className="bd-giftcard__kind">{gift.kind === 'promise' ? 'A promise' : gift.kind === 'message' ? 'A message' : gift.kind === 'photo' ? 'A photo' : gift.kind === 'memory' ? 'A memory' : 'A clue'} · {gift.label}</p>
+          {gift.media && <Media media={gift.media} label="Your gift" className="bd-gift__media" />}
+          <p className="bd-giftcard__text">{gift.text}</p>
         </div>
       )}
       <HiddenHeart slug={slug} style={{ right: '6%', top: '6%' }} />

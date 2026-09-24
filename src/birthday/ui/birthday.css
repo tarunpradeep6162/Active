@@ -310,3 +310,22 @@
   .bd-future .bd-orb { flex: 0 0 auto; width: 112px; min-height: 112px; padding: 12px; font-size: 11px; scroll-snap-align: center; animation: none; }
   .bd-future .bd-sphere { width: 56%; justify-self: center; }
 }
+
+/* Choose a Gift: the 3D stage and the message card that rises from the open box */
+.bd-gifts { width: min(980px, 100%); }
+.bd-giftstage { position: relative; width: 100%; aspect-ratio: 16 / 8; max-height: 56vh; transition: max-height 1.2s cubic-bezier(.4, 0, .2, 1); }
+.bd-giftstage.is-revealed { max-height: 40vh; }
+.bd-giftstage__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: pan-y;
+  /* feather every edge into the chapter's darkness: no visible rectangle */
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent), linear-gradient(transparent, #000 16%, #000 80%, transparent);
+  -webkit-mask-composite: source-in; mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent), linear-gradient(transparent, #000 16%, #000 80%, transparent); mask-composite: intersect; }
+.bd-gifts__hint { font: italic 500 clamp(17px, 1.8vw, 21px) var(--serif); letter-spacing: .01em; }
+.bd-giftcard { position: relative; width: min(560px, 92%); margin-top: -2vh; padding: clamp(18px, 3vw, 30px) clamp(20px, 4vw, 40px); border-radius: 14px; text-align: center;
+  background: linear-gradient(180deg, rgba(255, 246, 232, .96), rgba(246, 232, 214, .96)); color: #3a2226; box-shadow: 0 30px 80px rgba(0, 0, 0, .5), 0 0 60px rgba(255, 210, 150, .25);
+  animation: bd-giftcard 1.4s cubic-bezier(.2, .8, .2, 1) both; }
+.bd-giftcard::before { content: ''; position: absolute; inset: 8px; border: 1px solid rgba(201, 150, 90, .45); border-radius: 10px; pointer-events: none; }
+.bd-giftcard__kind { margin: 0 0 8px; font: 10px var(--mono); letter-spacing: .32em; text-transform: uppercase; color: #9a6a3a; }
+.bd-giftcard__text { margin: 0; font: italic 500 clamp(19px, 2.2vw, 26px)/1.5 var(--serif); letter-spacing: 0; }
+@keyframes bd-giftcard { from { opacity: 0; transform: translateY(40px) scale(.96); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+@media (max-width: 600px) { .bd-giftstage { aspect-ratio: 4 / 5; max-height: 52vh; } .bd-giftcard { margin-top: -2vh; } }
+@media (prefers-reduced-motion: reduce) { .bd-giftcard { animation: none; } }

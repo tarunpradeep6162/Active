@@ -71,7 +71,12 @@ await step(6, async () => {
 });
 await step(7, async () => { await page.locator('.bd-songs button').nth(0).click(); await page.locator('.bd-songs button').nth(1).click(); });
 await step(8, async () => { for (let k = 0; k < 12; k++) { const b = page.locator('.bd-timeline .bd-row .bd-btn').nth(1); if (await b.isDisabled()) break; await b.click(); } await page.waitForSelector('.bd-emptyframe'); });
-await step(9, async () => { await page.locator('.bd-gift').first().click({ force: true }); await page.waitForSelector('.bd-gift__content'); });
+await step(9, async () => {
+  // the 3D stage (keyboard path), or the flat fallback boxes when WebGL is unavailable
+  if (await page.locator('.bd-giftstage .sr-only button').count()) await page.locator('.bd-giftstage .sr-only button').first().evaluate((b) => b.click()); // (visually hidden: activate it like a keyboard user would)
+  else await page.locator('.bd-gift').first().click({ force: true });
+  await page.waitForSelector('.bd-giftcard', { timeout: 120000 });
+});
 await step(10, async () => {
   const b = await page.locator('.bd-wish .bd-btn').boundingBox();
   await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2); await page.mouse.down(); await page.waitForTimeout(2600); await page.mouse.up();
