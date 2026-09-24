@@ -408,3 +408,14 @@ html.no-webgl #interface { position: static; pointer-events: auto; }
 .actcard__title { font: italic 500 clamp(26px, 3vw, 44px)/1 var(--serif); letter-spacing: .04em; text-shadow: 0 0 24px rgba(230, 180, 110, .35); }
 @keyframes act { 0% { opacity: 0; letter-spacing: .12em; filter: blur(6px); } 22% { opacity: 1; filter: none; } 70% { opacity: 1; } 100% { opacity: 0; letter-spacing: .02em; } }
 @media (prefers-reduced-motion: reduce) { .actcard { animation: act-still 3.4s linear both; } @keyframes act-still { 0%, 80% { opacity: 1; } 100% { opacity: 0; } } }
+
+/* short landscape phones: keep the opening compact and the entry button on screen */
+@media (max-height: 500px) and (orientation: landscape) {
+  .opening__date { top: 9vh; font-size: 24px; }
+  .opening__line { top: calc(19vh + var(--i) * 7vh); font-size: 15px; }
+  .opening__name { top: 64vh; font-size: clamp(34px, 7vw, 56px); }
+  .opening__enter { top: auto; bottom: calc(10px + var(--safe-bottom)); }
+  .actcard { top: 10vh; }
+  .finale-sky__words { bottom: calc(96px + var(--safe-bottom)); }
+  .finale-sky__last { bottom: calc(52px + var(--safe-bottom)); }
+}
