@@ -39,7 +39,13 @@ export class ManorScene {
   private visible = true;
   private io: IntersectionObserver;
   private ro: ResizeObserver;
-  private readonly low: boolean;
+  private low: boolean;
+  private aoPass: GTAOPass | null = null;
+  /** adaptive quality: frame timing after load, and render every Nth frame on slow devices */
+  private samples: number[] = [];
+  private lastNow = 0;
+  private every = 1;
+  private tick = 0;
   private readonly still: boolean;
   private tex = new THREE.TextureLoader();
   private windUniform = { value: 0 };
@@ -49,7 +55,11 @@ export class ManorScene {
     this.low = matchMedia('(pointer: coarse)').matches || (navigator.hardwareConcurrency || 4) <= 4;
     this.still = matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.low ? 1.25 : 1.75));
+    // software rendering (no GPU) gets the light path straight away
+    const gl = this.renderer.getContext();
+    const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+    if (dbg && /swiftshader|llvmpipe|software|basic render/i.test(String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)))) this.low = true;
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.low ? 1 : 1.75));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.08;
@@ -114,10 +124,9 @@ export class ManorScene {
   private async build() {
     const s = this.scene;
     const pmrem = new THREE.PMREMGenerator(this.renderer);
-    const [hdr, sky, shrubA, shrubB, shrubC] = await Promise.all([
+    const [hdr, sky, shrubB, shrubC] = await Promise.all([
       new HDRLoader().loadAsync(`${BASE}sky_1k.hdr`),
       this.tex.loadAsync(`${BASE}sky_2k.jpg`),
-      this.loadModel('shrub_01'),
       this.loadModel('shrub_02'),
       this.loadModel('shrub_04'),
     ]);
@@ -147,7 +156,7 @@ export class ManorScene {
 
     this.buildGround();
     this.buildManor();
-    this.buildPlanting(shrubA, shrubB, shrubC);
+    this.buildPlanting(shrubB, shrubC);
 
     // post: ground‑truth AO grounds everything; a whisper of bloom on the sunlit plaster
     this.composer = new EffectComposer(this.renderer);
@@ -157,6 +166,7 @@ export class ManorScene {
       ao.updateGtaoMaterial({ radius: 0.9, distanceExponent: 1.6, thickness: 1.2, scale: 1.1, samples: 12 });
       ao.blendIntensity = 0.6;
       this.composer.addPass(ao);
+      this.aoPass = ao;
     }
     this.composer.addPass(new UnrealBloomPass(new THREE.Vector2(256, 256), 0.18, 0.6, 0.92));
     this.composer.addPass(new OutputPass());
@@ -454,7 +464,7 @@ export class ManorScene {
   }
 
   /** Scanned shrubs as instanced meshes, with a gentle wind sway in the vertex shader. */
-  private plant(model: Model, items: Item[], tint?: [number, number, number]) {
+  private plant(model: Model, items: Item[], tint?: [number, number, number], castShadow = true) {
     const mat = this.track(model.mat.clone());
     mat.envMapIntensity = 0.7;
     const wind = this.windUniform;
@@ -489,12 +499,13 @@ export class ManorScene {
     const q = new THREE.Quaternion();
     const up = new THREE.Vector3(0, 1, 0);
     items.forEach(({ p, s, r }, i) => im.setMatrixAt(i, new THREE.Matrix4().compose(p, q.setFromAxisAngle(up, r), new THREE.Vector3(s, s * (0.9 + (i % 3) * 0.08), s))));
-    im.castShadow = im.receiveShadow = true;
+    im.castShadow = castShadow;
+    im.receiveShadow = true;
     this.scene.add(im);
     return im;
   }
 
-  private buildPlanting(a: Model, b: Model, c: Model) {
+  private buildPlanting(b: Model, c: Model) {
     const rnd = mulberry(2511);
     const FRONT = 3.2;
     const at = (x: number, z: number, s: number, jitter = 1): Item => {
@@ -512,30 +523,31 @@ export class ManorScene {
     };
     const q = this.low ? 0.6 : 1;
     // big masses flank the path in the foreground and sit before the wings; the centre stays open
-    mass(-11.5, FRONT + 16, Math.round(90 * q), 7, 2.4);
-    mass(12, FRONT + 16, Math.round(90 * q), 7, 2.4);
-    mass(-18.5, FRONT + 6, Math.round(60 * q), 5.5, 2.2);
-    mass(19, FRONT + 6, Math.round(60 * q), 5.5, 2.2);
-    mass(-5.2, FRONT + 8.2, 10, 1.4, 1.2);
-    mass(5.2, FRONT + 8.2, 10, 1.4, 1.2);
+    // fewer, fuller shrubs: the same masses at roughly a third of the triangles
+    mass(-11.5, FRONT + 16, Math.round(32 * q), 6.5, 3.2);
+    mass(12, FRONT + 16, Math.round(32 * q), 6.5, 3.2);
+    mass(-18.5, FRONT + 6, Math.round(22 * q), 5, 2.9);
+    mass(19, FRONT + 6, Math.round(22 * q), 5, 2.9);
+    mass(-5.2, FRONT + 8.2, 5, 1.2, 1.5);
+    mass(5.2, FRONT + 8.2, 5, 1.2, 1.5);
     this.plant(c, blossom, [1.0, 0.42, 0.52]);
 
     // low green shrubs along the facade
     const sC = unit(c);
     const hedge: Item[] = [];
     for (let x = -18; x <= 18; x += 1.6) if (Math.abs(x) > 3.4) hedge.push(at(x, FRONT + (Math.abs(x) > 11 ? -1.2 : 1.1), sC * (1 + rnd() * 0.4), 0.4));
-    this.plant(c, hedge);
+    this.plant(c, hedge, undefined, false);
 
     // the ivy arch: leafy shrubs grown along a half‑ellipse over the steps
-    const sA = unit(a);
+    const sA = unit(c) * 0.8;
     const ivy: Item[] = [];
-    const n = this.low ? 26 : 40;
+    const n = this.low ? 20 : 30;
     for (let i = 0; i <= n; i++) {
       const t = (i / n) * Math.PI;
       ivy.push({ p: new THREE.Vector3(Math.cos(t) * 2.9, Math.sin(t) * 3.6 - 0.2, FRONT + 7.2 + (rnd() - 0.5) * 0.3), s: sA * (0.62 + rnd() * 0.2), r: rnd() * 6.28 });
     }
     for (const sx of [-1, 1]) for (let k = 0; k < 5; k++) ivy.push({ p: new THREE.Vector3(sx * (2.9 + (rnd() - 0.5) * 0.25), k * 0.55 - 0.2, FRONT + 7.2), s: sA * 0.75, r: rnd() * 6.28 });
-    this.plant(a, ivy);
+    this.plant(c, ivy, undefined, false);
 
     // two broad trees framing the view: a curved trunk and a crown of many leafy shrubs
     const bark = this.track(new THREE.MeshStandardMaterial({ color: '#5b4b3f', roughness: 0.95 }));
@@ -549,9 +561,9 @@ export class ManorScene {
       trunk.castShadow = true;
       this.scene.add(trunk);
       const cx = tx + lean * 7, cy = 12;
-      for (let i = 0; i < (this.low ? 45 : 80); i++) {
+      for (let i = 0; i < (this.low ? 26 : 44); i++) {
         const v = new THREE.Vector3(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).normalize().multiplyScalar(0.4 + rnd() * 0.6);
-        crown.push({ p: new THREE.Vector3(cx + v.x * 10, cy + v.y * 4.4 - 2.4, tz - 1 + v.z * 8), s: sB * (3.4 + rnd() * 1.8), r: rnd() * 6.28 });
+        crown.push({ p: new THREE.Vector3(cx + v.x * 10, cy + v.y * 4.4 - 2.4, tz - 1 + v.z * 8), s: sB * (4.4 + rnd() * 2), r: rnd() * 6.28 });
       }
     }
     this.plant(b, crown);
@@ -585,7 +597,28 @@ export class ManorScene {
     cancelAnimationFrame(this.raf);
   }
 
+  /** Watch the first frames after load; step quality down (once each) if the device struggles. */
+  private adapt() {
+    const now = performance.now();
+    if (this.lastNow) this.samples.push(now - this.lastNow);
+    this.lastNow = now;
+    if (this.samples.length < 24) return;
+    const sorted = [...this.samples].sort((a, b) => a - b);
+    const med = sorted[sorted.length >> 1];
+    this.samples = [];
+    if (med > 40 && this.aoPass?.enabled) {
+      this.aoPass.enabled = false; // the ambient occlusion is the most expensive pass
+    } else if (med > 40 && this.renderer.getPixelRatio() > 1) {
+      this.renderer.setPixelRatio(1);
+      this.resize();
+    } else if (med > 70 && this.every < 3) {
+      this.every++; // still slow: redraw every other (then every third) frame
+    }
+  }
+
   private frame() {
+    if (this.running && ++this.tick % this.every !== 0) return;
+    this.adapt();
     const t = this.clock.getElapsedTime();
     this.windUniform.value = this.still ? 0 : t;
     // a slow walk up the path toward the door, then a gentle hold; the pointer looks around
