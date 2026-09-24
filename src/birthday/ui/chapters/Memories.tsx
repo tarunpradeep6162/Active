@@ -4,7 +4,6 @@ import { chooseGift } from '../../progress';
 import { mediaUrl } from '../../vault';
 import { HiddenHeart, Media, filled, useContent } from '../shared';
 import type { ChapterProps } from '../ChapterView';
-import { pulseSky } from '../MoodSky';
 import { Backdrop, useStage } from '../stage/useStage';
 
 /* 2 ── Memory Universe: floating memories, a Polaroid camera and a photo puzzle. */
@@ -245,7 +244,6 @@ export function Secret({ slug, onDone }: ChapterProps) {
               const next = solved.slice();
               next[i] = true;
               events.emit('gardenPulse', undefined);
-              pulseSky();
               setSolved(next);
               setValue('');
               const k = next.findIndex((v) => !v);

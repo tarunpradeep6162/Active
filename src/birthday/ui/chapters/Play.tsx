@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { chooseThisOrThat } from '../../progress';
 import { HiddenHeart, useContent, useProgress } from '../shared';
 import type { ChapterProps } from '../ChapterView';
-import { pulseSky } from '../MoodSky';
 import { saveNextDateCard } from '../../keepsakes';
 import { Backdrop, useStage } from '../stage/useStage';
 
@@ -217,9 +216,7 @@ export function Quiz({ slug, onDone }: ChapterProps) {
           {q.options.map((o, k) => (
             <button key={k} type="button" className={`bd-choice ${picked === k ? 'is-picked' : ''}`} disabled={picked !== null} onClick={() => {
               setPicked(k);
-              const ok = q.answer === null || q.answer === k;
-              if (ok) pulseSky();
-              scene.stage.current?.pulse(ok);
+              scene.stage.current?.pulse(q.answer === null || q.answer === k);
             }}>
               {o}
             </button>

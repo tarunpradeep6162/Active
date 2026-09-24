@@ -10,7 +10,6 @@ import { Gifts, MemoryUniverse, Secret } from './chapters/Memories';
 import { Future, Letter, Reasons, Wish } from './chapters/Love';
 import { CatchGame, Quiz } from './chapters/Play';
 import { MusicRoom } from './chapters/Music';
-import { MoodSky } from './MoodSky';
 
 export interface ChapterProps {
   slug: string;
@@ -67,7 +66,6 @@ export function ChapterView() {
       </header>
       <div className="bd-chapter__stage">
         {open && vault === 'locked' && <Gate />}
-        {open && <MoodSky key={`sky-${p.slug}`} slug={p.slug} />}
         {open && vault !== 'locked' && vault !== 'checking' && <Chapter key={p.slug} slug={p.slug} onDone={() => markDone(p.slug)} />}
       </div>
       <footer className="bd-chapter__foot">
