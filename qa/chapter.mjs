@@ -7,6 +7,7 @@ const W = +process.argv[3] || 1280, H = +process.argv[4] || 800;
 const dir = `qa/out/ch/${slug}`;
 fs.mkdirSync(dir, { recursive: true });
 const { browser, page, logs } = await openSite('recreation', { width: W, height: H, mobile: W < 600, query: 'qa=1&tier=low', wait: false });
+if (process.env.STILL) await page.emulateMedia({ reducedMotion: 'reduce' });
 page.on('pageerror', (e) => logs.push(`pageerror: ${e.message}`));
 const ALL = ['the-beginning', 'memory-universe', 'the-letter', 'fourteen-things', 'catch-my-heart', 'know-us', 'our-secret', 'music-room', 'our-timeline', 'gift-boxes', 'make-a-wish', 'future-universe', 'little-movie'];
 const done = process.env.DONE === 'all' ? ALL : (process.env.DONE ?? '').split(',').filter(Boolean);
@@ -59,6 +60,13 @@ const steps = {
     await page.waitForSelector('.bd-movie.is-end', { timeout: 60000 });
     await page.waitForTimeout(3500);
     await shot('end');
+  },
+  'our-timeline': async () => {
+    for (const k of [1, 3, 8]) {
+      await click(`.bd-timeline__track li:nth-child(${k + 1}) button`);
+      await page.waitForTimeout(7000);
+      await shot(`stop${k}`);
+    }
   },
   'for-dheepika': async () => {
     info.locked = await page.evaluate(() => !!document.querySelector('.bd-door'));

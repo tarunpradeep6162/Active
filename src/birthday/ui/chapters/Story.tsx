@@ -69,6 +69,11 @@ export function Timeline({ slug, onDone }: ChapterProps) {
   const stops = [...c.timeline, { label: 'Next', text: c.emptyFrame, empty: true as const }];
   const s = stops[i];
   const track = useRef<HTMLOListElement>(null);
+  // the river of light in 3D: one lantern per date; moving through the story travels along it
+  const scene = useStage(() =>
+    import('../stage/TimelineScene').then(({ TimelineScene }) => (cv: HTMLCanvasElement) => new TimelineScene(cv, stops.map((t, k) => ('empty' in t ? '…' : k === 0 && c.timelineStory?.intro ? '' : filled(t.date) || t.label)))),
+  );
+  useEffect(() => scene.stage.current?.go(i), [i, scene.live]);
   useEffect(() => {
     if (i === stops.length - 1) onDone();
     // keep the current date in view on narrow screens (the strip scrolls sideways)
@@ -77,7 +82,8 @@ export function Timeline({ slug, onDone }: ChapterProps) {
     if (el && t && t.scrollWidth > t.clientWidth) t.scrollTo({ left: el.offsetLeft - t.clientWidth / 2 + el.clientWidth / 2, behavior: 'smooth' });
   }, [i]);
   return (
-    <div className="bd-timeline">
+    <div className="bd-timeline" data-live={scene.live}>
+      <Backdrop canvas={scene.ref} />
       {c.timelineStory?.intro && i === 0 && <p className="bd-timeline__intro">{c.timelineStory.intro}</p>}
       <ol className="bd-timeline__track" aria-label="Our timeline" ref={track}>
         {stops.map((t, k) => (

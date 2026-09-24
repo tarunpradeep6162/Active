@@ -412,3 +412,9 @@
 .bd-movie[data-live="true"] .bd-movie__line { color: #fff1dc; text-shadow: 0 2px 22px rgba(0, 0, 0, .9); animation: bd-in 2.4s ease 1.6s both; }
 @media (max-width: 720px) { .bd-movie[data-live="true"] .bd-movie__screen { width: 84vw; } }
 .bd-movie[data-live="true"] :is(.bd-movie__play, .bd-movie__caption) { position: absolute; bottom: 3%; left: 50%; translate: -50%; width: max-content; max-width: 90%; text-align: center; }
+
+/* chapter 9 · the river of light in 3D behind the story */
+.bd-timeline[data-live="true"] .bd-timeline__track { border-bottom-color: rgba(255, 216, 154, .22); }
+.bd-timeline[data-live="true"] :is(.bd-timeline__stop, .bd-timeline__intro, .bd-timeline__outro, .bd-timeline__track button) { text-shadow: 0 1px 14px rgba(7, 9, 20, .95), 0 0 2px rgba(7, 9, 20, .8); }
+.bd-timeline[data-live="true"] .bd-timeline__stop { padding-top: 22vh; }
+.bd-timeline[data-live="true"] .bd-cosmos::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 30%, rgba(7, 9, 20, .55) 70%); pointer-events: none; }
