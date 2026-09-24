@@ -65,8 +65,8 @@ export function Timeline({ slug, onDone }: ChapterProps) {
           </>
         ) : (
           <>
-            {/* real content without a photo simply tells the story; the preview keeps the slot visible */}
-            {(s.media || c.placeholder) && <Media media={s.media} label={`${s.label} — photo or clip`} className="bd-timeline__media" />}
+            {/* a date without a photo simply tells the story */}
+            {s.media && <Media media={s.media} label={`${s.label} — photo or clip`} className="bd-timeline__media" />}
             <h3>{s.label}</h3>
             {filled(s.date) && <p className="bd-meta">{s.date}</p>}
             <p>{s.text}</p>
