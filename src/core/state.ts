@@ -87,6 +87,8 @@ export const state = {
   cakeReady: false,
   /** 0..1 the room going dark after the candles go out */
   cakeDark: 0,
+  /** 0…1 the camera's slow push‑in on the cake once the cage opens */
+  labDolly: 0,
   /** 0..1 intro reveal after preload */
   reveal: 0,
   audioLevel: 0,

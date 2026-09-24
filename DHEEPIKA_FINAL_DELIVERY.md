@@ -19,8 +19,8 @@ nothing on the page says it). To change the URL, add a domain or rename the proj
 | 0 | **Loader**: a small bud gathers light, with "Gathering memories…" | `Preloader` in `src/ui/Sections.tsx` |
 | 1 | **Opening**: stars; *25 · 11*; "Some dates are just dates. / But one changed my world."; a shooting star she can make a wish on; her name; **Enter our garden** | `IntroHint`, the heart + D emblem in `src/scenes/Emblem.ts` |
 | 2 | **Threshold**: "A garden made of memories" | `Manifesto` |
-| 3 | **The tulip garden**: 25 tulips open as she scrolls, and 14 of them hold the chapters. Fireflies and a few butterflies. Each chapter unfolds out of its tulip. | `src/scenes/TulipGarden.ts`, `src/birthday/ui/*` |
-| 4 | **The cake in the cage**: touch the lock; the bars rise and the cake comes forward with its candles lit. **Blow out the candles**: hold the button (or, only if she taps for it, use the microphone). The flames lean and go out, there is a moment of darkness, then gold dust and petals. The candles relight for another wish. | `src/scenes/Lab.ts`, `src/scenes/BirthdayCake.ts`, `LabLabel` |
+| 3 | **The tulip garden**: 25 tulips open as she scrolls, and 14 of them hold the chapters. Fireflies and a few butterflies. Behind them, a real sky with a horizon: hills in the haze, thin clouds, stars, and a moon that turns into a low golden sun as she descends. Soft out‑of‑focus lights drift past the lens. Each chapter unfolds out of its tulip. | `src/scenes/TulipGarden.ts`, `src/scenes/GardenSky.ts`, `src/birthday/ui/*` |
+| 4 | **The cake in the cage**: a room staged like a film set: a plum velvet drape, strings of warm fairy lights out of focus, a rose‑gold cage, and a spotlight with dust turning in its beam. Touch the lock; the bars rise and the cake comes forward with its candles lit. **Blow out the candles**: hold the button (or, only if she taps for it, use the microphone). The flames lean and go out, smoke curls from every wick, there is a moment of darkness, then gold dust and petals. The candles relight for another wish. | `src/scenes/Lab.ts`, `src/scenes/CakeRoom.ts`, `src/scenes/BirthdayCake.ts`, `LabLabel` |
 | 5 | **The lantern sky**: a night of rising paper lanterns. Twelve hover close; touching one lets its wish go. Its words rise, and it climbs into a star that stays in her sky. | `src/scenes/LanternSky.ts`, `LanternSkyLabel` |
 | 6 | **The finale**: the stars gather into *25 · 11*, then into **DHEEPIKA**. *Happy birthday* above, *25 · November* below, gentle rose and champagne fireworks, a sunrise from the horizon, the final words one at a time, then **One last thing**: your voice note and last message. | `src/scenes/Constellation.ts`, `FinaleSky` |
 | + | **Someday** (inside chapter 12, Future Universe): a photographic manor at golden hour. It's a cream villa of our own design, with arched windows that reflect the sky, classical cornices, balustraded balconies, a porch of columns and an ivy arch. Rose blossom shrubs frame a gravel path, with full trees and a real cloudy sky. It's dressed with CC0 (public‑domain) Poly Haven assets: photoscanned plaster, grass and gravel, a captured sky for the lighting, and scanned shrubs. It loads about 5 MB, only when the chapter opens (credits in `public/manor/CREDITS.txt`). | `src/birthday/ui/ManorScene.ts`, `public/manor/` |
@@ -79,7 +79,9 @@ Without WebGL, the earlier flat versions come back.
   banding.
 - **Letterbox**: bars slide in for the two big moments, the cake leaving its cage and her name
   forming in the stars.
-- **Camera**: the lantern sky is framed level, and the finale drifts wide while the stars wander,
+- **Lens**: the brightest lights (candles, fairy lights, the sun) stretch into faint horizontal
+  streaks, as through a cinema lens.
+- **Camera**: in the cake room it pushes in slowly as the cake comes out of its cage. The lantern sky is framed level, and the finale drifts wide while the stars wander,
   then slowly pushes in as they spell DHEEPIKA.
 - **Light**: soft light shafts slant through the garden and warm toward sunset as she scrolls.
 

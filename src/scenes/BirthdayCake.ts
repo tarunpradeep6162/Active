@@ -127,6 +127,7 @@ export class BirthdayCake {
   private topper: THREE.Mesh;
   private sparkles: THREE.Points;
   private sparkleMat: THREE.ShaderMaterial;
+  private smokeMat: THREE.ShaderMaterial;
 
   constructor() {
     const g = this.group;
@@ -317,6 +318,41 @@ export class BirthdayCake {
     this.sparkles.frustumCulled = false;
     add(this.sparkles);
     this.materials.push(this.sparkleMat);
+
+    // thin ribbons of smoke curling up from every wick once the candles are blown out
+    const SM = 16;
+    const smoke = new Float32Array(CANDLES * SM * 3);
+    for (let i = 0; i < CANDLES; i++) for (let k = 0; k < SM; k++) smoke.set([i, k / SM, rr()], (i * SM + k) * 3);
+    const smg = new THREE.BufferGeometry();
+    smg.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(CANDLES * SM * 3), 3));
+    smg.setAttribute('aSmoke', new THREE.Float32BufferAttribute(smoke, 3));
+    this.smokeMat = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      vertexShader: /* glsl */ `
+        attribute vec3 aSmoke;
+        uniform float uT, uPx, uTime;
+        varying float vA;
+        void main(){
+          float ang = aSmoke.x / ${CANDLES.toFixed(1)} * 6.2832;
+          vec3 wick = vec3(cos(ang) * ${(TIERS[2].r - 0.16).toFixed(3)}, ${(TOP + 0.4).toFixed(3)}, sin(ang) * ${(TIERS[2].r - 0.16).toFixed(3)});
+          // each puff leaves the wick in turn and climbs, curling and spreading as it goes
+          float t = uT * .9 - aSmoke.y * 1.4;
+          float h = max(t, 0.) * .55;
+          vec3 p = wick + vec3(sin(h * 5. + aSmoke.x + uTime * .8) * h * .16, h, cos(h * 4. + aSmoke.x * 2.) * h * .12);
+          vec4 mv = modelViewMatrix * vec4(p, 1.); gl_Position = projectionMatrix * mv;
+          vA = step(0., t) * (1. - smoothstep(1.2, 3.4, t)) * smoothstep(0., .15, t) * step(0., uT);
+          gl_PointSize = uPx * (1.2 + h * 5. + aSmoke.z) / -mv.z;
+        }`,
+      fragmentShader: /* glsl */ `
+        varying float vA;
+        void main(){ float d = length(gl_PointCoord - .5); float a = smoothstep(.5, .05, d) * vA * .38; gl_FragColor = vec4(vec3(.82, .78, .86), a); }`,
+      uniforms: { uT: { value: -1 }, uPx: { value: 22 }, uTime: globalUniforms.uTime },
+    });
+    const smokePts = new THREE.Points(smg, this.smokeMat);
+    smokePts.frustumCulled = false;
+    add(smokePts);
+    this.materials.push(this.smokeMat);
   }
 
   /** World positions that light the cake (call after placing the group). */
@@ -326,8 +362,10 @@ export class BirthdayCake {
     roseUniform.value.copy(rose);
   }
 
-  /** lit: candles igniting 0…1 · burst: sparkles (0…1, more is a bigger cloud) · blow: flames leaning */
-  update(time: number, lit: number, burst: number, dpr: number, blow = 0) {
+  /** lit: candles igniting 0…1 · burst: sparkles (0…1, more is a bigger cloud) · blow: flames leaning · sinceOut: seconds since blown out (−1: burning) */
+  update(time: number, lit: number, burst: number, dpr: number, blow = 0, sinceOut = -1) {
+    this.smokeMat.uniforms.uT.value = sinceOut;
+    this.smokeMat.uniforms.uPx.value = 22 * dpr;
     litUniform.value = lit;
     blowUniform.value = blow;
     this.sparkleMat.uniforms.uBurst.value = burst;

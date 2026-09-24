@@ -4,6 +4,7 @@ import { TulipGarden } from '../scenes/TulipGarden';
 import { getProgress } from '../birthday/progress';
 import { ProjectCards } from '../scenes/ProjectCards';
 import { Lab } from '../scenes/Lab';
+import { GardenSky } from '../scenes/GardenSky';
 import { LanternSky } from '../scenes/LanternSky';
 import { Constellation } from '../scenes/Constellation';
 import { getContent } from '../birthday/vault';
@@ -79,6 +80,8 @@ export class World {
   gardenReveal = 0;
   readonly cards: ProjectCards;
   readonly lab = new Lab();
+  /** the garden's sky, horizon and foreground bokeh */
+  readonly gardenSky: GardenSky;
   readonly portal: LanternSky;
   readonly finaleSky: Constellation;
   private manifestoRing: THREE.Mesh;
@@ -108,6 +111,8 @@ export class World {
     this.scene.add(this.backdrop.mesh, this.root);
     this.cards = new ProjectCards(titles);
     this.garden = new TulipGarden(titles, PROJECTS.map((p) => p.slug), settings.particleScale < 0.7);
+    this.gardenSky = new GardenSky(settings.particleScale < 0.7);
+    this.scene.add(this.gardenSky.sky, this.gardenSky.bokeh);
     this.portal = new LanternSky(settings.hexCount);
     this.finaleSky = new Constellation(getContent().name, getContent().date, settings.particleScale);
 
@@ -414,6 +419,9 @@ export class World {
     this.cards.setEntry(workTimeline.card0Entry(wt));
     // an open chapter (and the finale's reveal) always sees the whole garden
     this.garden.setCrumble(workTimeline.spineDissolve(wt) * (1 - clamp(state.focus + this.gardenReveal)));
+    // the sky behind the garden: there while the garden is, gone with it into the cake room
+    const skyAmt = Math.max(smoothstep(-0.05, 0.04, wt) * (1 - workTimeline.spineDissolve(wt)), this.gardenReveal) * (1 - clamp(state.focus * 1.5));
+    this.gardenSky.update(camera, skyAmt, clamp(0.1 + wt * 0.95) * (1 - this.gardenReveal) + this.gardenReveal, state.viewport.dpr);
     if (state.section === 'portal' || state.section === 'lab' || state.section === 'outro') {
       this.portal.update(t, state.viewport.dpr);
       state.starsLit = this.portal.starsLit;
@@ -424,6 +432,7 @@ export class World {
     state.cakeReady = this.lab.candlesReady;
     state.cageOpen = this.lab.isOpen;
     state.cakeDark = this.lab.dark;
+    state.labDolly = this.lab.dolly;
     if (++this.rayFrame % 2 === 0) this.raycast(camera);
     const gardenOn = this.garden.group.visible || state.focus > 0.001 || this.activeSlug !== null;
     if (!gardenOn) return;

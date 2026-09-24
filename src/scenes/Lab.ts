@@ -5,6 +5,7 @@ import { createWaterFloor } from '../fluid/Water';
 import { ANCHOR } from '../world/journey';
 import { rng, clamp, smoothstep } from '../utils/math';
 import { BirthdayCake } from './BirthdayCake';
+import { CakeRoom, roseGoldMaterial } from './CakeRoom';
 
 /** Heading (from the centre) the lab camera looks along — the lock hangs on that side. */
 const FRONT_DEG = 70;
@@ -33,6 +34,9 @@ export class Lab {
   blow = 0;
   /** 0…1 the room going dark after the candles go out (drawn as a DOM veil) */
   dark = 0;
+  /** 0…1 the camera's slow push‑in as the cake comes forward (read by the camera rig) */
+  dolly = 0;
+  private room: CakeRoom;
   private bars = new THREE.Group();
   private cables = new THREE.Group();
   private lock = new THREE.Group();
@@ -43,7 +47,8 @@ export class Lab {
 
   constructor() {
     const c = this.center;
-    const chrome = iridescentMaterial({ base: '#12080b', envTop: '#b0475e', envBottom: '#0a0406', film: 0.45, glow: 0.3 });
+    // rose gold, catching the candle light (was a harsh magenta chrome)
+    const chrome = roseGoldMaterial();
     this.materials.push(chrome);
 
     // ring platforms: the top pair stays with the housing, the lower pair lifts with the bars
@@ -124,7 +129,7 @@ export class Lab {
       g.deleteAttribute('uv');
       cables.push(g);
     }
-    const cableMat = darkLitMaterial('#14030a', '#c8203f', c.clone(), '#7a2a3c');
+    const cableMat = darkLitMaterial('#140806', '#d08a5a', c.clone(), '#6a3a3a');
     this.materials.push(cableMat);
     // hung from a pivot at the top ring so they can be reeled up when the cage opens
     const cableMesh = new THREE.Mesh(mergeGeometries(cables)!.translate(0, -3.4, 0), cableMat);
@@ -149,12 +154,10 @@ export class Lab {
     const cap = new THREE.Mesh(new THREE.CylinderGeometry(2.75, 2.75, 0.1, 48), concrete);
     cap.position.set(c.x, c.y + 4.85, c.z);
     this.group.add(cap);
-    for (const [x, z, lean, h] of [[-5.2, -2.5, 0.28, 11], [5.6, -2.8, -0.3, 11], [-8.5, -6, 0.12, 12], [8.8, -6.5, -0.15, 12]] as const) {
-      const b = new THREE.Mesh(new THREE.BoxGeometry(1.5, h, 1.8).translate(0, h / 2, 0), concrete);
-      b.position.set(c.x + x, c.y - 2.3, c.z + z);
-      b.rotation.set(0, x > 0 ? -0.4 : 0.4, lean);
-      this.group.add(b);
-    }
+    // the room itself: a velvet drape, fairy lights and a spotlight on the cake
+    this.room = new CakeRoom(c, this.front, c.y - 2.1, false);
+    this.materials.push(...this.room.materials);
+    this.group.add(this.room.group);
     const rockGeo = new THREE.DodecahedronGeometry(0.6, 1);
     const rocks = new THREE.InstancedMesh(rockGeo, concrete, 9);
     const rm = new THREE.Matrix4(), rq = new THREE.Quaternion(), rs = new THREE.Vector3(), rp = new THREE.Vector3(), re = new THREE.Euler();
@@ -170,13 +173,6 @@ export class Lab {
     }
     rocks.computeBoundingSphere();
     this.group.add(rocks);
-    // foreground silhouettes left/right of frame
-    for (const side of [-1, 1]) {
-      const fg = new THREE.Mesh(new THREE.BoxGeometry(1.2, 10, 1.2), concrete);
-      fg.position.set(c.x + side * 6.4, c.y + 2.5, c.z + 5.8);
-      fg.rotation.set(0, side * 0.5, side * -0.08);
-      this.group.add(fg);
-    }
   }
 
   get isOpen() {
@@ -240,7 +236,10 @@ export class Lab {
       if (b > 14.5) this.blownAt = -1;
     }
     const blow = this.blownAt >= 0 ? 0 : this.blow;
+    // the stage light comes up as the cage opens; the camera eases in on the cake
+    this.room.setStage(ease(0.6, 3.2, t), this.dark, dpr);
+    this.dolly = ease(1.6, 5.5, t);
     this.cake.syncLights(this.rose);
-    this.cake.update(time, lit, burst, dpr, blow);
+    this.cake.update(time, lit, burst, dpr, blow, b);
   }
 }

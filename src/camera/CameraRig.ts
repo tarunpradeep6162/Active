@@ -78,6 +78,8 @@ export class CameraRig {
       const v = clamp(s.velocity, -4, 4);
       this.desiredPos.addScaledVector(this.fwd, -Math.abs(v) * 0.18);
       this.desiredTgt.addScaledVector(this.up, -v * 0.1);
+      // the cake room: a slow push‑in and a gentle rise as the cake comes forward
+      if (state.section === 'lab' && state.labDolly > 0) this.desiredPos.addScaledVector(this.fwd, state.labDolly * 1.7).addScaledVector(this.up, state.labDolly * 0.2);
       const t = state.time;
       this.desiredPos.addScaledVector(this.right, Math.sin(t * 0.31) * 0.04 + Math.sin(t * 0.83) * 0.015).addScaledVector(this.up, Math.sin(t * 0.27 + 1.3) * 0.03);
     }

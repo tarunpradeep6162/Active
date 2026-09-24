@@ -71,11 +71,11 @@ void main(){
 const compositeFrag = /* glsl */ `
 precision highp float;
 in vec2 vUv; out vec4 o;
-uniform sampler2D tScene; uniform sampler2D tBloom; uniform sampler2D tBlur;
+uniform sampler2D tScene; uniform sampler2D tBloom; uniform sampler2D tBlur; uniform sampler2D tStreak;
 uniform float uBloomStrength; uniform float uHasBloom;
 uniform float uTime; uniform vec2 uResolution; uniform float uScrollVelocity;
 uniform float uChromatic; uniform float uBlur; uniform float uDim; uniform float uExposure;
-uniform vec3 uGlowA; uniform vec3 uGlowB; uniform float uReveal; uniform float uLetterbox;
+uniform vec3 uGlowA; uniform vec3 uGlowB; uniform float uReveal; uniform float uLetterbox; uniform float uStreak;
 ${math}
 ${noise}
 vec3 aces(vec3 x){ const float a = 2.51, b = .03, c = 2.43, d = .59, e = .14; return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0., 1.); }
@@ -90,6 +90,18 @@ void main(){
   col.g = texture(tScene, uv).g;
   col.b = texture(tScene, uv - c * ca).b;
   if (uHasBloom > .5) col += texture(tBloom, uv).rgb * uBloomStrength;
+  // anamorphic streaks: the brightest lights (candles, fairy lights, the sun) stretch sideways
+  // into thin champagne lines, like a cinema lens (squared, so only real highlights streak)
+  if (uHasBloom > .5 && uStreak > .001) {
+    vec3 s = vec3(0.);
+    for (int k = 1; k <= 14; k++) {
+      float o = float(k) * .0065;
+      float w = exp(-float(k) * .2);
+      vec3 a = texture(tStreak, uv + vec2(o, 0.)).rgb, b = texture(tStreak, uv - vec2(o, 0.)).rgb;
+      s += (a * a + b * b) * w;
+    }
+    col += s * vec3(1., .8, .7) * uStreak;
+  }
   if (uBlur > .001) col = mix(col, texture(tBlur, uv).rgb * 1.1, clamp(uBlur, 0., 1.));
   // corner glow (teal wash seen on the reference) — screen space so it frames every scene
   float aspect = uResolution.x / uResolution.y;
@@ -147,6 +159,7 @@ export class PostFX {
     tScene: { value: null },
     tBloom: { value: null },
     tBlur: { value: null },
+    tStreak: { value: null },
     uBloomStrength: { value: 0.9 },
     uHasBloom: { value: 1 },
     uTime: globalUniforms.uTime,
@@ -158,6 +171,7 @@ export class PostFX {
     uDim: { value: 0 },
     uExposure: { value: 1 },
     uLetterbox: { value: 0 },
+    uStreak: { value: 0.07 },
     uGlowA: { value: new THREE.Color('#1e6f6a') },
     uGlowB: { value: new THREE.Color('#123a44') },
   });
@@ -301,6 +315,7 @@ export class PostFX {
     }
     this.composite.uniforms.tScene.value = this.sceneRT.texture;
     this.composite.uniforms.tBloom.value = bloom ? this.ups[0].texture : null;
+    this.composite.uniforms.tStreak.value = bloom ? this.levels[Math.min(1, this.levels.length - 1)].texture : null;
     this.composite.uniforms.uHasBloom.value = bloom ? 1 : 0;
     this.composite.uniforms.tBlur.value = this.blurRT.texture;
     this.draw(this.composite, null);
