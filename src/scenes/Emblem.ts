@@ -1,39 +1,54 @@
 import * as THREE from 'three';
 import { iridescentMaterial } from './materials';
 
-/** Original studio mark: a glass ring holding a notched chevron glyph, trailed by two tube ribbons. */
+/**
+ * The mark: a glass heart holding a "D" (for Dheepika), trailed by two tube ribbons that
+ * flow out of the heart's point.
+ */
 function glyphGeometry() {
-  const s = new THREE.Shape();
-  s.moveTo(-0.52, -0.46);
-  s.lineTo(-0.06, 0.5);
-  s.lineTo(0.06, 0.5);
-  s.lineTo(0.52, -0.46);
-  s.lineTo(0.27, -0.46);
-  s.lineTo(0.0, 0.1);
-  s.lineTo(-0.27, -0.46);
-  s.closePath();
-  const bar = new THREE.Shape();
-  bar.moveTo(-0.16, -0.2);
-  bar.lineTo(0.16, -0.2);
-  bar.lineTo(0.11, -0.3);
-  bar.lineTo(-0.11, -0.3);
-  bar.closePath();
-  const g = new THREE.ExtrudeGeometry([s, bar], {
+  // D: straight spine on the left, round bowl on the right, with a matching counter
+  const d = new THREE.Shape();
+  d.moveTo(-0.4, -0.5);
+  d.lineTo(0.0, -0.5);
+  d.absarc(0.0, 0.0, 0.5, -Math.PI / 2, Math.PI / 2, false);
+  d.lineTo(-0.4, 0.5);
+  d.closePath();
+  const counter = new THREE.Path();
+  counter.moveTo(-0.2, -0.3);
+  counter.lineTo(0.0, -0.3);
+  counter.absarc(0.0, 0.0, 0.3, -Math.PI / 2, Math.PI / 2, false);
+  counter.lineTo(-0.2, 0.3);
+  counter.closePath();
+  d.holes.push(counter);
+  const g = new THREE.ExtrudeGeometry(d, {
     depth: 0.16,
     bevelEnabled: true,
     bevelThickness: 0.05,
     bevelSize: 0.035,
     bevelSegments: 4,
-    curveSegments: 4,
+    curveSegments: 28,
   });
   g.center();
   return g;
 }
 
+/** Closed heart outline (the classic parametric heart), ~2.1 wide, centred on the glyph. */
+function heartCurve() {
+  const pts: THREE.Vector3[] = [];
+  const N = 96;
+  for (let i = 0; i < N; i++) {
+    const t = (i / N) * Math.PI * 2;
+    const x = 16 * Math.pow(Math.sin(t), 3);
+    const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+    pts.push(new THREE.Vector3(x / 15, y / 15 + 0.12, 0));
+  }
+  return new THREE.CatmullRomCurve3(pts, true, 'centripetal');
+}
+
 function strand(sign: number) {
   const pts = [
-    [-0.99, -0.12, 0.02],
-    [-0.93, -0.75, 0.08],
+    [-0.02, -1.0, 0.02],
+    [-0.3, -1.38, 0.08],
     [-0.62, -1.9, 0.14],
     [-0.12, -3.0, 0.06],
     [0.35, -3.9, -0.08],
@@ -65,9 +80,10 @@ export class Emblem {
     });
     this.materials.push(ringMat, glyphMat, ribbonMat);
 
-    this.ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.068, 36, 180), ringMat);
+    this.ring = new THREE.Mesh(new THREE.TubeGeometry(heartCurve(), 360, 0.068, 20, true), ringMat);
     this.glyph = new THREE.Mesh(glyphGeometry(), glyphMat);
-    this.glyph.scale.setScalar(1.05);
+    this.glyph.scale.setScalar(0.95);
+    this.glyph.position.y = 0.08;
     this.core.add(this.ring, this.glyph);
     this.group.add(this.core);
 
