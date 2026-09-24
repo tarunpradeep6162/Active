@@ -113,3 +113,19 @@ Check it with:
 - `node qa/moments.mjs 1280 800` (the wish and the finale reveal).
 
 The old column (`WorkSpine.ts`) remains in git history if you ever need to roll back.
+
+### Chapters that grow out of the garden
+
+- **Opening a tulip:** the chapter unfolds out of that flower, as a circle of light growing
+  from the tulip's place on screen with a warm burst. Closing folds it back into the flower.
+- **Catch My Heart:** petals escape the flower and she catches them. Golden petals count
+  double; clouds steal one. At the end: "You caught them all." Then: "But you already
+  caught my heart."
+- **The Letter:** a sealed letter with an **Open my letter** button.
+- **Our Secret:** every correct clue sends a small golden light up the stem.
+- **Make a Wish:** while she holds the button, the wish tulip gathers golden light. When the
+  candle goes out, the light climbs the whole plant.
+- **Finale:** the text arrives in order: 25 · 11, a pause, DHEEPIKA, a pause,
+  HAPPY BIRTHDAY. Then the camera pulls back to show the whole garden in bloom.
+- **Phones and low-end devices:** the garden uses lighter petals, stems, leaves and ribbon
+  (fewer triangles, same shape) and fewer drifting petals.

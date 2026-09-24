@@ -41,6 +41,8 @@ export class UIDriver {
     this.set('--v-end', band('outro', 0.82, 0.97, 2, 3) * free);
     this.set('--focus', state.focus);
     this.set('--veil-thin', state.veilThin);
+    this.root.style.setProperty('--bloom-x', `${Math.round(state.bloomX)}px`);
+    this.root.style.setProperty('--bloom-y', `${Math.round(state.bloomY)}px`);
     this.set('--overlay', state.overlay);
     this.set('--scroll-vel', Math.max(-4, Math.min(4, state.scroll.velocity)));
     this.set('--progress', p);

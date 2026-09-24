@@ -112,6 +112,7 @@ export class Experience {
       this.world?.garden.pulse(state.time);
       this.thinUntil = state.time + 5.5;
     });
+    events.on('gardenPulse', () => this.world?.garden.pulse(state.time));
     events.on('gardenReveal', (on) => {
       this.revealTarget = on ? 1 : 0;
       if (on) {

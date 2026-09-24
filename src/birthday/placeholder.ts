@@ -34,7 +34,7 @@ export const PLACEHOLDER: BirthdayContent = {
     'Your little habits', 'Reason 9', 'Reason 10', 'Reason 11', 'Reason 12', 'Reason 13', 'Reason 14',
   ].map((r) => P(`${r} — write why, in your own words`)),
   nameLetters: ['D', 'H', 'E', 'E', 'P', 'I', 'K', 'A'].map((l) => P(`A memory for the letter ${l}`)),
-  game: { finish: 'You already caught the important one — mine.' },
+  game: { finish: 'But you already caught my heart.' },
   quiz: [
     { q: 'What was our first ___?', options: [P('option A'), P('option B'), P('option C')], answer: 0, yes: 'You remember! 🥹', no: P('A gentle, funny hint') },
     { q: 'Which moment do I talk about the most?', options: [P('option A'), P('option B'), P('option C')], answer: 1, yes: 'Of course you know. 💛', no: P('A gentle, funny hint') },

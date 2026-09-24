@@ -15,12 +15,19 @@
   color: var(--ink); font-family: var(--mono); letter-spacing: .06em;
   /* closed = invisible AND unclickable: #interface re-enables pointer events on every button,
      so opacity alone would leave invisible footer buttons catching clicks all over the page */
-  opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 700ms ease, visibility 0s linear 700ms;
+  opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 700ms ease, visibility 0s linear 900ms, clip-path 900ms cubic-bezier(.6, 0, .2, 1);
 }
 /* the veil is a separate layer so it can step aside for the garden's big moments */
 .bd-chapter::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
   background: radial-gradient(120% 90% at 50% 40%, rgba(20, 12, 34, 0.8), var(--bd-glass)); opacity: calc(1 - var(--veil-thin, 0) * .94); }
-.bd-chapter.is-open { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity 700ms ease 250ms, visibility 0s; }
+.bd-chapter { clip-path: circle(4% at var(--bloom-x, 50%) var(--bloom-y, 50%)); }
+.bd-chapter.is-open { opacity: 1; visibility: visible; pointer-events: auto; clip-path: circle(160vmax at var(--bloom-x, 50%) var(--bloom-y, 50%));
+  transition: opacity 700ms ease 250ms, visibility 0s, clip-path 1300ms cubic-bezier(.6, 0, .2, 1) 250ms; }
+/* a warm burst where the chapter leaves its flower */
+.bd-chapter::after { content: ''; position: absolute; left: var(--bloom-x, 50%); top: var(--bloom-y, 50%); width: 60vmax; height: 60vmax; translate: -50% -50%;
+  background: radial-gradient(circle, rgba(255, 216, 154, .35), rgba(255, 122, 162, .12) 35%, transparent 65%); pointer-events: none; opacity: 0; z-index: -1; }
+.bd-chapter.is-open::after { animation: bd-burst 1.6s ease-out .2s; }
+@keyframes bd-burst { 0% { opacity: 0; scale: .2; } 30% { opacity: 1; } 100% { opacity: 0; scale: 1.2; } }
 .bd-chapter__head { text-align: center; }
 .bd-chapter__title { font: 480 clamp(28px, 5vw, 64px)/1 var(--display); font-stretch: 112%; text-transform: uppercase; margin: 6px 0 0; text-shadow: 0 0 24px rgba(255, 216, 154, .25); }
 .bd-chapter__stage { position: relative; min-height: 0; overflow: auto; display: grid; place-items: center; padding: 12px 0; }
@@ -129,6 +136,7 @@
 .bd-game__canvas { width: 100%; height: 100%; display: block; touch-action: none; }
 .bd-game__hud { position: absolute; top: 12px; right: 16px; color: var(--bd-rose); font-size: 14px; }
 .bd-game__overlay { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 14px; text-align: center; padding: 20px; background: rgba(8, 6, 14, .6); }
+.bd-game__win--late { animation: bd-in 1.4s ease 1.8s both; color: var(--bd-rose) !important; }
 .bd-game__win { font: 480 clamp(20px, 3.4vw, 34px)/1.3 var(--display); text-transform: uppercase; color: var(--bd-cream); max-width: 20ch; }
 
 /* 6 quiz */
@@ -246,9 +254,10 @@
 .bd-finale[data-stage='5'] .bd-orbit { opacity: 0; }
 .bd-orbit__item { position: absolute; left: 50%; top: 50%; width: 70px; aspect-ratio: 1; --a: calc(var(--k) / var(--n) * 360deg);
   transform: translate(-50%, -50%) rotate(var(--a)) translateY(min(-30vh, -200px)) rotate(calc(-1 * var(--a))); opacity: .55; }
-.bd-finale__end { position: relative; display: grid; gap: 14px; justify-items: center; animation: bd-in 1.6s ease; }
-.bd-finale__name { font: 480 clamp(40px, 9vw, 120px)/1 var(--display); font-stretch: 112%; margin: 0; letter-spacing: .06em; text-shadow: 0 0 40px rgba(255,216,154,.5); }
-.bd-finale__headline { font-size: clamp(14px, 2vw, 20px); color: var(--bd-gold); margin: 0; }
+.bd-finale__end { position: relative; display: grid; gap: 14px; justify-items: center; }
+.bd-finale__end > .bd-btn, .bd-lastthing, .bd-secret-ending { animation: bd-in 1.2s ease 4.4s both; }
+.bd-finale__name { animation: bd-in 1.6s ease both; font: 480 clamp(40px, 9vw, 120px)/1 var(--display); font-stretch: 112%; margin: 0; letter-spacing: .06em; text-shadow: 0 0 40px rgba(255,216,154,.5); }
+.bd-finale__headline { animation: bd-in 1.6s ease 2.4s both; font-size: clamp(14px, 2vw, 20px); color: var(--bd-gold); margin: 0; }
 .bd-lastthing { max-width: 52ch; font: 16px/1.8 Georgia, serif; letter-spacing: 0; color: var(--bd-cream); white-space: pre-wrap; }
 .bd-secret-ending { color: var(--bd-rose); max-width: 50ch; }
 

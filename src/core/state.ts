@@ -68,6 +68,11 @@ export const state = {
   overlay: 0,
   /** 0..1 how far an open chapter's veil steps aside so the garden shows (wish, finale) */
   veilThin: 0,
+  /** screen position (px) of the open chapter's tulip — chapters grow out of it */
+  bloomX: 0,
+  bloomY: 0,
+  /** 0..1 while the wish button is held: the wish tulip gathers light */
+  wishHold: 0,
   /** 0..1 intro reveal after preload */
   reveal: 0,
   audioLevel: 0,
@@ -141,6 +146,8 @@ type Events = {
   wishLight: void;
   /** the finale's pull‑back reveal of the whole garden */
   gardenReveal: boolean;
+  /** a small golden pulse up the stem (a clue solved) */
+  gardenPulse: void;
   filter: string | null;
   toggleAudio: void;
   scrollTo: number;

@@ -3,7 +3,28 @@ import { chooseThisOrThat } from '../../progress';
 import { HiddenHeart, useContent, useProgress } from '../shared';
 import type { ChapterProps } from '../ChapterView';
 
-/* 5 ── Catch My Heart: steer a little light, catch 14 hearts, dodge the storm clouds. */
+/* 5 ── Catch My Heart: petals escape the flower; steer a little light to catch them, dodge the clouds. */
+/** A tulip petal (rose, or gold for the double‑value ones), tumbling as it falls. */
+function drawPetal(g: CanvasRenderingContext2D, x: number, y: number, r: number, t: number, gold: boolean) {
+  g.save();
+  g.translate(x, y);
+  g.rotate(Math.sin(t * 1.3) * 0.8);
+  g.scale(1, 0.75 + 0.25 * Math.sin(t * 2.1));
+  const grad = g.createLinearGradient(0, r, 0, -r);
+  grad.addColorStop(0, gold ? '#fff1c9' : '#ffe4c4');
+  grad.addColorStop(0.35, gold ? '#ffcf6b' : '#e0567a');
+  grad.addColorStop(1, gold ? '#ffe9a8' : '#ffb3c6');
+  g.fillStyle = grad;
+  g.shadowColor = gold ? 'rgba(255, 207, 107, .8)' : 'rgba(255, 122, 162, .6)';
+  g.shadowBlur = r * 0.8;
+  g.beginPath();
+  g.moveTo(0, r);
+  g.bezierCurveTo(r * 0.95, r * 0.4, r * 0.8, -r * 0.9, 0, -r);
+  g.bezierCurveTo(-r * 0.8, -r * 0.9, -r * 0.95, r * 0.4, 0, r);
+  g.fill();
+  g.restore();
+}
+
 export function CatchGame({ slug, onDone }: ChapterProps) {
   const c = useContent();
   const ref = useRef<HTMLCanvasElement>(null);
@@ -61,10 +82,12 @@ export function CatchGame({ slug, onDone }: ChapterProps) {
           items.splice(i, 1);
           continue;
         }
-        g.font = `${it.r * 2}px serif`;
-        g.textAlign = 'center';
-        g.textBaseline = 'middle';
-        g.fillText(it.kind === 'heart' ? '❤' : it.kind === 'star' ? '★' : '☁', it.x, it.y);
+        if (it.kind === 'cloud') {
+          g.font = `${it.r * 2}px serif`;
+          g.textAlign = 'center';
+          g.textBaseline = 'middle';
+          g.fillText('☁', it.x, it.y);
+        } else drawPetal(g, it.x, it.y, it.r, now / 1000 + it.x, it.kind === 'star');
       }
       // the player: a small glowing light
       const glow = g.createRadialGradient(px, py, 0, px, py, 34 * dpr);
@@ -93,11 +116,11 @@ export function CatchGame({ slug, onDone }: ChapterProps) {
     <div className="bd-game">
       <canvas ref={ref} className="bd-game__canvas" aria-label="Catch the falling hearts; move with the pointer or the arrow keys" />
       <div className="bd-game__hud">
-        ❤ {score} / {GOAL}
+        ✿ {score} / {GOAL}
       </div>
       {state === 'ready' && (
         <div className="bd-game__overlay">
-          <p>Catch {GOAL} hearts. Stars count double. Clouds steal one.</p>
+          <p>The petals are escaping. Catch {GOAL}. Golden ones count double; clouds steal one.</p>
           <button type="button" className="bd-btn bd-btn--big" onClick={() => { setScore(0); setState('play'); }}>
             Start
           </button>
@@ -108,7 +131,8 @@ export function CatchGame({ slug, onDone }: ChapterProps) {
       )}
       {state === 'won' && (
         <div className="bd-game__overlay">
-          <p className="bd-game__win">{c.game.finish}</p>
+          <p className="bd-game__win">You caught them all.</p>
+          <p className="bd-game__win bd-game__win--late">{c.game.finish}</p>
         </div>
       )}
       <HiddenHeart slug={slug} style={{ left: '2%', top: '2%' }} />

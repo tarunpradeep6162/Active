@@ -65,8 +65,8 @@ const commonGlsl = /* glsl */ `
 /* ------------------------------------------------------------------ petals */
 
 /** One tulip petal: hinge at the origin, grows along +Y, cupped, faces +Z (outward). */
-function petalGeometry(len: number, wid: number) {
-  const su = 10, sv = 14, pos: number[] = [], uv: number[] = [], idx: number[] = [];
+function petalGeometry(len: number, wid: number, su = 10, sv = 14) {
+  const pos: number[] = [], uv: number[] = [], idx: number[] = [];
   for (let j = 0; j <= sv; j++) {
     const v = j / sv;
     const w = wid * 0.5 * Math.pow(Math.sin(Math.PI * Math.min(0.999, v * 0.97 + 0.02)), 0.55) * (1 - 0.12 * v) + 0.07 * wid * (1 - v);
@@ -257,7 +257,7 @@ export class TulipGarden {
     const stemMat = greenMaterial('#1f3a1c');
     const leafMat = greenMaterial('#274a22');
     this.materials.push(stemMat, leafMat);
-    const stems: THREE.BufferGeometry[] = [new THREE.TubeGeometry(this.mainCurve, 420, 0.075, 8, false)];
+    const stems: THREE.BufferGeometry[] = [new THREE.TubeGeometry(this.mainCurve, lowTier ? 200 : 420, 0.075, lowTier ? 6 : 8, false)];
 
     // ── the 11 axis blooms, alternating around the stem, larger toward the middle
     for (let i = 0; i < AXIS_BLOOMS; i++) {
@@ -293,7 +293,7 @@ export class TulipGarden {
     g.add(this.chapterStems);
 
     // ── leaves along the stem
-    const leafCount = 64;
+    const leafCount = lowTier ? 36 : 64;
     const leaves = new THREE.InstancedMesh(leafGeometry(), leafMat, leafCount);
     for (let i = 0; i < leafCount; i++) {
       const y = TOP - 0.2 - (i / leafCount) * (TOP - BOTTOM - 0.4);
@@ -306,7 +306,8 @@ export class TulipGarden {
     g.add(leaves);
 
     // ── petals: one instanced mesh for every petal of every bloom and bud
-    const petalGeo = petalGeometry(0.66, 0.54);
+    // lighter petals, leaves, stem and ribbon on low‑tier devices (same silhouette, fewer triangles)
+    const petalGeo = lowTier ? petalGeometry(0.66, 0.54, 6, 9) : petalGeometry(0.66, 0.54);
     const nPetals = (this.blooms.length + BUDS) * PETALS;
     const petalMat = new THREE.ShaderMaterial({ vertexShader: petalVert, fragmentShader: petalFrag, uniforms: { ...U, uKeep: { value: AXIS_BLOOMS + CHAPTER_BLOOMS - 1 } }, side: THREE.DoubleSide });
     this.materials.push(petalMat);
@@ -372,7 +373,7 @@ export class TulipGarden {
     }
 
     // ── the silk ribbon spiralling round the structure
-    g.add(this.ribbon());
+    g.add(this.ribbon(lowTier ? 450 : 900));
     // ── drifting petals
     g.add(this.drift(lowTier ? 50 : 130, petalGeo));
   }
@@ -411,8 +412,8 @@ export class TulipGarden {
   }
 
   /** The translucent silk ribbon. */
-  private ribbon() {
-    const N = 900, pos: number[] = [], uv: number[] = [], idx: number[] = [];
+  private ribbon(N: number) {
+    const pos: number[] = [], uv: number[] = [], idx: number[] = [];
     const turns = 5.5, W = 0.3;
     const up = new THREE.Vector3(), radial = new THREE.Vector3(), c = new THREE.Vector3(), off = new THREE.Vector3();
     for (let i = 0; i <= N; i++) {
@@ -592,6 +593,13 @@ export class TulipGarden {
     return WORK_ORIGIN.y + spineBottom();
   }
 
+  /** World position of chapter i's tulip head. */
+  chapterHead(i: number, out: THREE.Vector3) {
+    return out.copy(this.blooms[AXIS_BLOOMS + i].pos).applyMatrix4(this.group.matrixWorld);
+  }
+  /** 0…1: the wish tulip gathering light while the button is held */
+  hold = 0;
+
   /** The wish: a light that travels up through the whole plant. */
   private pulseStart = -1;
   pulse(time: number) {
@@ -621,7 +629,7 @@ export class TulipGarden {
         // chapter tulips open as the camera arrives; the last, largest one waits for the end
         open = last ? smoothstep(c - 0.08, c + 0.005, p) : smoothstep(c - 0.08, c - 0.005, p);
         if (activeChapter === b.chapter) open = 1;
-        glow = open * 0.55 + (activeChapter === b.chapter ? 0.6 : 0) + (visited[b.chapter] ? 0.25 : 0);
+        glow = open * 0.55 + (activeChapter === b.chapter ? 0.6 + this.hold * 1.6 : 0) + (visited[b.chapter] ? 0.25 : 0);
         const label = this.labels[b.chapter];
         if (label) (label.material as THREE.ShaderMaterial).uniforms.uAlpha.value = (0.25 + 0.75 * open) * (1 - reveal) * (activeChapter >= 0 ? 0 : 1);
       } else {
@@ -642,6 +650,6 @@ export class TulipGarden {
   }
 
   triangles() {
-    return this.petals.count * 280 + 4000;
+    return this.petals.count * ((this.petals.geometry.index?.count ?? 0) / 3) + 4000;
   }
 }

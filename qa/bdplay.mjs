@@ -14,6 +14,7 @@ const open = async (i) => {
   await page.evaluate((s) => { history.pushState({}, '', `/work/${s}`); dispatchEvent(new PopStateEvent('popstate')); }, chapters[i].slug);
   await page.waitForFunction((t) => document.querySelector('.bd-chapter.is-open .bd-chapter__title')?.textContent === t, chapters[i].title, { timeout: T });
   await page.waitForSelector('.bd-chapter__stage > *', { timeout: T });
+  await page.waitForTimeout(1700); // the chapter unfolds out of its tulip first
 };
 const done = () => page.evaluate(() => JSON.parse(localStorage.getItem('bday-progress-v1') || '{"done":[],"hearts":[]}'));
 const heart = async () => { const h = page.locator('.bd-heart').first(); if (await h.count()) await h.click({ force: true }); };
@@ -27,6 +28,7 @@ const step = async (i, fn) => {
   const d = await done();
   results.push({ chapter: chapters[i].title, done: d.done.includes(chapters[i].slug), heart: d.hearts.includes(chapters[i].slug), secs: Math.round((Date.now() - t0) / 1000) });
   console.log(JSON.stringify(results.at(-1)));
+  if (!results.at(-1).heart) console.log('   heart not registered in', chapters[i].title);
 };
 
 // on a fresh start Door 25 must be locked

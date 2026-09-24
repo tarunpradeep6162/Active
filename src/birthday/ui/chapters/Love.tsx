@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { events } from '../../../core/state';
+import { events, state } from '../../../core/state';
 import { HiddenHeart, ParticleText, useContent, useTypewriter } from '../shared';
 import type { ChapterProps } from '../ChapterView';
 
@@ -26,6 +26,11 @@ export function Letter({ slug, onDone }: ChapterProps) {
           ))}
           <span className="bd-caret" aria-hidden="true" />
         </div>
+      )}
+      {!open && (
+        <button type="button" className="bd-btn" onClick={() => setOpen(true)}>
+          Open my letter
+        </button>
       )}
       {!open && <p className="bd-hint">Sealed. For you only.</p>}
       <HiddenHeart slug={slug} style={{ right: '8%', bottom: '6%' }} />
@@ -106,6 +111,7 @@ export function Wish({ slug, onDone }: ChapterProps) {
   const stopMicRef = useRef<() => void>(() => {});
   const blowOut = () => {
     stopMicRef.current();
+    state.wishHold = 0;
     setStage('out');
     // the wish's light climbs the whole garden; every flower already visited glows as it passes
     events.emit('wishLight', undefined);
@@ -118,6 +124,7 @@ export function Wish({ slug, onDone }: ChapterProps) {
     const tick = () => {
       const h = Math.min(1, (performance.now() - t0) / 1800);
       setHold(h);
+      state.wishHold = h;
       if (h >= 1) return blowOut();
       raf.current = requestAnimationFrame(tick);
     };
@@ -128,6 +135,7 @@ export function Wish({ slug, onDone }: ChapterProps) {
     if (stage === 'holding') {
       setStage('ready');
       setHold(0);
+      state.wishHold = 0;
     }
   };
   useEffect(() => () => cancelAnimationFrame(raf.current), []);
@@ -144,7 +152,10 @@ export function Wish({ slug, onDone }: ChapterProps) {
   };
   stopMicRef.current = stopMic;
   // leaving the chapter must always release the microphone
-  useEffect(() => () => stopMicRef.current(), []);
+  useEffect(() => () => {
+    stopMicRef.current();
+    state.wishHold = 0;
+  }, []);
   const useMic = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });

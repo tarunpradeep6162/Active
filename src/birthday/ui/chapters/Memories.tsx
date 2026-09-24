@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { events } from '../../../core/state';
 import { chooseGift } from '../../progress';
 import { mediaUrl } from '../../vault';
 import { HiddenHeart, Media, useContent, useProgress } from '../shared';
@@ -165,6 +166,7 @@ export function Secret({ slug, onDone }: ChapterProps) {
             if (clue.answers.some((a) => norm(a) === norm(value))) {
               const next = solved.slice();
               next[i] = true;
+              events.emit('gardenPulse', undefined);
               setSolved(next);
               setValue('');
               const k = next.findIndex((v) => !v);

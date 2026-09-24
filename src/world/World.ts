@@ -94,6 +94,7 @@ export class World {
 
   private nebulaScale: number;
   private visited: boolean[] = [];
+  private tmpHead = new THREE.Vector3();
 
   constructor(particles: ParticleResult[], titles: Map<string, THREE.Texture>, settings: TierSettings) {
     this.nebulaScale = Math.max(0.35, settings.particleScale);
@@ -379,6 +380,14 @@ export class World {
     const done = getProgress().done;
     for (let i = 0; i < PROJECTS.length; i++) this.visited[i] = done.includes(PROJECTS[i].slug);
     const active = this.activeSlug ? PROJECTS.findIndex((p) => p.slug === this.activeSlug) : -1;
+    // where the open chapter's tulip is on screen — the chapter unfolds out of it
+    if (active >= 0) {
+      this.garden.chapterHead(active, this.tmpHead).project(camera);
+      // clamped on screen: the unfolding circle must always be able to cover the whole view
+      state.bloomX = clamp((this.tmpHead.x * 0.5 + 0.5) * state.viewport.width, 0, state.viewport.width);
+      state.bloomY = clamp((-this.tmpHead.y * 0.5 + 0.5) * state.viewport.height, 0, state.viewport.height);
+    }
+    this.garden.hold = state.wishHold;
     this.garden.update(t, wt, (i) => workTimeline.cardCentre(i), state.focus > 0.5 ? active : -1, this.visited, this.gardenReveal);
   }
 
