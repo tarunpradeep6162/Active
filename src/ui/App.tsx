@@ -1,5 +1,5 @@
 import { Nav } from './Nav';
-import { Preloader, IntroHint, Manifesto, WorkPanel, LabLabel, LanternSkyLabel, EndCap, Contact, WebGLLost, NotFound } from './Sections';
+import { Preloader, IntroHint, Manifesto, WorkPanel, LabLabel, LanternSkyLabel, FinaleSky, EndCap, Contact, WebGLLost, NotFound } from './Sections';
 import { useStore } from './useStore';
 import { ChapterView } from '../birthday/ui/ChapterView';
 import { CursorTrail } from './CursorTrail';
@@ -22,6 +22,7 @@ export function App() {
             <WorkPanel />
             <LabLabel />
             <LanternSkyLabel />
+            <FinaleSky />
             <EndCap />
           </main>
           <ChapterView />

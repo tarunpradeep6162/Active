@@ -4,7 +4,8 @@ import { useStore } from './useStore';
 import { CATEGORIES, PROJECTS, type Project } from '../app/projects';
 import { routePath, isKnownPath } from '../app/router';
 import { rangeOf } from '../world/journey';
-import { useContent, useProgress } from '../birthday/ui/shared';
+import { useContent, useProgress, useVaultState, Media } from '../birthday/ui/shared';
+import { Gate } from '../birthday/ui/ChapterView';
 import { saveFutureCard, saveLetterPdf, saveNextDateCard } from '../birthday/keepsakes';
 
 export function Preloader() {
@@ -387,6 +388,88 @@ export function LanternSkyLabel() {
           ))}
       </div>
     </>
+  );
+}
+
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+/**
+ * The finale over the sky: once the stars have spelled her name, HAPPY BIRTHDAY above it and
+ * the date below, a sunrise from the horizon, the final words one by one, and ONE LAST THING.
+ */
+export function FinaleSky() {
+  const c = useContent();
+  const section = useStore((s) => s.section);
+  const hidden = section !== 'outro';
+  const [words, setWords] = useState(-1);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (hidden || words >= 0) return;
+    const id = setInterval(() => state.finaleLocal > 0.84 && setWords(0), 300);
+    return () => clearInterval(id);
+  }, [hidden, words]);
+  useEffect(() => {
+    if (words < 0 || words >= c.finalWords.length) return;
+    const id = setTimeout(() => setWords((w) => w + 1), state.reducedMotion ? 600 : 2600);
+    return () => clearTimeout(id);
+  }, [words, c.finalWords.length]);
+  const month = MONTHS[(c.birthday.month || 11) - 1];
+  return (
+    <>
+      <div className="sunrise" aria-hidden="true" />
+      <section className="finale-sky" data-hidden={hidden} aria-hidden={hidden} aria-label="Happy birthday">
+        <p className="finale-sky__happy">Happy birthday</p>
+        <h2 className="sr-only">{c.name}</h2>
+        <p className="finale-sky__date">
+          {c.birthday.day || 25} · {month}
+        </p>
+        <div className="finale-sky__words" aria-live="polite">
+          {c.finalWords.slice(0, Math.max(0, words + 1)).map((w, i) => (
+            <p key={i} className={i === Math.min(words, c.finalWords.length - 1) ? 'is-now' : ''}>
+              {w}
+            </p>
+          ))}
+        </div>
+        {words >= c.finalWords.length && (
+          <button type="button" className="finale-sky__last" tabIndex={hidden ? -1 : 0} onClick={() => setOpen(true)}>
+            One last thing
+          </button>
+        )}
+      </section>
+      {open && <LastThing onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
+/** The private ending: the voice note and the last message (behind the passcode when set). */
+function LastThing({ onClose }: { onClose: () => void }) {
+  const c = useContent();
+  const vault = useVaultState();
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    ref.current?.focus();
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    addEventListener('keydown', esc);
+    return () => removeEventListener('keydown', esc);
+  }, [onClose]);
+  return (
+    <div className="lastthing" role="dialog" aria-modal="true" aria-label="One last thing" ref={ref} tabIndex={-1}>
+      <div className="lastthing__card">
+        {vault === 'locked' ? (
+          <Gate />
+        ) : (
+          <>
+            <p className="lastthing__kicker">One last thing</p>
+            {c.finale.voice ? <Media media={c.finale.voice} label="A voice note for you" /> : <p className="lastthing__note">[A voice note will play here]</p>}
+            <p className="lastthing__text">{c.finale.lastThing}</p>
+            <p className="lastthing__sign">{c.signature}</p>
+          </>
+        )}
+        <button type="button" className="bd-link" onClick={onClose}>
+          Back to the sky
+        </button>
+      </div>
+    </div>
   );
 }
 

@@ -40,6 +40,10 @@ export class UIDriver {
     // from the moment the cake is framed in its cage until the lanterns take the sky
     this.set('--v-lab', band('lab', 0.3, 0.48, 1.05, 1.2) * free);
     this.set('--v-sky', band('portal', 0.12, 0.3, 0.86, 0.98) * free);
+    // the finale sky: HAPPY BIRTHDAY once her name has formed in stars, then the sunrise
+    const fl = state.section === 'outro' ? state.finaleLocal : 0;
+    this.set('--v-happy', smoothstep(0.68, 0.76, fl) * free);
+    this.set('--v-sunrise', smoothstep(0.74, 0.97, fl) * (1 - state.overlay));
     this.set('--v-end', band('outro', 0.82, 0.97, 2, 3) * free);
     this.set('--focus', state.focus);
     this.set('--veil-thin', state.veilThin);

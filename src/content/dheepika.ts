@@ -97,7 +97,8 @@ export const PLACEHOLDER: BirthdayContent = {
   wishes: Array.from({ length: 24 }, (_, i) => P(`Wish ${i + 1} for your year`)),
   movie: { clips: [], line: 'Different days. Different places. Same person I keep choosing.' },
   finale: {
-    headline: 'HAPPY BIRTHDAY, DHEEPIKA.',
+    // HAPPY BIRTHDAY itself is saved for the sky at the very end
+    headline: 'Every flower here is yours.',
     lastThing: P('Your most personal message — only ever stored encrypted'),
     secretEnding: P('A secret ending for finding every hidden heart'),
   },

@@ -75,6 +75,8 @@ export const state = {
   wishHold: 0,
   /** 0..1 how hard she is blowing at the cake's candles (hold button or microphone) */
   cakeBlow: 0,
+  /** 0…1 progress through the finale sky (outro) */
+  finaleLocal: 0,
   /** wish lanterns already turned into stars */
   starsLit: 0,
   /** the cage has been opened */

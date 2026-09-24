@@ -5,6 +5,8 @@ import { getProgress } from '../birthday/progress';
 import { ProjectCards } from '../scenes/ProjectCards';
 import { Lab } from '../scenes/Lab';
 import { LanternSky } from '../scenes/LanternSky';
+import { Constellation } from '../scenes/Constellation';
+import { getContent } from '../birthday/vault';
 import { Backdrop } from '../scenes/Backdrop';
 import { iridescentMaterial } from '../scenes/materials';
 import { ParticleField, type FieldOptions } from '../particles/ParticleField';
@@ -71,7 +73,6 @@ export class World {
   readonly root = new THREE.Group();
   readonly backdrop = new Backdrop();
   readonly emblem = new Emblem(false);
-  readonly outroEmblem = new Emblem(true);
   /** the living tulip garden at the heart of the Work world (replaced the old column) */
   readonly garden: TulipGarden;
   /** 0…1 final pull‑back: every flower in bloom (driven by the finale) */
@@ -79,6 +80,7 @@ export class World {
   readonly cards: ProjectCards;
   readonly lab = new Lab();
   readonly portal: LanternSky;
+  readonly finaleSky: Constellation;
   private manifestoRing: THREE.Mesh;
   private fields: Record<string, ParticleField> = {};
   private streaks: Streaks[] = [];
@@ -107,6 +109,7 @@ export class World {
     this.cards = new ProjectCards(titles);
     this.garden = new TulipGarden(titles, PROJECTS.map((p) => p.slug), settings.particleScale < 0.7);
     this.portal = new LanternSky(settings.hexCount);
+    this.finaleSky = new Constellation(getContent().name, getContent().date, settings.particleScale);
 
     // intro emblem
     this.root.add(this.emblem.group);
@@ -131,8 +134,8 @@ export class World {
     this.add(this.lab.group, ANCHOR.lab + 4, ANCHOR.lab - 3);
     this.add(this.portal.group, ANCHOR.portal + 6, ANCHOR.portal - 18);
 
-    this.outroEmblem.group.position.set(0, ANCHOR.outro, 0);
-    this.add(this.outroEmblem.group, ANCHOR.outro + 12, ANCHOR.outro - 4);
+    // the finale sky: stars that become the date, then her name (the emblem stays at the start)
+    this.add(this.finaleSky.group, ANCHOR.outro + 12, ANCHOR.outro - 6);
 
     // particles
     const byId = new Map(particles.map((p) => [p.id, p]));
@@ -159,8 +162,8 @@ export class World {
     // dust is global: always visible
     this.pieces = this.pieces.filter((p) => p.obj !== this.fields.dust?.points);
 
-    const s1 = new Streaks(14, -5, 1.5, 5, ['#ff2a55', '#ff4f7a', '#ff7a3a']);
-    const s2 = new Streaks(14, ANCHOR.outro - 5, ANCHOR.outro + 1.5, 9, ['#ff2a55', '#ff4f7a', '#ff7a3a']);
+    const s1 = new Streaks(14, -5, 1.5, 5, ['#e8a6b5', '#e6c989', '#f2c1cb']);
+    const s2 = new Streaks(14, ANCHOR.outro - 5, ANCHOR.outro + 1.5, 9, ['#e8a6b5', '#e6c989', '#f2c1cb']);
     this.streaks.push(s1, s2);
     this.add(s1.mesh, 4, -8);
     this.add(s2.mesh, ANCHOR.outro + 4, ANCHOR.outro - 8);
@@ -360,7 +363,8 @@ export class World {
     const intro = state.section === 'intro' ? state.sectionProgress : state.scroll.progress > rangeOf('intro').end ? 1 : 0;
     this.emblem.update(t, state.reveal, state.pointer.targetX, state.pointer.targetY, smoothstep(0.05, 0.6, intro) * Math.PI);
     const outroLocal = state.section === 'outro' ? state.sectionProgress : 0;
-    this.outroEmblem.update(t, smoothstep(0.15, 0.6, outroLocal), state.pointer.targetX, state.pointer.targetY);
+    this.finaleSky.update(outroLocal, camera, state.viewport.dpr);
+    state.finaleLocal = outroLocal;
 
     // intro eruption
     const embers = this.fields.embers;
