@@ -8,17 +8,51 @@ import type { ChapterProps } from '../ChapterView';
 export function Beginning({ slug, onDone }: ChapterProps) {
   const c = useContent();
   const [awake, setAwake] = useState(0);
-  const line = useTypewriter(c.beginning.line, awake >= 2, 26);
+  const ref = useRef<HTMLCanvasElement>(null);
+  const stage = useRef<{ wake(l: number): void; dispose(): void } | null>(null);
+  const [live, setLive] = useState(false);
+  // the words follow the stars: they begin once the date has gathered (at once without 3D)
+  const [ready, setReady] = useState(false);
+  const line = useTypewriter(c.beginning.line, ready, 26);
   useEffect(() => {
-    if (awake >= 2 && line.length === c.beginning.line.length) onDone();
-  }, [awake, line]);
+    if (ready && line.length === c.beginning.line.length) onDone();
+  }, [ready, line]);
+  useEffect(() => {
+    let alive = true;
+    import('../stage/BeginningScene')
+      .then(({ BeginningScene }) => {
+        if (!alive || !ref.current) return;
+        stage.current = new BeginningScene(ref.current, c.date);
+        setLive(true);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+      stage.current?.dispose();
+      stage.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (awake < 2) return;
+    const id = setTimeout(() => setReady(true), live && !reducedMotion() ? 5600 : 0);
+    return () => clearTimeout(id);
+  }, [awake, live]);
+  const touch = () => {
+    const next = Math.min(2, awake + 1);
+    setAwake(next);
+    stage.current?.wake(next);
+  };
   return (
-    <div className="bd-beginning" data-awake={awake}>
-      <button type="button" className="bd-star" aria-label={awake ? 'The star is awake' : 'Wake the star'} onClick={() => setAwake((a) => Math.min(2, a + 1))}>
+    <div className="bd-beginning" data-awake={awake} data-live={live}>
+      <div className="bd-cosmos" aria-hidden="true">
+        <canvas ref={ref} className="bd-cosmos__canvas" />
+      </div>
+      <button type="button" className="bd-star" aria-label={awake ? (awake > 1 ? 'The star is awake' : 'Touch the star once more') : 'Wake the star'} onClick={touch}>
         <span />
       </button>
-      <p className="bd-hint">{awake === 0 ? 'Touch the star.' : awake === 1 ? 'Once more.' : ''}</p>
-      <h2 className="bd-date" aria-hidden={awake < 1}>
+      <p className="bd-hint bd-beginning__hint">{awake === 0 ? 'Touch the star.' : awake === 1 ? 'Once more.' : ''}</p>
+      <h2 className="bd-date" aria-hidden={awake < 2}>
         {c.date}
       </h2>
       <p className="bd-line">{line}</p>

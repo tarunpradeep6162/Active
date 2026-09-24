@@ -330,3 +330,17 @@
 @media (max-width: 600px) { .bd-giftstage { aspect-ratio: 4 / 5; max-height: 52vh; } .bd-giftcard { margin-top: -2vh; } }
 @media (prefers-reduced-motion: reduce) { .bd-giftcard { animation: none; } }
 .bd-giftcard__again { margin-top: 12px; color: #9a6a3a; font-size: 11px; }
+
+/* 1 · 25 · 11 — a full‑screen cosmos behind the chapter */
+.bd-cosmos { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(circle at 50% 50%, #1a1026, #05060d 70%); }
+.bd-cosmos__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.bd-beginning[data-live="true"] { grid-template-rows: 1fr auto auto; align-content: stretch; }
+.bd-beginning[data-live="true"] .bd-star { position: absolute; left: 50%; top: 50%; translate: -50% -50%; width: 150px; height: 150px; }
+.bd-beginning[data-live="true"] .bd-star span { opacity: 0; }
+.bd-beginning[data-live="true"][data-awake="2"] .bd-star { pointer-events: none; }
+/* the date is written by the stars; the heading stays for screen readers */
+.bd-beginning[data-live="true"] .bd-date { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.bd-beginning__hint { position: absolute; left: 0; right: 0; top: calc(50% + 96px); font: italic 500 clamp(18px, 2vw, 22px) var(--serif); letter-spacing: .02em; color: rgba(248, 241, 232, .82); animation: bd-hint-breathe 3s ease-in-out infinite; }
+@keyframes bd-hint-breathe { 50% { opacity: .55; } }
+.bd-beginning .bd-line { position: absolute; left: 50%; top: calc(50% + clamp(70px, 11vw, 130px)); translate: -50% 0; width: min(34ch, 88vw); font: italic 500 clamp(19px, 2.4vw, 28px)/1.45 var(--serif); letter-spacing: .01em; color: var(--soft, #f8f1e8);
+  text-shadow: 0 0 22px rgba(230, 180, 110, .35); }
