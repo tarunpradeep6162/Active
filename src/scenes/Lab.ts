@@ -27,6 +27,12 @@ export class Lab {
   /** page time at which the cage was opened */
   private openedAt = 0;
   private time = 0;
+  /** page time the candles were blown out (-1: burning) */
+  private blownAt = -1;
+  /** 0…1 how hard she is blowing right now (hold button or microphone) */
+  blow = 0;
+  /** 0…1 the room going dark after the candles go out (drawn as a DOM veil) */
+  dark = 0;
   private bars = new THREE.Group();
   private cables = new THREE.Group();
   private lock = new THREE.Group();
@@ -177,6 +183,18 @@ export class Lab {
     return this.opened;
   }
 
+  /** Candles are burning and can be blown out. */
+  get candlesReady() {
+    return this.opened && this.time - this.openedAt > 4.2 && this.blownAt < 0;
+  }
+
+  /** The candles go out: darkness, then gold dust and petals; they relight after a while. */
+  blowOut() {
+    if (!this.candlesReady) return false;
+    this.blownAt = this.time;
+    return true;
+  }
+
   /** Start the unlock (idempotent). */
   open() {
     if (this.opened) return;
@@ -209,9 +227,20 @@ export class Lab {
     this.cake.group.position.copy(this.cakeHome).addScaledVector(this.front, rise * 1.7);
     this.cake.group.position.y += rise * 0.35 + (t > 3.6 ? Math.sin((t - 3.6) * 1.2) * 0.04 : 0);
     this.cake.group.rotation.y = rise * 0.9 + (t > 3.6 ? (t - 3.6) * 0.18 : 0);
-    const lit = clamp((t - 2.4) / 1.8);
-    const burst = t < 0 ? 0 : ease(2.8, 3.4, t) * (1 - ease(3.4, 6, t) * 0.45);
+    let lit = t < 0 ? 0 : clamp((t - 2.4) / 1.8);
+    let burst = t < 0 ? 0 : ease(2.8, 3.4, t) * (1 - ease(3.4, 6, t) * 0.45);
+    const b = this.blownAt >= 0 ? time - this.blownAt : -1;
+    this.dark = 0;
+    if (b >= 0) {
+      // out in half a second → a breath of darkness → the wish bursts into gold dust and petals
+      // → after a while the candles light again, one by one, so it can be done once more
+      lit *= 1 - ease(0, 0.45, b) + clamp((b - 12) / 2);
+      this.dark = ease(0.2, 1.1, b) * (1 - ease(2.2, 3.6, b));
+      burst = Math.max(burst * (1 - ease(0, 0.5, b)), ease(2.2, 2.8, b) * (1.6 - ease(3, 11, b) * 1.2));
+      if (b > 14.5) this.blownAt = -1;
+    }
+    const blow = this.blownAt >= 0 ? 0 : this.blow;
     this.cake.syncLights(this.rose);
-    this.cake.update(time, t < 0 ? 0 : lit, burst, dpr);
+    this.cake.update(time, lit, burst, dpr, blow);
   }
 }

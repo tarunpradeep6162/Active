@@ -28,8 +28,8 @@ const arrive = async (want) => {
 for (const path of ['/garden', '/garden/music-room', '/for-you', '/', '/work/for-dheepika', '/garden', '/contact', '/nowhere-at-all', '/']) {
   await page.evaluate((p) => { history.pushState({}, '', p); dispatchEvent(new PopStateEvent('popstate')); }, path);
   nav.push(`${path} → ${await arrive(expect[path] ?? (path.startsWith('/nowhere') ? 'home' : 'project'))}`);
+  if (path.startsWith('/nowhere')) nav.push('404 shown: ' + (await page.evaluate(() => !!document.querySelector('.notfound'))));
 }
-nav.push('404 shown: ' + (await page.evaluate(() => !!document.querySelector('.notfound'))));
 await page.goBack(); nav.push('back → ' + (await arrive('home')));
 await page.goForward(); nav.push('forward → ' + (await arrive('home')));
 const errors = logs.filter((l) => /error/i.test(l));

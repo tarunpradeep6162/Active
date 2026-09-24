@@ -376,6 +376,8 @@ export class TulipGarden {
     g.add(this.ribbon(lowTier ? 450 : 900));
     // ── drifting petals
     g.add(this.drift(lowTier ? 50 : 130, petalGeo));
+    g.add(this.fireflies(lowTier ? 40 : 90));
+    g.add(this.butterflies(lowTier ? 3 : 5));
   }
 
   private chapterStems: THREE.Mesh;
@@ -530,6 +532,136 @@ export class TulipGarden {
     return m;
   }
   private driftDensity = { value: 0.3 };
+
+  /** Fireflies: slow wandering points of warm light that blink, more of them as the dusk deepens. */
+  private fireflies(count: number) {
+    const rr = rng(1125);
+    const seeds = new Float32Array(count * 4);
+    const pos = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      const a = rr() * Math.PI * 2, r = 1.4 + rr() * 5.5;
+      pos.set([Math.cos(a) * r, BOTTOM + rr() * (TOP - BOTTOM + 1), Math.sin(a) * r], i * 3);
+      seeds.set([rr(), rr(), rr(), rr()], i * 4);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute('aSeed', new THREE.Float32BufferAttribute(seeds, 4));
+    const mat = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      vertexShader: /* glsl */ `
+        attribute vec4 aSeed;
+        uniform float uTime, uPx, uRevealY, uCrumble, uReveal;
+        varying float vA;
+        void main(){
+          vec3 p = position;
+          float t = uTime * (.12 + aSeed.x * .1) + aSeed.y * 40.;
+          p += vec3(sin(t * 1.3) * .6 + sin(t * .37) * .9, sin(t * .9 + aSeed.z * 6.) * .5, cos(t * 1.1) * .6 + cos(t * .29) * .9);
+          vec4 wp = modelMatrix * vec4(p, 1.);
+          vec4 mv = viewMatrix * wp;
+          gl_Position = projectionMatrix * mv;
+          // a slow breath of light with the occasional brighter blink
+          float blink = pow(.5 + .5 * sin(uTime * (1.2 + aSeed.z * 1.6) + aSeed.w * 30.), 3.);
+          vA = blink * step(wp.y, uRevealY) * (1. - uCrumble) * (.6 + uReveal * .4);
+          gl_PointSize = uPx * (1. + aSeed.w) / max(-mv.z, .5);
+        }`,
+      fragmentShader: /* glsl */ `
+        varying float vA;
+        void main(){
+          float d = length(gl_PointCoord - .5);
+          float a = (smoothstep(.5, .0, d) * .5 + smoothstep(.12, .0, d)) * vA;
+          gl_FragColor = vec4(vec3(1., .86, .5) * a, 1.);
+        }`,
+      uniforms: { uTime: U.uTime, uRevealY: U.uRevealY, uCrumble: U.uCrumble, uReveal: U.uReveal, uPx: this.fireflyPx },
+    });
+    this.materials.push(mat);
+    const pts = new THREE.Points(geo, mat);
+    pts.frustumCulled = false;
+    return pts;
+  }
+  /** point size scale (× device pixel ratio), set from the viewport */
+  readonly fireflyPx = { value: 60 };
+
+  /**
+   * A few butterflies: two soft wings hinged on the body, flapping, each on its own loose loop
+   * around the stem at a different height, so one is usually somewhere near the camera.
+   */
+  private butterflies(count: number) {
+    // one wing = a quad from the hinge (x = 0) outward; two wings mirrored by aSide
+    const wing = new THREE.PlaneGeometry(0.34, 0.3).translate(0.17, 0, 0);
+    const geo = mergeGeometries([wing.clone(), wing.clone().scale(-1, 1, 1)])!;
+    const side = new Float32Array(geo.attributes.position.count);
+    for (let i = 0; i < side.length; i++) side[i] = i < side.length / 2 ? 1 : -1;
+    geo.setAttribute('aSide', new THREE.BufferAttribute(side, 1));
+    const inst = new THREE.InstancedBufferGeometry().copy(geo as unknown as THREE.InstancedBufferGeometry);
+    const rr = rng(2511 + 11);
+    const seeds = new Float32Array(count * 4);
+    for (let i = 0; i < count; i++) seeds.set([rr(), (i + 0.5) / count, rr(), rr()], i * 4);
+    inst.setAttribute('aSeed', new THREE.InstancedBufferAttribute(seeds, 4));
+    inst.instanceCount = count;
+    const mat = new THREE.ShaderMaterial({
+      side: THREE.DoubleSide,
+      transparent: true,
+      depthWrite: false,
+      vertexShader: /* glsl */ `
+        attribute float aSide; attribute vec4 aSeed;
+        uniform float uTime, uRevealY, uCrumble;
+        varying vec2 vUv; varying float vDepth; varying float vOn; varying float vHue;
+        void main(){
+          float t = uTime * (.16 + aSeed.x * .08) + aSeed.z * 20.;
+          float y = ${BOTTOM.toFixed(2)} + aSeed.y * ${(TOP - BOTTOM).toFixed(2)} + sin(t * 1.7) * .6;
+          float r = 2.2 + aSeed.w * 2.4 + sin(t * .8) * .6;
+          vec3 c = vec3(cos(t) * r, y, sin(t) * r);
+          // heading along the loop, banking a little
+          vec3 fwd = normalize(vec3(-sin(t), cos(t * 1.7) * .25, cos(t)));
+          vec3 up = vec3(0., 1., 0.);
+          vec3 right = normalize(cross(fwd, up));
+          up = cross(right, fwd);
+          // flap: the wing rotates about the body axis (fwd)
+          float flap = sin(uTime * (11. + aSeed.x * 5.) + aSeed.z * 9.) * .95 + .25;
+          vec3 lp = position;
+          float ang = flap * aSide;
+          float x = lp.x * cos(ang), z = abs(lp.x) * sin(ang);
+          vec3 p = c + right * x + up * z + fwd * lp.y;
+          vec4 wp = modelMatrix * vec4(p, 1.);
+          vOn = step(wp.y, uRevealY) * (1. - uCrumble);
+          vec4 mv = viewMatrix * wp; vDepth = -mv.z;
+          gl_Position = projectionMatrix * mv;
+          vUv = vec2(abs(lp.x) / .34, uv.y);
+          vHue = aSeed.w;
+        }`,
+      fragmentShader: /* glsl */ `
+        ${fog}
+        varying vec2 vUv; varying float vDepth; varying float vOn; varying float vHue;
+        void main(){
+          // two lobes: a larger fore wing and a smaller hind wing
+          vec2 u = vUv;
+          float fore = length((u - vec2(.52, .66)) * vec2(1., 1.25));
+          float hind = length((u - vec2(.42, .28)) * vec2(1.2, 1.4));
+          float shape = min(fore - .42, hind - .3);
+          float a = smoothstep(.02, -.03, shape) * vOn;
+          if (a < .01) discard;
+          // deep wine at the body → rose (or champagne) → a dark edge with pale spots; faint veins
+          vec3 wine = vec3(.32, .07, .16);
+          vec3 tint = mix(vec3(.85, .42, .55), vec3(.86, .66, .32), step(.6, vHue));
+          vec3 col = mix(wine, tint, smoothstep(.0, .45, u.x));
+          float veins = smoothstep(.035, .0, abs(fract(atan(u.y - .45, u.x) * 2.2) - .5) * .12 + (1. - u.x) * .02);
+          col = mix(col, wine, veins * .45 * smoothstep(.1, .4, u.x));
+          float edge = smoothstep(-.1, -.015, shape);
+          col = mix(col, vec3(.1, .03, .07), edge * .85);
+          col += edge * smoothstep(.05, .0, abs(fract(u.y * 7.) - .5) - .2) * vec3(.95, .85, .7) * .5 * step(.5, u.x);
+          if (u.x < .06) col = vec3(.08, .04, .05);
+          col = pow(col, vec3(2.2)) * .85; // authored in sRGB; the scene is lit in linear
+          gl_FragColor = vec4(applyFog(col, vDepth), a * .92);
+        }`,
+      uniforms: { uTime: U.uTime, uRevealY: U.uRevealY, uCrumble: U.uCrumble, uFogColor: U.uFogColor, uFogDensity: U.uFogDensity },
+    });
+    this.materials.push(mat);
+    const m = new THREE.Mesh(inst, mat);
+    m.frustumCulled = false;
+    return m;
+  }
 
   /** Height (garden‑local) the camera reaches at work progress p — for timing axis blooms. */
   setHeightMap(heightToP: (y: number) => number) {

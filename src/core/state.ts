@@ -73,6 +73,14 @@ export const state = {
   bloomY: 0,
   /** 0..1 while the wish button is held: the wish tulip gathers light */
   wishHold: 0,
+  /** 0..1 how hard she is blowing at the cake's candles (hold button or microphone) */
+  cakeBlow: 0,
+  /** the cage has been opened */
+  cageOpen: false,
+  /** the cake is out of its cage and its candles are burning */
+  cakeReady: false,
+  /** 0..1 the room going dark after the candles go out */
+  cakeDark: 0,
   /** 0..1 intro reveal after preload */
   reveal: 0,
   audioLevel: 0,
@@ -142,6 +150,8 @@ type Events = {
   navigate: Route;
   jumpToProject: string;
   openCage: void;
+  /** the candles are blown out */
+  blowCandles: void;
   /** the wish in chapter 11: light climbs the whole garden */
   wishLight: void;
   /** the finale's pull‑back reveal of the whole garden */

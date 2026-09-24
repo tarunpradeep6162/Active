@@ -224,12 +224,18 @@ body {
 .lab-label { position: fixed; left: 0; right: 0; top: 79vh; opacity: var(--v-lab); display: flex; justify-content: center; gap: clamp(20px, 13vw, 190px); align-items: flex-start; }
 .lab-label__title { font-family: var(--serif); font-weight: 500; font-style: italic; font-size: clamp(30px, 3.2vw, 54px); line-height: 1.05; letter-spacing: .01em; margin: 0; text-shadow: 0 0 14px rgba(255,255,255,.35); }
 .lab-label[data-hidden='true'] { visibility: hidden; }
+.lab-label__side { display: grid; gap: 4px; justify-items: start; max-width: 260px; }
+.lab-label__actions { display: grid; gap: 10px; justify-items: start; }
+.lab-label__blow { position: relative; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; padding: 12px 22px; font-size: 12px; }
+.lab-label__blow::before { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(230, 201, 137, .35), rgba(232, 166, 181, .35)); transform-origin: left; transform: scaleX(var(--hold, 0)); pointer-events: none; }
+.lab-label__mic { font-size: 11px; pointer-events: auto; }
+.cake-veil { position: fixed; inset: 0; z-index: 1; background: radial-gradient(ellipse at 50% 55%, rgba(7, 9, 20, .55), #04050b 70%); opacity: 0; pointer-events: none; }
 .lab-label__copy { font-size: 11px; line-height: 2.1; letter-spacing: .1em; text-transform: uppercase; max-width: 230px; margin: 0; }
 
 /* ------------------------------------------------------------------ end */
 .endcap { position: fixed; left: 0; right: 0; bottom: calc(52px + var(--safe-bottom)); text-align: center; opacity: var(--v-end); }
 .endcap button { background: none; border: 1px solid rgba(143, 208, 220, .35); color: var(--cyan); border-radius: 23px; height: 46px; padding: 0 28px; font: 11px var(--mono); letter-spacing: .28em; text-transform: uppercase; cursor: pointer; }
-.endcap[data-hidden='true'] button { pointer-events: none; }
+.endcap[data-hidden='true'] { visibility: hidden; }
 
 /* ------------------------------------------------------------------ contact */
 .contact { position: fixed; inset: 0; opacity: var(--overlay); display: none; }

@@ -110,6 +110,7 @@ export class Experience {
     events.on('navigate', (r: Route) => this.transition?.request(r, true));
     events.on('toggleAudio', () => this.audio.toggle());
     events.on('openCage', () => this.world?.lab.open());
+    events.on('blowCandles', () => this.world?.lab.blowOut());
     events.on('wishLight', () => {
       this.world?.garden.pulse(state.time);
       this.thinUntil = state.time + 5.5;

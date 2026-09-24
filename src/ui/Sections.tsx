@@ -189,18 +189,151 @@ export function LabLabel() {
   // opacity alone would leave the button clickable (and tabbable) everywhere else on the page
   const section = useStore((s) => s.section);
   const hidden = section !== 'lab' && section !== 'portal';
+  // the cage → the cake → its candles; read from the runtime each frame while the lab is near
+  const [stage, setStage] = useState<'locked' | 'rising' | 'candles' | 'wished'>('locked');
+  const [hold, setHold] = useState(0);
+  const [mic, setMic] = useState<'off' | 'asking' | 'on' | 'denied'>('off');
+  const veil = useRef<HTMLDivElement>(null);
+  const holding = useRef(false);
+  const micLevel = useRef(0);
+  const stopMic = useRef<() => void>(() => {});
+  useEffect(() => {
+    if (hidden) return;
+    let raf = 0;
+    let last = performance.now();
+    let blow = 0;
+    let wasReady = false;
+    const tick = (now: number) => {
+      const dt = Math.min(0.1, (now - last) / 1000);
+      last = now;
+      // hold: ~1.6 s of steady blowing; the microphone: sustained breath above the room's noise
+      const push = holding.current ? 0.65 : micLevel.current > 0.06 ? Math.min(1.4, micLevel.current * 9) : 0;
+      blow = state.cakeReady ? Math.max(0, Math.min(1, blow + (push > 0 ? push * dt : -dt * 0.8))) : 0;
+      state.cakeBlow = blow;
+      setHold((h) => (Math.abs(h - blow) > 0.01 || (blow === 0 && h !== 0) ? blow : h));
+      if (state.cageOpen) setStage((st) => (st === 'locked' ? 'rising' : st));
+      if (blow >= 1 && state.cakeReady) {
+        events.emit('blowCandles', undefined);
+        holding.current = false;
+        blow = 0;
+        stopMic.current();
+        setStage('wished');
+      }
+      if (state.cakeReady && !wasReady) setStage('candles');
+      wasReady = state.cakeReady;
+      if (veil.current) veil.current.style.opacity = String(state.cakeDark * 0.82);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(raf);
+      state.cakeBlow = 0;
+    };
+  }, [hidden]);
+  useEffect(() => () => stopMic.current(), []);
+  useEffect(() => {
+    if (hidden) stopMic.current();
+  }, [hidden]);
+
+  const open = () => {
+    events.emit('openCage', undefined);
+    setStage('rising');
+  };
+  // the microphone is only asked for after this explicit tap; the sound is measured locally, never recorded
+  const listen = async () => {
+    setMic('asking');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+      const ctx = new AudioContext();
+      const an = ctx.createAnalyser();
+      an.fftSize = 1024;
+      ctx.createMediaStreamSource(stream).connect(an);
+      const buf = new Float32Array(an.fftSize);
+      let raf = 0;
+      const read = () => {
+        an.getFloatTimeDomainData(buf);
+        let sum = 0;
+        for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+        micLevel.current = micLevel.current * 0.7 + Math.sqrt(sum / buf.length) * 0.3;
+        raf = requestAnimationFrame(read);
+      };
+      read();
+      stopMic.current = () => {
+        cancelAnimationFrame(raf);
+        stream.getTracks().forEach((t) => t.stop());
+        ctx.close().catch(() => {});
+        micLevel.current = 0;
+        stopMic.current = () => {};
+        setMic('off');
+      };
+      setMic('on');
+    } catch {
+      setMic('denied');
+    }
+  };
+  const holdOn = (on: boolean) => () => {
+    holding.current = on;
+  };
+  const candles = stage === 'candles';
   return (
-    <section className="lab-label" aria-labelledby="lab-title" data-hidden={hidden} aria-hidden={hidden}>
-      <h2 className="lab-label__title" id="lab-title">
-        // Locked
-        <br />
-        inside -&gt;
-      </h2>
-      <p className="lab-label__copy">Something sweet is waiting behind these bars. Touch the cage to open it.</p>
-      <button type="button" className="lab-label__open" tabIndex={hidden ? -1 : 0} onClick={() => events.emit('openCage', undefined)}>
-        Open the cage
-      </button>
-    </section>
+    <>
+      <div className="cake-veil" ref={veil} aria-hidden="true" />
+      <section className="lab-label" aria-labelledby="lab-title" data-hidden={hidden} data-stage={stage} aria-hidden={hidden}>
+        <h2 className="lab-label__title" id="lab-title">
+          {stage === 'locked' ? 'Something sweet,' : stage === 'wished' ? 'Your wish' : 'Blow out'}
+          <br />
+          {stage === 'locked' ? 'locked inside' : stage === 'wished' ? 'is on its way' : 'the candles'}
+        </h2>
+        <div className="lab-label__side">
+          <p className="lab-label__copy" aria-live="polite">
+            {stage === 'locked' && 'Touch the cage to open it.'}
+            {stage === 'rising' && 'Wait for the candles…'}
+            {candles && (mic === 'on' ? 'Close your eyes, make a wish, and blow gently toward your phone.' : 'Close your eyes and make a wish. Then hold the button, and blow.')}
+            {stage === 'wished' && 'Kept in the dark for a moment, and then let go. The candles will light again.'}
+            {mic === 'denied' && candles && ' (No microphone. Holding works just as well.)'}
+          </p>
+          {stage === 'locked' && (
+            <button type="button" className="lab-label__open" tabIndex={hidden ? -1 : 0} onClick={open}>
+              Open the cage
+            </button>
+          )}
+          {candles && (
+            <div className="lab-label__actions">
+              <button
+                type="button"
+                className="lab-label__open lab-label__blow"
+                tabIndex={hidden ? -1 : 0}
+                style={{ ['--hold' as string]: hold }}
+                onPointerDown={holdOn(true)}
+                onPointerUp={holdOn(false)}
+                onPointerLeave={holdOn(false)}
+                onPointerCancel={holdOn(false)}
+                onKeyDown={(e) => (e.key === ' ' || e.key === 'Enter') && holdOn(true)()}
+                onKeyUp={holdOn(false)}
+                onContextMenu={(e) => e.preventDefault()}
+              >
+                Hold to blow
+              </button>
+              {mic !== 'on' && mic !== 'denied' && 'mediaDevices' in navigator && (
+                <button type="button" className="bd-link lab-label__mic" tabIndex={hidden ? -1 : 0} onClick={listen} disabled={mic === 'asking'}>
+                  or use the microphone
+                </button>
+              )}
+              {mic === 'on' && (
+                <button type="button" className="bd-link lab-label__mic" onClick={() => stopMic.current()}>
+                  turn the microphone off
+                </button>
+              )}
+            </div>
+          )}
+          {stage === 'wished' && (
+            <button type="button" className="lab-label__open" tabIndex={hidden ? -1 : 0} onClick={() => setStage(state.cakeReady ? 'candles' : 'rising')}>
+              Make another wish
+            </button>
+          )}
+        </div>
+      </section>
+    </>
   );
 }
 

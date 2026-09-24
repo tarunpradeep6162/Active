@@ -71,6 +71,8 @@ function cakeMaterial(color: string, o: { gloss?: number; sheen?: number; bump?:
   });
 }
 const litUniform = { value: 0 };
+/** 0…1: how hard the candles are being blown (flames lean and shrink) */
+const blowUniform = { value: 0 };
 const candleUniform = { value: new THREE.Vector3() };
 const roseUniform = { value: new THREE.Vector3() };
 
@@ -214,15 +216,16 @@ export class BirthdayCake {
       blending: THREE.AdditiveBlending,
       vertexShader: /* glsl */ `
         attribute float aIndex;
-        uniform float uTime; uniform float uLit;
+        uniform float uTime; uniform float uLit; uniform float uBlow;
         varying vec2 vUv; varying float vOn;
         void main(){
           // billboard: keep the instance's position, face the camera
           vec4 base = modelViewMatrix * instanceMatrix * vec4(0., 0., 0., 1.);
           float flick = 1. + .12 * sin(uTime * 13. + aIndex * 2.3) + .06 * sin(uTime * 29. + aIndex);
           vOn = clamp(uLit * ${CANDLES.toFixed(1)} - aIndex, 0., 1.);
-          vec2 p = position.xy * vec2(1., flick) * vOn;
-          p.x += sin(uTime * 3. + aIndex) * .015 * position.y * 4.;
+          float gust = uBlow * (.8 + .2 * sin(uTime * 21. + aIndex * 3.));
+          vec2 p = position.xy * vec2(1. + gust * .3, flick * (1. - gust * .45)) * vOn;
+          p.x += sin(uTime * 3. + aIndex) * .015 * position.y * 4. + gust * max(position.y, 0.) * .9;
           gl_Position = projectionMatrix * (base + vec4(p, 0., 0.));
           vUv = uv;
         }`,
@@ -237,7 +240,7 @@ export class BirthdayCake {
           vec3 col = mix(vec3(1., .45, .12), vec3(1., .95, .75), core) * (core * 1.6 + halo);
           gl_FragColor = vec4(col * vOn, 1.);
         }`,
-      uniforms: { uTime: globalUniforms.uTime, uLit: litUniform },
+      uniforms: { uTime: globalUniforms.uTime, uLit: litUniform, uBlow: blowUniform },
     });
     this.flames = new THREE.InstancedMesh(flameGeo, this.flameMat, CANDLES);
     const aIndex = new Float32Array(CANDLES);
@@ -283,19 +286,30 @@ export class BirthdayCake {
         void main(){
           float t = fract(aSeed.y + uTime * (.05 + aSeed.z * .06));
           float r = (.4 + aSeed.w * 2.2) * (.3 + .7 * uBurst);
+          if (aSeed.z > .62) { t = fract(aSeed.y + uTime * (.03 + aSeed.w * .03)); r *= 1.3; }
           vec3 p = vec3(cos(aSeed.x + t * 2.) * r, ${TOP.toFixed(2)} * (.4 + t * 1.4), sin(aSeed.x + t * 2.) * r);
           vec4 mv = modelViewMatrix * vec4(p, 1.);
           gl_Position = projectionMatrix * mv;
-          vA = uBurst * sin(3.1416 * t) * (.5 + .5 * sin(uTime * 6. + aSeed.x * 20.));
+          vA = min(uBurst, 1.) * sin(3.1416 * t) * (.5 + .5 * sin(uTime * 6. + aSeed.x * 20.));
           vHue = aSeed.z;
-          gl_PointSize = uPx * (2. + aSeed.w * 3.) / -mv.z;
+          gl_PointSize = uPx * (2. + aSeed.w * 3.) * (aSeed.z > .62 ? 2.2 : 1.) / -mv.z;
         }`,
       fragmentShader: /* glsl */ `
         varying float vA; varying float vHue;
         void main(){
-          float d = length(gl_PointCoord - .5);
+          vec2 c = gl_PointCoord - .5;
+          if (vHue > .62) {
+            // a petal: a soft rotated ellipse, rose with a paler base
+            float an = vHue * 40.;
+            c = mat2(cos(an), -sin(an), sin(an), cos(an)) * c;
+            float d = length(c * vec2(1., 2.1));
+            float a = smoothstep(.42, .3, d) * vA * .8;
+            gl_FragColor = vec4(mix(vec3(.95, .55, .62), vec3(1., .85, .85), c.y + .5) * a, 1.);
+            return;
+          }
+          float d = length(c);
           float a = smoothstep(.5, 0., d) * vA;
-          gl_FragColor = vec4(mix(vec3(1., .85, .5), vec3(1., .45, .7), vHue) * a, 1.);
+          gl_FragColor = vec4(mix(vec3(1., .85, .5), vec3(.95, .76, .45), vHue) * a, 1.);
         }`,
       uniforms: { uBurst: { value: 0 }, uTime: globalUniforms.uTime, uPx: { value: 22 } },
     });
@@ -312,9 +326,10 @@ export class BirthdayCake {
     roseUniform.value.copy(rose);
   }
 
-  /** lit: candles igniting 0…1 · burst: sparkles 0…1 */
-  update(time: number, lit: number, burst: number, dpr: number) {
+  /** lit: candles igniting 0…1 · burst: sparkles (0…1, more is a bigger cloud) · blow: flames leaning */
+  update(time: number, lit: number, burst: number, dpr: number, blow = 0) {
     litUniform.value = lit;
+    blowUniform.value = blow;
     this.sparkleMat.uniforms.uBurst.value = burst;
     this.sparkleMat.uniforms.uPx.value = 22 * dpr;
     this.topper.rotation.y = time * 0.8;

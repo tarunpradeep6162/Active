@@ -376,7 +376,11 @@ export class World {
     this.cards.setEntry(workTimeline.card0Entry(wt));
     // an open chapter (and the finale's reveal) always sees the whole garden
     this.garden.setCrumble(workTimeline.spineDissolve(wt) * (1 - clamp(state.focus + this.gardenReveal)));
+    this.lab.blow = state.cakeBlow;
     this.lab.update(t, state.viewport.dpr);
+    state.cakeReady = this.lab.candlesReady;
+    state.cageOpen = this.lab.isOpen;
+    state.cakeDark = this.lab.dark;
     if (++this.rayFrame % 2 === 0) this.raycast(camera);
     this.cards.update(dt, this.activeSlug, this.highlight, this.hovered, this.hitUv);
     // chapter tulips follow their anchors (hover tilt, chapter‑1 entry rise)
@@ -393,6 +397,7 @@ export class World {
       state.bloomY = clamp((-this.tmpHead.y * 0.5 + 0.5) * state.viewport.height, 0, state.viewport.height);
     }
     this.garden.hold = state.wishHold;
+    this.garden.fireflyPx.value = 60 * state.viewport.dpr;
     this.garden.update(t, wt, (i) => workTimeline.cardCentre(i), state.focus > 0.5 ? active : -1, this.visited, this.gardenReveal);
   }
 
