@@ -25,7 +25,8 @@ const args = process.argv.slice(2);
 const arg = (k) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : undefined; };
 const pass = arg('--pass');
 const hint = arg('--hint') ?? '';
-if (!pass || pass.trim().length < 6) {
+if (!pass || pass.trim().length < 6) // (matched case- and space-insensitively on the site)
+ {
   console.error('Usage: npm run vault -- --pass "a passphrase of at least 6 characters" [--hint "…"]');
   process.exit(1);
 }
@@ -40,7 +41,7 @@ if (!fs.existsSync(contentPath)) {
 const ITER = 600_000;
 const enc = new TextEncoder();
 const salt = crypto.getRandomValues(new Uint8Array(16));
-const base = await crypto.subtle.importKey('raw', enc.encode(pass.normalize('NFC').trim()), 'PBKDF2', false, ['deriveKey']);
+const base = await crypto.subtle.importKey('raw', enc.encode(pass.normalize('NFC').trim().toLowerCase().replace(/\s+/g, ' ')), 'PBKDF2', false, ['deriveKey']);
 const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: ITER, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt']);
 const seal = async (bytes) => {
   const iv = crypto.getRandomValues(new Uint8Array(12));

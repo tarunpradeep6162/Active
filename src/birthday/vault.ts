@@ -65,7 +65,7 @@ export async function initVault() {
 }
 
 async function derive(pass: string, m: Meta) {
-  const base = await crypto.subtle.importKey('raw', enc.encode(pass.normalize('NFC').trim()), 'PBKDF2', false, ['deriveKey']);
+  const base = await crypto.subtle.importKey('raw', enc.encode(pass.normalize('NFC').trim().toLowerCase().replace(/\s+/g, ' ')), 'PBKDF2', false, ['deriveKey']);
   return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b64(m.salt), iterations: m.iterations, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
 }
 
