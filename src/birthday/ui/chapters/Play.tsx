@@ -34,6 +34,24 @@ export function CatchGame({ slug, onDone }: ChapterProps) {
   const [state, setState] = useState<'ready' | 'play' | 'won'>('ready');
   const [score, setScore] = useState(0);
   const GOAL = 14;
+  // the tulip in 3D behind the game: every petal caught comes home, and it blooms
+  const box = useRef<HTMLDivElement>(null);
+  const scene = useStage(() => import('../stage/CatchScene').then(({ CatchScene }) => (cv: HTMLCanvasElement) => new CatchScene(cv)));
+  useEffect(() => {
+    if (!scene.live) return;
+    let raf = 0;
+    const tick = () => {
+      const r = box.current?.getBoundingClientRect();
+      if (r && r.width) scene.stage.current?.setAnchor(r.left / innerWidth, r.top / innerHeight, r.width / innerWidth, r.height / innerHeight);
+      raf = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => cancelAnimationFrame(raf);
+  }, [scene.live]);
+  useEffect(() => scene.stage.current?.setProgress(score / GOAL), [score, scene.live]);
+  useEffect(() => {
+    if (state === 'won') scene.stage.current?.win();
+  }, [state, scene.live]);
   useEffect(() => {
     if (state !== 'play') return;
     const cv = ref.current!;
@@ -116,7 +134,8 @@ export function CatchGame({ slug, onDone }: ChapterProps) {
     };
   }, [state]);
   return (
-    <div className="bd-game">
+    <div className="bd-game" data-live={scene.live} data-state={state} ref={box}>
+      <Backdrop canvas={scene.ref} />
       <canvas ref={ref} className="bd-game__canvas" aria-label="Catch the falling hearts; move with the pointer or the arrow keys" />
       <div className="bd-game__hud">
         ✿ {score} / {GOAL}

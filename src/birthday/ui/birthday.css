@@ -423,3 +423,9 @@
 .bd-secret[data-live="true"] .bd-code { width: min(520px, 86vw); height: clamp(120px, 20vh, 190px); justify-content: center; align-items: center; }
 .bd-secret[data-live="true"] .bd-code span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 .bd-secret[data-live="true"] :is(.bd-hint, .bd-clue__text) { font: italic 500 clamp(16px, 1.8vw, 21px)/1.5 var(--serif); color: #fff8ee; text-shadow: 0 1px 14px rgba(7, 9, 20, .9); }
+
+/* chapter 5 · the tulip in 3D stands behind the game, seen through glass */
+.bd-game[data-live="true"] { background: linear-gradient(rgba(14, 8, 22, .16), rgba(14, 8, 22, .42)); border-color: rgba(255, 216, 154, .22); box-shadow: inset 0 0 60px rgba(255, 170, 200, .06); }
+.bd-game[data-live="true"] .bd-game__overlay { background: linear-gradient(transparent 20%, rgba(8, 6, 14, .55) 60%); align-content: end; padding-bottom: 8%; }
+.bd-game[data-live="true"][data-state="won"] .bd-game__overlay { background: none; }
+.bd-game[data-live="true"] .bd-game__overlay p { text-shadow: 0 1px 14px rgba(7, 9, 20, .9); }

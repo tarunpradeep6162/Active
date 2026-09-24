@@ -106,6 +106,21 @@ const steps = {
     await page.waitForTimeout(3000);
     await shot('card');
   },
+  'catch-my-heart': async () => {
+    if (process.env.SKIP) {
+      await click('.bd-game__overlay .bd-link');
+      for (const n of ['won1', 'won2']) { await page.waitForTimeout(2500); await shot(n); }
+      return;
+    }
+    await click('.bd-game__overlay .bd-btn');
+    const r = await page.locator('.bd-game__canvas').boundingBox();
+    for (let k = 0; k < 60; k++) {
+      await page.mouse.move(r.x + r.width * (0.5 + 0.42 * Math.sin(k * 0.7)), r.y + r.height * 0.8);
+      await page.waitForTimeout(150);
+    }
+    info.score = await page.evaluate(() => document.querySelector('.bd-game__hud')?.textContent);
+    await shot('playing');
+  },
   'for-dheepika': async () => {
     info.locked = await page.evaluate(() => !!document.querySelector('.bd-door'));
     if (info.locked) return;
