@@ -94,8 +94,49 @@ export function Reasons({ slug, onDone }: ChapterProps) {
     if (all) onDone();
   }, [all]);
   const letters = c.name.toUpperCase().split('');
+  // the sky behind: glows, threads of light and, at the end, her name written in stars
+  const root = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLCanvasElement>(null);
+  const stage = useRef<{ setStars(p: { x: number; y: number }[], s: boolean[]): void; flare(i: number): void; complete(): void; dispose(): void } | null>(null);
+  const [live, setLive] = useState(false);
+  const seenRef = useRef(seen);
+  seenRef.current = seen;
+  useEffect(() => {
+    let alive = true;
+    let raf = 0;
+    import('../stage/ReasonsScene')
+      .then(({ ReasonsScene }) => {
+        if (!alive || !ref.current) return;
+        stage.current = new ReasonsScene(ref.current, c.reasons.length, c.name);
+        setLive(true);
+        const tick = () => {
+          const stars = root.current ? [...root.current.querySelectorAll<HTMLElement>('.bd-reason-star')] : [];
+          const pos = stars.map((b) => {
+            const r = b.getBoundingClientRect();
+            return { x: (r.left + r.width / 2) / innerWidth, y: (r.top + r.height / 2) / innerHeight };
+          });
+          stage.current?.setStars(pos, c.reasons.map((_, k) => seenRef.current.includes(k)));
+          raf = requestAnimationFrame(tick);
+        };
+        tick();
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+      cancelAnimationFrame(raf);
+      stage.current?.dispose();
+      stage.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (all) stage.current?.complete();
+  }, [all, live]);
   return (
-    <div className={`bd-reasons ${all ? 'is-constellation' : ''}`}>
+    <div className={`bd-reasons ${all ? 'is-constellation' : ''}`} ref={root} data-live={live}>
+      <div className="bd-cosmos" aria-hidden="true">
+        <canvas ref={ref} className="bd-cosmos__canvas" />
+      </div>
       <svg className="bd-reasons__lines" viewBox="-50 -50 100 100" aria-hidden="true">
         {all && c.reasons.map((_, k) => {
           const a = star(k, c.reasons.length), b = star((k + 1) % c.reasons.length, c.reasons.length);
@@ -113,6 +154,7 @@ export function Reasons({ slug, onDone }: ChapterProps) {
             aria-label={`Reason ${k + 1}`}
             onClick={() => {
               setCur(k);
+              if (seen.includes(k)) stage.current?.flare(k);
               setSeen((s) => (s.includes(k) ? s : [...s, k]));
             }}
           >

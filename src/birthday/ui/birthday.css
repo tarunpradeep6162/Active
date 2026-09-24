@@ -372,3 +372,10 @@
 @keyframes bd-paper-rise { from { opacity: 0; transform: translateY(40px) scale(.97); } to { opacity: 1; transform: none; } }
 .bd-letter .bd-cosmos::after { content: ''; position: absolute; inset: 0; background: rgba(7, 9, 20, .62); opacity: 0; transition: opacity 1.4s ease; pointer-events: none; }
 .bd-letter[data-phase="open"] .bd-cosmos::after { opacity: 1; }
+
+/* 4 · 14 Things — the sky lights the stars; the page keeps the words */
+.bd-reasons[data-live="true"] .bd-reason-star { color: transparent; text-shadow: none; animation: none; width: 44px; height: 44px; }
+.bd-reasons[data-live="true"] .bd-reasons__lines { display: none; }
+.bd-reasons[data-live="true"] .bd-reasons__text { font: italic 500 clamp(18px, 2vw, 24px)/1.5 var(--serif); letter-spacing: 0; color: #fff8ee; text-shadow: 0 1px 14px rgba(7, 9, 20, .8); max-width: 30ch; }
+.bd-reasons[data-live="true"].is-constellation .bd-reasons__name button { color: transparent; text-shadow: none; }
+.bd-reasons[data-live="true"] .bd-reasons__name { transition: color 1.6s ease; }
