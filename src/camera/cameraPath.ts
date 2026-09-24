@@ -57,11 +57,12 @@ function buildKeys(): Key[] {
     k('portal', 0.6, [0.4, ANCHOR.portal - 6, 10.5], [0, ANCHOR.portal - 4, -6], 48),
     k('portal', 0.9, [0, ANCHOR.portal - 7, 9], [0, ANCHOR.portal - 5.5, -6], 46),
     k('portal', 1, [0, ANCHOR.portal - 6, 6], [0, ANCHOR.portal - 9, -2]),
-    // the finale sky: wide while the stars wander, a slow push‑in as they spell her name
-    k('outro', 0.22, [0, ANCHOR.outro + 0.9, 13.4], [0, ANCHOR.outro + 0.9, 0]),
-    k('outro', 0.45, [-0.4, ANCHOR.outro + 0.85, 12.8], [0, ANCHOR.outro + 0.9, 0]),
-    k('outro', 0.7, [0.2, ANCHOR.outro + 0.8, 11.4], [0, ANCHOR.outro + 0.95, 0]),
-    k('outro', 1, [0, ANCHOR.outro + 0.7, 10.6], [0, ANCHOR.outro + 1, 0]),
+    // the finale sky: wide while the stars wander, a slow push‑in as they spell her name. The
+    // camera sits a little low and looks up, so the lake's horizon falls below her name.
+    k('outro', 0.22, [0, ANCHOR.outro - 0.4, 13.4], [0, ANCHOR.outro + 0.9, 0]),
+    k('outro', 0.45, [-0.4, ANCHOR.outro - 0.45, 12.8], [0, ANCHOR.outro + 0.9, 0]),
+    k('outro', 0.7, [0.2, ANCHOR.outro - 0.5, 11.4], [0, ANCHOR.outro + 0.95, 0]),
+    k('outro', 1, [0, ANCHOR.outro - 0.6, 10.6], [0, ANCHOR.outro + 1, 0]),
   );
   return keys.sort((a, b) => a.t - b.t);
 }

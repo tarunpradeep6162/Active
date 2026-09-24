@@ -372,7 +372,7 @@ html.no-webgl #interface { position: static; pointer-events: auto; }
 @media (max-width: 600px) { .sky-label { left: 16px; right: 16px; bottom: calc(6vh + var(--safe-bottom, 0px)); } }
 
 /* ── the finale sky ── */
-.sunrise { position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: var(--v-sunrise, 0); mix-blend-mode: screen;
+.sunrise { position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: calc(var(--v-sunrise, 0) * .3); mix-blend-mode: screen;
   background: radial-gradient(120% 60% at 50% 115%, rgba(243, 223, 167, .55), rgba(232, 166, 181, .32) 38%, rgba(106, 58, 90, .18) 62%, transparent 80%);
   transform: translateY(calc((1 - var(--v-sunrise, 0)) * 18vh)); }
 .finale-sky { position: fixed; inset: 0; display: grid; grid-template-rows: 1fr auto 1fr; justify-items: center; pointer-events: none; text-align: center; color: var(--soft); }
@@ -416,6 +416,7 @@ html.no-webgl #interface { position: static; pointer-events: auto; }
   .opening__name { top: 64vh; font-size: clamp(34px, 7vw, 56px); }
   .opening__enter { top: auto; bottom: calc(10px + var(--safe-bottom)); }
   .actcard { top: 10vh; }
-  .finale-sky__words { bottom: calc(96px + var(--safe-bottom)); }
-  .finale-sky__last { bottom: calc(52px + var(--safe-bottom)); }
+  .finale-sky__words { bottom: calc(108px + var(--safe-bottom)); }
+  .finale-sky__last { bottom: calc(58px + var(--safe-bottom)); }
+  .endcap { bottom: calc(6px + var(--safe-bottom)); }
 }

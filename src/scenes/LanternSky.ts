@@ -3,6 +3,7 @@ import { ANCHOR } from '../world/journey';
 import { globalUniforms } from '../world/uniforms';
 import { fog } from '../shaders/chunks';
 import { rng, clamp, smoothstep } from '../utils/math';
+import { NightLake, reflectionChunk } from './NightLake';
 
 /** How many lanterns carry a wish she can read (and let go). */
 export const WISH_LANTERNS = 12;
@@ -10,6 +11,8 @@ export const WISH_LANTERNS = 12;
 export const SKY_Y = ANCHOR.portal - 6;
 const P = SKY_Y;
 const STORE = 'bday-lanterns-v1';
+/** the lake the lanterns rise from */
+export const WATER_Y = P - 2.5;
 
 /**
  * The lantern sky, where the old underwater hex tunnel was: a night full of paper sky lanterns
@@ -34,11 +37,14 @@ export class LanternSky {
   private stars: THREE.Points;
   private starAlpha: THREE.BufferAttribute;
   private glowWish: THREE.Points;
+  private wishRefl!: THREE.ShaderMaterial;
   private time = 0;
   private m = new THREE.Matrix4();
   private q = new THREE.Quaternion();
   private s = new THREE.Vector3();
   private readonly px = { value: 60 };
+  /** the night lake under the lanterns (sky, far shore, water) */
+  readonly lake = new NightLake(WATER_Y, 16);
 
   constructor(density = 1) {
     const rr = rng(2511);
@@ -59,7 +65,7 @@ export class LanternSky {
     const motion = /* glsl */ `
       vec3 drift(vec4 s, float t){
         float k = fract(s.y + t * (.006 + s.z * .006));
-        float y = ${(P - 10).toFixed(2)} + k * 26.;
+        float y = ${(WATER_Y + 0.4).toFixed(2)} + k * 24.;
         float x = (s.x - .5) * 30. + sin(t * .11 + s.w * 6.) * .8;
         float z = -3. - s.w * 20.;
         return vec3(x, y, z);
@@ -99,14 +105,15 @@ export class LanternSky {
           vec3 c = drift(aSeed, uTime);
           float sc = .55 + aSeed.z * .5;
           float sway = sin(uTime * .6 + aSeed.x * 20.) * .08;
-          vec3 p = position * sc;
+          vFade = driftFade(aSeed, uTime);
+          // a lantern fading in or out also grows or shrinks (never a dark shape on the water)
+          vec3 p = position * sc * clamp(vFade * 3., 0., 1.);
           p.xy = mat2(cos(sway), -sin(sway), sin(sway), cos(sway)) * p.xy;
           vLocal = position;
           vec4 mv = viewMatrix * modelMatrix * vec4(c + p, 1.);
           vDepth = -mv.z;
           vGlow = .6 + aSeed.w * .4;
           vHue = step(.7, aSeed.x);
-          vFade = driftFade(aSeed, uTime);
           gl_Position = projectionMatrix * mv;
         }`,
       fragmentShader: paperFrag,
@@ -146,6 +153,47 @@ export class LanternSky {
     const halos = new THREE.Points(haloGeo, halo);
     halos.frustumCulled = false;
     this.group.add(halos);
+    this.group.add(this.lake.sky, this.lake.water);
+
+    // every lantern's light, reflected on the lake as a soft streak broken by ripples
+    const reflMat = (body: string, attribs: string, size: string) =>
+      new THREE.ShaderMaterial({
+        transparent: true,
+        depthTest: false,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        vertexShader: /* glsl */ `
+          ${attribs}
+          uniform float uTime, uPx, uWaterY, uAmt;
+          varying float vA; varying float vSeed;
+          ${motion}
+          ${reflectionChunk}
+          void main(){
+            ${body}
+            float hgt = w.y - uWaterY;
+            vec4 mv = viewMatrix * vec4(mirrorWorld(w, uWaterY, uTime, vSeed), 1.);
+            gl_Position = projectionMatrix * mv;
+            vA *= exp(-hgt * .05) * step(0., hgt) * uAmt;
+            gl_PointSize = uPx * ${size} / max(-mv.z, 1.);
+          }`,
+        fragmentShader: /* glsl */ `
+          ${reflectionChunk}
+          uniform float uTime; varying float vA; varying float vSeed;
+          void main(){ float a = streak(gl_PointCoord, uTime, vSeed) * vA * 1.1; gl_FragColor = vec4(vec3(1., .66, .34) * a, a); }`,
+        uniforms: { uTime: globalUniforms.uTime, uPx: this.px, uWaterY: this.lake.uniforms.uWaterY, uAmt: this.lake.uniforms.uAmt },
+      });
+    const ambRefl = reflMat(
+      `vec3 w = (modelMatrix * vec4(drift(aSeed, uTime), 1.)).xyz; vSeed = aSeed.x; vA = driftFade(aSeed, uTime) * (.5 + aSeed.w * .5);`,
+      'attribute vec4 aSeed;',
+      '22. * (.55 + aSeed.z * .5)',
+    );
+    this.materials.push(ambRefl);
+    const ar = new THREE.Points(haloGeo, ambRefl);
+    ar.frustumCulled = false;
+    ar.renderOrder = 5;
+    this.group.add(ar);
+    this.wishRefl = reflMat(`vec3 w = (modelMatrix * vec4(position, 1.)).xyz; vSeed = w.x; vA = aA;`, 'attribute float aA;', '20.');
+    this.materials.push(this.wishRefl);
 
     // wish lanterns: close, larger, brighter, hovering in a loose arc in front of the camera
     const wishMat = new THREE.ShaderMaterial({
@@ -199,6 +247,10 @@ export class LanternSky {
     this.glowWish = new THREE.Points(wg, wishHalo);
     this.glowWish.frustumCulled = false;
     this.group.add(this.glowWish);
+    const wr = new THREE.Points(wg, this.wishRefl);
+    wr.frustumCulled = false;
+    wr.renderOrder = 5;
+    this.group.add(wr);
 
     // the stars the released wishes become
     const sg = new THREE.BufferGeometry();

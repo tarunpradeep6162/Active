@@ -141,6 +141,7 @@ export class World {
 
     // the finale sky: stars that become the date, then her name (the emblem stays at the start)
     this.add(this.finaleSky.group, ANCHOR.outro + 12, ANCHOR.outro - 6);
+    this.add(this.finaleSky.extras, ANCHOR.outro + 12, ANCHOR.outro - 6);
 
     // particles
     const byId = new Map(particles.map((p) => [p.id, p]));
@@ -422,6 +423,9 @@ export class World {
     // the sky behind the garden: there while the garden is, gone with it into the cake room
     const skyAmt = Math.max(smoothstep(-0.05, 0.04, wt) * (1 - workTimeline.spineDissolve(wt)), this.gardenReveal) * (1 - clamp(state.focus * 1.5));
     this.gardenSky.update(camera, skyAmt, clamp(0.1 + wt * 0.95) * (1 - this.gardenReveal) + this.gardenReveal, state.viewport.dpr);
+    // the night lake under the lanterns: there once the camera has come down into their sky
+    const lp = state.section === 'portal' ? state.sectionProgress : state.section === 'outro' ? 1 : 0;
+    this.portal.lake.update(camera, smoothstep(0.04, 0.16, lp) * (1 - smoothstep(0.88, 0.98, lp)), 0);
     if (state.section === 'portal' || state.section === 'lab' || state.section === 'outro') {
       this.portal.update(t, state.viewport.dpr);
       state.starsLit = this.portal.starsLit;

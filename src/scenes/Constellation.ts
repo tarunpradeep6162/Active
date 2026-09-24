@@ -2,9 +2,12 @@ import * as THREE from 'three';
 import { ANCHOR } from '../world/journey';
 import { globalUniforms } from '../world/uniforms';
 import { rng, clamp, smoothstep } from '../utils/math';
+import { NightLake, reflectionChunk } from './NightLake';
 
 const O = ANCHOR.outro;
 const SERIF = "'Cormorant Garamond', Georgia, serif";
+/** the lake under the finale sky */
+const WATER_Y = O - 2.6;
 
 /**
  * The finale sky. A field of stars that, as she scrolls, drifts together into "25 · 11",
@@ -12,6 +15,68 @@ const SERIF = "'Cormorant Garamond', Georgia, serif";
  * once the name has formed. Everything is one Points draw each; shapes are sampled from text
  * rasterised on a canvas, so they use the site's own serif.
  */
+/** where each star is (sky → date → name) and how bright, shared by the stars and their reflection */
+const STAR_VS = /* glsl */ `
+  attribute vec3 aDate; attribute vec3 aName; attribute vec4 aSeed;
+  uniform float uMorph, uPx, uTime, uFade;
+  varying float vA; varying float vWarm; varying float vSize;
+  vec3 starPos(){
+    // each star travels on its own schedule, so the words gather rather than snap
+    float d = aSeed.x * .45;
+    float m1 = smoothstep(d, d + .55, clamp(uMorph, 0., 1.));
+    float m2 = smoothstep(d, d + .55, clamp(uMorph - 1., 0., 1.));
+    vec3 p = mix(mix(position, aDate, m1), aName, m2);
+    // a gentle arc on the way, and a slow shimmer once placed
+    float travel = sin(3.1416 * (m1 < 1. ? m1 : m2));
+    p.z += travel * (aSeed.y - .5) * 2.;
+    p += vec3(sin(uTime * .6 + aSeed.z * 30.), cos(uTime * .5 + aSeed.w * 30.), 0.) * .012;
+    float tw = .65 + .35 * sin(uTime * (1. + aSeed.z * 2.) + aSeed.w * 40.);
+    vA = tw * uFade * (.55 + .45 * max(m1, m2));
+    vWarm = aSeed.y;
+    vSize = (.9 + aSeed.w * 1.3) * (1. + max(m1, m2) * .35);
+    return p;
+  }
+`;
+
+/** a firework particle: a rocket climbing from the shore on a trail, then the burst, falling and crackling */
+const FIRE_VS = /* glsl */ `
+  attribute vec4 aDir;
+  uniform float uTime, uPx, uFire, uLaunchY;
+  varying float vA; varying float vRose; varying float vSize;
+  float h(float n){ return fract(sin(n) * 43758.5453); }
+  vec3 firePos(){
+    float b = aDir.w;
+    float period = 7.;
+    float rise = 1.1;
+    float cyc = floor((uTime + b * 1.4) / period);
+    float T = mod(uTime + b * 1.4, period);
+    // each burst picks a new spot around (never over) the name
+    float side = h(cyc * 7.1 + b) < .5 ? -1. : 1.;
+    vec3 c = vec3(side * (3.2 + h(cyc * 3.3 + b) * 3.), 1.8 + h(cyc * 5.7 + b) * 2.2, -3. - h(cyc + b * 9.) * 3.);
+    vec3 launch = vec3(c.x + (h(cyc * 2.3 + b) - .5) * 1.4, uLaunchY, c.z);
+    vRose = step(.5, h(cyc * 1.9 + b * 4.1));
+    if (T < rise) {
+      // the rocket: a bright head and a fading trail of the same particles behind it
+      float lag = position.x * .22;
+      float k = max(T / rise - lag, 0.);
+      float e = 1. - (1. - k) * (1. - k);
+      vec3 p = mix(launch, c, e) + vec3(sin(position.y * 40. + uTime * 9.), 0., cos(position.z * 30.)) * .03 * position.x;
+      vA = uFire * step(.001, k) * (1. - position.x) * .9;
+      vRose = -1.;
+      vSize = .6 + (1. - position.x) * .8;
+      return p;
+    }
+    float t = T - rise;
+    float r = (1. - exp(-t * 2.2)) * (1.2 + position.x * .6);
+    vec3 p = c + aDir.xyz * r + vec3(0., -.14 * t * t, 0.);
+    vA = uFire * smoothstep(0., .06, t) * (1. - smoothstep(.8, 3.2, t)) * (.6 + .4 * sin(t * 30. + position.y * 20.));
+    // late glitter: the falling sparks crackle on and off
+    vA *= t > 1.3 ? step(.45, fract(sin(position.y * 917. + floor(uTime * 14.)) * 43758.5)) * 1.4 : 1.;
+    vSize = 1. + position.z;
+    return p;
+  }
+`;
+
 export class Constellation {
   readonly group = new THREE.Group();
   readonly materials: THREE.ShaderMaterial[] = [];
@@ -23,7 +88,13 @@ export class Constellation {
     uTime: globalUniforms.uTime,
     uFire: { value: 0 },
     uFade: { value: 1 },
+    uLaunchY: { value: -3.5 },
+    uWaterY: { value: WATER_Y },
+    uAmt: { value: 0 },
   };
+  /** the lake, sky and shore under the finale (unscaled, added to the world beside the group) */
+  readonly lake = new NightLake(WATER_Y, 16);
+  readonly extras = new THREE.Group();
   private built = false;
   /** half the formed name's height on screen, in CSS px */
   nameHalfPx = 60;
@@ -47,25 +118,12 @@ export class Constellation {
         depthWrite: false,
         blending: THREE.AdditiveBlending,
         vertexShader: /* glsl */ `
-          attribute vec3 aDate; attribute vec3 aName; attribute vec4 aSeed;
-          uniform float uMorph, uPx, uTime, uFade;
-          varying float vA; varying float vWarm;
+          ${STAR_VS}
           void main(){
-            // each star travels on its own schedule, so the words gather rather than snap
-            float d = aSeed.x * .45;
-            float m1 = smoothstep(d, d + .55, clamp(uMorph, 0., 1.));
-            float m2 = smoothstep(d, d + .55, clamp(uMorph - 1., 0., 1.));
-            vec3 p = mix(mix(position, aDate, m1), aName, m2);
-            // a gentle arc on the way, and a slow shimmer once placed
-            float travel = sin(3.1416 * (m1 < 1. ? m1 : m2));
-            p.z += travel * (aSeed.y - .5) * 2.;
-            p += vec3(sin(uTime * .6 + aSeed.z * 30.), cos(uTime * .5 + aSeed.w * 30.), 0.) * .012;
+            vec3 p = starPos();
             vec4 mv = modelViewMatrix * vec4(p, 1.);
             gl_Position = projectionMatrix * mv;
-            float tw = .65 + .35 * sin(uTime * (1. + aSeed.z * 2.) + aSeed.w * 40.);
-            vA = tw * uFade * (.55 + .45 * max(m1, m2));
-            vWarm = aSeed.y;
-            gl_PointSize = uPx * (.9 + aSeed.w * 1.3) * (1. + max(m1, m2) * .35) / max(-mv.z, 1.);
+            gl_PointSize = uPx * vSize / max(-mv.z, 1.);
           }`,
         fragmentShader: /* glsl */ `
           varying float vA; varying float vWarm;
@@ -104,31 +162,17 @@ export class Constellation {
         depthWrite: false,
         blending: THREE.AdditiveBlending,
         vertexShader: /* glsl */ `
-          attribute vec4 aDir;
-          uniform float uTime, uPx, uFire;
-          varying float vA; varying float vRose;
-          float h(float n){ return fract(sin(n) * 43758.5453); }
+          ${FIRE_VS}
           void main(){
-            float b = aDir.w;
-            float period = 7.;
-            float cyc = floor((uTime + b * 1.4) / period);
-            float t = mod(uTime + b * 1.4, period);
-            // each burst picks a new spot around (never over) the name
-            float side = h(cyc * 7.1 + b) < .5 ? -1. : 1.;
-            vec3 c = vec3(side * (3.2 + h(cyc * 3.3 + b) * 3.), 1.8 + h(cyc * 5.7 + b) * 2.2, -3. - h(cyc + b * 9.) * 3.);
-            float r = (1. - exp(-t * 2.2)) * (1.1 + position.x * .5);
-            vec3 p = c + aDir.xyz * r + vec3(0., -.12 * t * t, 0.);
-            vec4 mv = modelViewMatrix * vec4(p, 1.);
+            vec4 mv = modelViewMatrix * vec4(firePos(), 1.);
             gl_Position = projectionMatrix * mv;
-            vA = uFire * smoothstep(0., .08, t) * (1. - smoothstep(.6, 2.6, t)) * (.6 + .4 * sin(t * 30. + position.y * 20.));
-            vRose = step(.5, h(cyc * 1.9 + b * 4.1));
-            gl_PointSize = uPx * (1. + position.z) / max(-mv.z, 1.);
+            gl_PointSize = uPx * vSize / max(-mv.z, 1.);
           }`,
         fragmentShader: /* glsl */ `
           varying float vA; varying float vRose;
           void main(){
             float d = length(gl_PointCoord - .5);
-            vec3 col = mix(vec3(.96, .82, .52), vec3(.95, .6, .68), vRose);
+            vec3 col = vRose < 0. ? vec3(1., .85, .6) : mix(vec3(.96, .82, .52), vec3(.95, .6, .68), vRose);
             gl_FragColor = vec4(col * smoothstep(.5, 0., d) * vA, 1.);
           }`,
         uniforms: this.u,
@@ -137,6 +181,45 @@ export class Constellation {
     this.fireworks.frustumCulled = false;
     this.materials.push(this.fireworks.material as THREE.ShaderMaterial);
     this.group.add(this.fireworks);
+
+    // the lake: her name, the stars and the fireworks all shimmer in it
+    this.extras.add(this.lake.sky, this.lake.water);
+    const refl = (chunk: string, call: string, col: string) => {
+      const m = new THREE.ShaderMaterial({
+        transparent: true,
+        depthTest: false,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        vertexShader: /* glsl */ `
+          ${chunk}
+          ${reflectionChunk}
+          uniform float uWaterY, uAmt;
+          varying float vSeed;
+          void main(){
+            vec3 w = (modelMatrix * vec4(${call}, 1.)).xyz;
+            float hgt = w.y - uWaterY;
+            vSeed = fract(w.x * 7.3);
+            vec4 mv = viewMatrix * vec4(mirrorWorld(w, uWaterY, uTime, vSeed), 1.);
+            gl_Position = projectionMatrix * mv;
+            vA *= exp(-hgt * .08) * step(0., hgt) * uAmt;
+            gl_PointSize = uPx * vSize * 2.6 / max(-mv.z, 1.);
+          }`,
+        fragmentShader: /* glsl */ `
+          ${reflectionChunk}
+          uniform float uTime; varying float vA; varying float vSeed; ${col.includes('vRose') ? 'varying float vRose;' : ''}${col.includes('vWarm') ? 'varying float vWarm;' : ''}
+          void main(){ float a = streak(gl_PointCoord, uTime, vSeed) * vA * .5; gl_FragColor = vec4((${col}) * a, a); }`,
+        uniforms: this.u,
+      });
+      this.materials.push(m);
+      return m;
+    };
+    const sr = new THREE.Points(geo, refl(STAR_VS, 'starPos()', 'mix(vec3(1., .96, .9), vec3(.95, .82, .56), vWarm * .6)'));
+    const fr = new THREE.Points(fg, refl(FIRE_VS, 'firePos()', 'vRose < 0. ? vec3(1., .85, .6) : mix(vec3(.96, .82, .52), vec3(.95, .6, .68), vRose)'));
+    for (const r of [sr, fr]) {
+      r.frustumCulled = false;
+      r.renderOrder = 5;
+      this.group.add(r);
+    }
 
     this.name = name;
     this.date = date;
@@ -212,6 +295,11 @@ export class Constellation {
     const scale = Math.min(1, (viewW * 0.86) / this.span);
     this.group.scale.setScalar(scale);
     this.group.visible = local > 0.001;
+    // rockets leave from the shore line, wherever the group's scale puts it
+    this.u.uLaunchY.value = (WATER_Y + 0.3 - this.group.position.y) / scale;
+    this.u.uAmt.value = smoothstep(0.02, 0.12, local);
+    // the sun rises behind the far hills with the page's sunrise
+    this.lake.update(camera, this.u.uAmt.value, smoothstep(0.74, 0.97, local));
     // half the name's height on screen (px), so the page can set its words just clear of it
     const capHalf = 0.36 * 220 * (this.span / (1400 * 0.94)) * scale;
     this.nameHalfPx = (capHalf / (2 * dist * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)))) * innerHeight;

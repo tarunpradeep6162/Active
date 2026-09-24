@@ -171,7 +171,7 @@ export class PostFX {
     uDim: { value: 0 },
     uExposure: { value: 1 },
     uLetterbox: { value: 0 },
-    uStreak: { value: 0.07 },
+    uStreak: { value: 0.045 },
     uGlowA: { value: new THREE.Color('#1e6f6a') },
     uGlowB: { value: new THREE.Color('#123a44') },
   });
