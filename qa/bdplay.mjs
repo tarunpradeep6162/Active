@@ -38,7 +38,15 @@ console.log(JSON.stringify({ door25LockedAtStart: lockedAtStart }));
 if (!lockedAtStart) logs.push('error: Door 25 was not locked on a fresh start');
 await step(0, async () => { await page.click('.bd-star'); await page.click('.bd-star'); });
 await step(1, async () => {
-  for (let k = 0; k < 3; k++) { await page.locator('.bd-float__item').nth(k).click({ force: true }); await page.click('.bd-lightbox .bd-btn'); }
+  // the 3D orbit (its visually hidden buttons, as a keyboard user would), or the flat photos without WebGL
+  await page.waitForSelector('.bd-memories .sr-only button, .bd-float__item', { timeout: T });
+  const orbit = (await page.locator('.bd-memories .sr-only button').count()) > 0;
+  for (let k = 0; k < 3; k++) {
+    if (orbit) await page.locator('.bd-memories .sr-only button').nth(k).evaluate((b) => b.click());
+    else await page.locator('.bd-float__item').nth(k).click({ force: true });
+    await page.waitForSelector('.bd-lightbox .bd-btn', { timeout: 60000 });
+    await page.click('.bd-lightbox .bd-btn');
+  }
   await page.click('.bd-tabs button:nth-child(2)'); await page.click('.bd-camera'); await page.waitForSelector('.bd-polaroid__print');
   await page.click('.bd-tabs button:nth-child(3)'); await page.locator('.bd-puzzle__tile').nth(0).click(); await page.locator('.bd-puzzle__tile').nth(1).click();
 });
