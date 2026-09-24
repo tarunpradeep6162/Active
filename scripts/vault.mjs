@@ -112,4 +112,4 @@ await walk(content);
 fs.writeFileSync(path.join(OUT, 'content.bin'), await seal(enc.encode(JSON.stringify(content))));
 fs.writeFileSync(path.join(OUT, 'meta.json'), JSON.stringify({ v: 1, salt: b64(salt), iterations: ITER, check: b64(await seal(enc.encode('dheepika-vault'))), hint }, null, 1));
 console.log(`Vault written to public/vault/: content + ${files} media file(s), PBKDF2 ${ITER.toLocaleString()} iterations.`);
-console.log('Build and deploy as usual. Remove public/vault/ to return to placeholder preview mode.');
+console.log('Build and deploy as usual. To go back to the shipped content, git checkout public/vault/meta.json and delete the .bin files.');

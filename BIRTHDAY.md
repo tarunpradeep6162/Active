@@ -58,7 +58,7 @@ Nothing personal is ever committed.
   (`sessionStorage`). Closing the tab forgets it.
 - Keep the GitHub repo private anyway, as you chose. It hides even the encrypted files and
   the placeholder structure.
-- Re‑running `npm run vault` replaces the whole vault. Deleting `public/vault/` returns the
+- Re‑running `npm run vault` replaces the whole vault. Restoring the shipped `public/vault/meta.json` marker (and deleting the `.bin` files) returns the
   site to placeholder preview mode.
 
 ## Checking it

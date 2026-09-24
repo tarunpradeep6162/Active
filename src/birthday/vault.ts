@@ -52,7 +52,9 @@ export async function initVault() {
   try {
     const r = await fetch(`${BASE}meta.json`, { cache: 'no-store' });
     // a static host's SPA fallback answers 200 with index.html for a missing file
-    meta = r.ok && (r.headers.get('content-type') ?? '').includes('json') ? ((await r.json()) as Meta) : null;
+    const m = r.ok && (r.headers.get('content-type') ?? '').includes('json') ? ((await r.json()) as Partial<Meta>) : null;
+    // public/vault/meta.json ships as a "no vault yet" marker (so the request never 404s)
+    meta = m && typeof m.salt === 'string' && typeof m.iterations === 'number' ? (m as Meta) : null;
   } catch {
     meta = null;
   }
