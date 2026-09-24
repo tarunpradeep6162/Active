@@ -43,6 +43,7 @@ export class UIDriver {
     // the finale sky: HAPPY BIRTHDAY once her name has formed in stars, then the sunrise
     const fl = state.section === 'outro' ? state.finaleLocal : 0;
     this.set('--v-happy', smoothstep(0.68, 0.76, fl) * free);
+    if (fl > 0) this.root.style.setProperty('--name-half', `${Math.round(state.nameHalfPx)}px`);
     this.set('--v-sunrise', smoothstep(0.74, 0.97, fl) * (1 - state.overlay));
     this.set('--v-end', band('outro', 0.82, 0.97, 2, 3) * free);
     this.set('--focus', state.focus);

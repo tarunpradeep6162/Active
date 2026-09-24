@@ -378,6 +378,7 @@ export class TulipGarden {
     g.add(this.drift(lowTier ? 50 : 130, petalGeo));
     g.add(this.fireflies(lowTier ? 40 : 90));
     g.add(this.butterflies(lowTier ? 3 : 5));
+    if (!lowTier) g.add(this.shafts(6));
   }
 
   private chapterStems: THREE.Mesh;
@@ -580,6 +581,61 @@ export class TulipGarden {
     pts.frustumCulled = false;
     return pts;
   }
+  /**
+   * Light shafts: tall soft beams slanting down through the garden, like moonlight through
+   * leaves, warming toward sunset as the journey goes on. Cylindrical billboards, additive.
+   */
+  private shafts(count: number) {
+    const rr = rng(4242);
+    const H = TOP - BOTTOM + 6;
+    const geo = new THREE.PlaneGeometry(1, 1, 1, 1);
+    const inst = new THREE.InstancedBufferGeometry().copy(geo as unknown as THREE.InstancedBufferGeometry);
+    const data = new Float32Array(count * 4);
+    for (let i = 0; i < count; i++) {
+      const a = (i / count) * Math.PI * 2 + rr() * 0.6;
+      data.set([Math.cos(a) * (4 + rr() * 3), Math.sin(a) * (4 + rr() * 3) - 2, 1.2 + rr() * 1.6, rr()], i * 4);
+    }
+    inst.setAttribute('aShaft', new THREE.InstancedBufferAttribute(data, 4));
+    inst.instanceCount = count;
+    const mat = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      vertexShader: /* glsl */ `
+        attribute vec4 aShaft;
+        varying vec2 vUv; varying float vSeed; varying float vY;
+        void main(){
+          vec3 base = (modelMatrix * vec4(aShaft.x, ${((TOP + BOTTOM) / 2).toFixed(2)}, aShaft.y, 1.)).xyz;
+          // face the camera around the vertical axis, lean a little like light through a canopy
+          vec3 toCam = cameraPosition - base; toCam.y = 0.;
+          vec3 right = normalize(cross(vec3(0., 1., 0.), normalize(toCam + vec3(1e-4, 0., 0.))));
+          vec3 up = normalize(vec3(.28 * (aShaft.w - .5), 1., 0.));
+          vec3 p = base + right * position.x * aShaft.z + up * position.y * ${H.toFixed(2)};
+          vY = p.y;
+          vUv = uv; vSeed = aShaft.w;
+          gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.);
+        }`,
+      fragmentShader: /* glsl */ `
+        uniform float uTime, uWarm, uRevealY, uCrumble, uFocus;
+        varying vec2 vUv; varying float vSeed; varying float vY;
+        void main(){
+          float across = smoothstep(0., .5, vUv.x) * smoothstep(1., .5, vUv.x);
+          across *= across;
+          float along = smoothstep(0., .35, vUv.y) * smoothstep(1., .7, vUv.y);
+          float drift = .65 + .35 * sin(uTime * .25 + vSeed * 20. + vUv.y * 5.);
+          vec3 col = mix(vec3(.55, .6, .95), vec3(1., .78, .55), uWarm);
+          float a = across * along * drift * .07 * step(vY, uRevealY) * (1. - uCrumble) * (1. - uFocus * .6);
+          gl_FragColor = vec4(col * a, 1.);
+        }`,
+      uniforms: { uTime: U.uTime, uWarm: U.uWarm, uRevealY: U.uRevealY, uCrumble: U.uCrumble, uFocus: U.uFocus },
+    });
+    this.materials.push(mat);
+    const m = new THREE.Mesh(inst, mat);
+    m.frustumCulled = false;
+    m.renderOrder = 2;
+    return m;
+  }
+
   /** point size scale (× device pixel ratio), set from the viewport */
   readonly fireflyPx = { value: 60 };
 

@@ -158,7 +158,7 @@ export class World {
     // foreground energy specks: few, large, hot — the brightest layer of each storm
     field('specks', { colors: ['#f3dfa7', '#e6c989', '#e8a6b5'], size: 7, turbulence: 0.35, speed: 0.5, twinkle: 0.6 }, 4, -8);
     field('outroSpecks', { colors: ['#f3dfa7', '#e6c989', '#e8a6b5'], size: 4.2, turbulence: 0.35, speed: 0.5, twinkle: 0.6 }, ANCHOR.outro + 4, ANCHOR.outro - 8);
-    field('dust', { colors: ['#f2c1cb', '#f8f1e8', '#e6c989'], size: 1.1, turbulence: 0.2, speed: 0.2, twinkle: 0.8, opacity: 0.6 }, 10, ANCHOR.outro - 12);
+    field('dust', { colors: ['#f2c1cb', '#f8f1e8', '#e6c989'], size: 1.1, turbulence: 0.2, speed: 0.2, twinkle: 0.35, opacity: 0.38 }, 10, ANCHOR.outro - 12);
     // dust is global: always visible
     this.pieces = this.pieces.filter((p) => p.obj !== this.fields.dust?.points);
 
@@ -365,6 +365,7 @@ export class World {
     const outroLocal = state.section === 'outro' ? state.sectionProgress : 0;
     this.finaleSky.update(outroLocal, camera, state.viewport.dpr);
     state.finaleLocal = outroLocal;
+    state.nameHalfPx = this.finaleSky.nameHalfPx;
 
     // intro eruption
     const embers = this.fields.embers;

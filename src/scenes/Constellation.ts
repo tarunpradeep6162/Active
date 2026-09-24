@@ -25,6 +25,8 @@ export class Constellation {
     uFade: { value: 1 },
   };
   private built = false;
+  /** half the formed name's height on screen, in CSS px */
+  nameHalfPx = 60;
   private readonly count: number;
   /** the width the name spans (world units at scale 1) */
   private readonly span = 11;
@@ -207,7 +209,11 @@ export class Constellation {
     this.u.uPx.value = 60 * dpr;
     const dist = Math.max(1, camera.position.z - this.group.position.z);
     const viewW = 2 * dist * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect;
-    this.group.scale.setScalar(Math.min(1, (viewW * 0.86) / this.span));
+    const scale = Math.min(1, (viewW * 0.86) / this.span);
+    this.group.scale.setScalar(scale);
     this.group.visible = local > 0.001;
+    // half the name's height on screen (px), so the page can set its words just clear of it
+    const capHalf = 0.36 * 220 * (this.span / (1400 * 0.94)) * scale;
+    this.nameHalfPx = (capHalf / (2 * dist * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)))) * innerHeight;
   }
 }

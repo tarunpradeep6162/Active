@@ -77,6 +77,8 @@ export const state = {
   cakeBlow: 0,
   /** 0…1 progress through the finale sky (outro) */
   finaleLocal: 0,
+  /** half the height of her name in stars, on screen (px) */
+  nameHalfPx: 60,
   /** wish lanterns already turned into stars */
   starsLit: 0,
   /** the cage has been opened */

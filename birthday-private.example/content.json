@@ -4,7 +4,7 @@
   "birthday": {
     "month": 11,
     "day": 25,
-    "timezone": "[IANA timezone, e.g. Europe/London]",
+    "timezone": "",
     "countdownEnabled": false
   },
   "opening": {
@@ -32,14 +32,14 @@
     "More places to discover.",
     "More peaceful mornings.",
     "More dreams becoming real.",
-    "[Wish 5 for her]",
-    "[Wish 6 for her]",
-    "[Wish 7 for her]",
-    "[Wish 8 for her]",
-    "[Wish 9 for her]",
-    "[Wish 10 for her]",
-    "[Wish 11 for her]",
-    "[Wish 12 for her]"
+    "Courage on the days you need it.",
+    "Rest on the days you don’t.",
+    "People who see you the way I do.",
+    "A year that is gentle with you.",
+    "Late talks that end in laughter.",
+    "Every little plan working out.",
+    "Someone always saving you the window seat.",
+    "Me, still beside you, a year from now."
   ],
   "finalWords": [
     "Another year of you.",
@@ -52,7 +52,7 @@
   },
   "memories": [
     {
-      "caption": "[Memory 1: what you remember about this moment]",
+      "caption": "One of the days I keep replaying.",
       "date": "[date]",
       "place": "[place]",
       "media": {
@@ -62,44 +62,44 @@
       }
     },
     {
-      "caption": "[Memory 2: what you remember about this moment]",
+      "caption": "I didn’t know then how much this would matter.",
       "date": "[date]",
       "place": "[place]"
     },
     {
-      "caption": "[Memory 3: what you remember about this moment]",
+      "caption": "Your laugh, right before this was taken.",
       "date": "[date]",
       "place": "[place]"
     },
     {
-      "caption": "[Memory 4: what you remember about this moment]",
+      "caption": "Proof that ordinary days with you are the best ones.",
       "date": "[date]",
       "place": "[place]"
     },
     {
-      "caption": "[Memory 5: what you remember about this moment]",
+      "caption": "I remember exactly how this moment felt.",
       "date": "[date]",
       "place": "[place]"
     },
     {
-      "caption": "[Memory 6: what you remember about this moment]",
+      "caption": "You, being completely yourself. My favourite view.",
       "date": "[date]",
       "place": "[place]"
     },
     {
-      "caption": "[Memory 7: what you remember about this moment]",
+      "caption": "A small moment that turned into a big memory.",
       "date": "[date]",
       "place": "[place]"
     },
     {
-      "caption": "[Memory 8: what you remember about this moment]",
+      "caption": "If I could live one day again, it might be this one.",
       "date": "[date]",
       "place": "[place]"
     }
   ],
   "polaroidPrompt": "Press the shutter.",
   "puzzle": {
-    "caption": "[The caption that appears when the photo is whole again]",
+    "caption": "Some pieces only make sense together. Like us.",
     "media": {
       "src": "media/puzzle.jpg",
       "type": "image",
@@ -107,76 +107,77 @@
     }
   },
   "letter": {
-    "greeting": "[Dear Dheepika,]",
+    "greeting": "Dear Dheepika,",
     "paragraphs": [
-      "[The first paragraph of the letter you never said out loud.]",
-      "[The second paragraph.]",
-      "[The third paragraph.]"
+      "There are things I think about you every day and somehow never say out loud. So I built you a garden, and I’m saying them here.",
+      "You make ordinary days feel like something worth remembering. You make me laugh when I least expect it, you listen when I don’t make sense, and you stay kind even when the world isn’t.",
+      "I don’t know everything this year will bring. But I know I want to be there for the good days and the hard ones, for the small plans and the big dreams, for all of it.",
+      "Thank you for being exactly who you are. I wouldn’t change a single thing, except maybe how many birthdays I get to spend with you. More, please."
     ],
-    "signoff": "[Yours,]"
+    "signoff": "Happy birthday. Yours,"
   },
   "reasons": [
-    "[Your smile — write why, in your own words]",
-    "[Your laugh — write why, in your own words]",
-    "[Your kindness — write why, in your own words]",
-    "[Your angry face — write why, in your own words]",
-    "[Your craziness — write why, in your own words]",
-    "[Your voice — write why, in your own words]",
-    "[The way you support me — write why, in your own words]",
-    "[Your little habits — write why, in your own words]",
-    "[Reason 9 — write why, in your own words]",
-    "[Reason 10 — write why, in your own words]",
-    "[Reason 11 — write why, in your own words]",
-    "[Reason 12 — write why, in your own words]",
-    "[Reason 13 — write why, in your own words]",
-    "[Reason 14 — write why, in your own words]"
+    "Your smile: it changes the whole room, and it still catches me off guard.",
+    "Your laugh: it’s my favourite sound, and I’ll do silly things just to hear it.",
+    "Your kindness: you’re gentle with people even when nobody is watching.",
+    "Your angry face: honestly, it’s too cute to take seriously, and you know it.",
+    "Your craziness: life with you is never boring, not even for a minute.",
+    "Your voice: some days, it’s the only thing that makes everything feel okay.",
+    "The way you support me: you believe in me on days I don’t believe in myself.",
+    "Your little habits: the small things you do without noticing are the ones I notice most.",
+    "Your honesty: you tell me the truth, even when a softer answer would be easier.",
+    "Your strength: you carry more than you let anyone see, and you still show up.",
+    "Your curiosity: you make me want to see the world with new eyes.",
+    "Your heart: the way you care, fully and without holding back.",
+    "The way you say my name: somehow it sounds different when you say it.",
+    "Simply you: all of you, exactly as you are. That’s the fourteenth reason and the first."
   ],
   "nameLetters": [
-    "[A memory for the letter D]",
-    "[A memory for the letter H]",
-    "[A memory for the letter E]",
-    "[A memory for the letter E]",
-    "[A memory for the letter P]",
-    "[A memory for the letter I]",
-    "[A memory for the letter K]",
-    "[A memory for the letter A]"
+    "D is for the Dreams I want to chase with you.",
+    "H is for the way you make anywhere feel like Home.",
+    "E is for Every day I choose you, again.",
+    "E is for Endless talks that never feel long enough.",
+    "P is for the Patience you show me more than I deserve.",
+    "I is for the Inside jokes nobody else will ever get.",
+    "K is for your Kindness, the kind that changes people.",
+    "A is for Always, which is how long I mean all of this."
   ],
   "game": {
     "finish": "But you already caught my heart."
   },
   "quiz": [
     {
-      "q": "What was our first ___?",
+      "q": "What do I love doing with you most?",
       "options": [
-        "[option A]",
-        "[option B]",
-        "[option C]"
+        "Talking for hours",
+        "Doing absolutely nothing together",
+        "All of the above, obviously"
       ],
-      "answer": 0,
-      "yes": "You remember! 🥹",
-      "no": "[A gentle, funny hint]"
+      "answer": 2,
+      "yes": "Exactly. Anything, as long as it’s with you. 🥹",
+      "no": "Close… but the real answer is: all of it."
     },
     {
-      "q": "Which moment do I talk about the most?",
+      "q": "When do I miss you the most?",
       "options": [
-        "[option A]",
-        "[option B]",
-        "[option C]"
+        "Late at night",
+        "When something funny happens",
+        "Pretty much always"
       ],
-      "answer": 1,
-      "yes": "Of course you know. 💛",
-      "no": "[A gentle, funny hint]"
+      "answer": 2,
+      "yes": "You know me too well. 💛",
+      "no": "That too. But honestly? Pretty much always."
     },
     {
       "q": "What do you think I noticed first about you?",
       "options": [
-        "[option A]",
-        "[option B]",
-        "[option C]"
+        "Your smile",
+        "Your eyes",
+        "The way you talk"
       ],
       "answer": null,
-      "yes": "[Your real answer, told sweetly]",
-      "no": "[Your real answer, told sweetly]"
+      "yes": "Good guess. Ask me in person and I’ll tell you the whole story.",
+      "no": "Good guess. Ask me in person and I’ll tell you the whole story."
     }
   ],
   "thisOrThat": [
@@ -202,114 +203,112 @@
     ]
   ],
   "secret": {
-    "intro": "Answer each clue to reveal one symbol of the code.",
+    "intro": "Answer each clue to reveal one symbol of the code. Everything you need is somewhere in this little universe.",
     "clues": [
       {
-        "clue": "[Clue 1 about us]",
+        "clue": "How many tulips grow in this garden? Only the first digit, please.",
         "answers": [
-          "answer"
+          "2",
+          "two",
+          "25",
+          "twenty five",
+          "twentyfive"
         ],
         "symbol": "2"
       },
       {
-        "clue": "[Clue 2 about us]",
+        "clue": "Count the tulips again. What is the last digit?",
         "answers": [
-          "answer"
+          "5",
+          "five"
         ],
         "symbol": "5"
       },
       {
-        "clue": "[Clue 3 about us]",
+        "clue": "What shape holds the letter D on the very first screen?",
         "answers": [
-          "answer"
+          "heart",
+          "a heart",
+          "love heart"
         ],
         "symbol": "♥"
       },
       {
-        "clue": "[Clue 4 about us]",
+        "clue": "In 25 · 11, which number is the month?",
         "answers": [
-          "answer"
+          "11",
+          "eleven",
+          "november"
         ],
         "symbol": "1"
       },
       {
-        "clue": "[Clue 5 about us]",
+        "clue": "The month once more. What is its last digit?",
         "answers": [
-          "answer"
+          "1",
+          "one"
         ],
         "symbol": "1"
       }
     ],
     "reveal": {
-      "text": "[The hidden memory or message she unlocks]",
-      "media": {
-        "src": "media/secret.jpg",
-        "type": "image"
-      }
+      "text": "25 ♥ 11. The code was your birthday all along, because that’s the day everything good started."
     }
   },
   "songs": [
     {
-      "title": "[Song 1]",
+      "title": "[Song 1 title]",
       "artist": "[artist]",
-      "note": "[What this song reminds you of (your words, not lyrics)]",
-      "audio": {
-        "src": "media/song-1.mp3",
-        "type": "audio"
-      }
+      "note": "The one that plays in my head when I think of you."
     },
     {
-      "title": "[Song 2]",
+      "title": "[Song 2 title]",
       "artist": "[artist]",
-      "note": "[What this song reminds you of (your words, not lyrics)]"
+      "note": "The song that feels like a long drive with you."
     },
     {
-      "title": "[Song 3]",
+      "title": "[Song 3 title]",
       "artist": "[artist]",
-      "note": "[What this song reminds you of (your words, not lyrics)]"
+      "note": "The one I’d play for you at midnight."
     },
     {
-      "title": "[Song 4]",
+      "title": "[Song 4 title]",
       "artist": "[artist]",
-      "note": "[What this song reminds you of (your words, not lyrics)]"
+      "note": "The song that sounds like a good day."
     },
     {
-      "title": "[Song 5]",
+      "title": "[Song 5 title]",
       "artist": "[artist]",
-      "note": "[What this song reminds you of (your words, not lyrics)]"
+      "note": "The one I can never listen to without smiling."
     }
   ],
   "timeline": [
     {
       "label": "Before Us",
-      "text": "[Who we were before]"
+      "text": "Two separate stories, not knowing yet that they were about to become one."
     },
     {
       "label": "We Met",
       "date": "[date]",
-      "text": "[How it happened]",
-      "media": {
-        "src": "media/we-met.jpg",
-        "type": "image"
-      }
+      "text": "An ordinary day that turned out to be the most important one."
     },
     {
-      "label": "[A memory]",
+      "label": "Getting Closer",
       "date": "[date]",
-      "text": "[What happened]"
+      "text": "Somewhere in the conversations and the small moments, you became my favourite person."
     },
     {
-      "label": "[Another memory]",
+      "label": "Us",
       "date": "[date]",
-      "text": "[What happened]"
+      "text": "The day I realised this was something I never wanted to lose."
     },
     {
       "label": "Today",
-      "text": "[Where we are now]"
+      "text": "Here. Still choosing you, still amazed by you, still learning you."
     },
     {
       "label": "What Comes Next",
-      "text": "[What you hope for]"
+      "text": "Everything we haven’t done yet. I can’t wait for all of it."
     }
   ],
   "emptyFrame": "Next memory goes here.",
@@ -317,17 +316,17 @@
     {
       "label": "I",
       "kind": "message",
-      "text": "[A message]"
+      "text": "You are the best thing that has happened to me, and I don’t say it enough. So here it is, in a box, where you can find it any time."
     },
     {
       "label": "II",
       "kind": "promise",
-      "text": "[A promise]"
+      "text": "I promise to listen, even when I think I already know. To show up, even on the hard days. And to keep making you laugh."
     },
     {
       "label": "III",
-      "kind": "clue",
-      "text": "[A clue to a real‑world gift]"
+      "kind": "promise",
+      "text": "One whole day, planned entirely by you. Wherever, whatever. I’ll say yes to all of it."
     }
   ],
   "wish": {
@@ -336,50 +335,50 @@
   "future": [
     {
       "title": "A place we should visit",
-      "text": "[where]"
+      "text": "Somewhere with a sky this full of stars."
     },
     {
       "title": "Something we should try",
-      "text": "[what]"
+      "text": "Something neither of us has ever done, so we can be bad at it together."
     },
     {
       "title": "A photo we haven't taken yet",
-      "text": "[which one]"
+      "text": "The two of us, laughing too hard to look at the camera."
     },
     {
       "title": "A midnight adventure",
-      "text": "[the plan]"
+      "text": "No plan, a full tank, and a playlist we both pretend to hate."
     },
     {
       "title": "One dream for us",
-      "text": "[the dream]"
+      "text": "A life where every ordinary day still feels a little like this garden."
     }
   ],
   "wishes": [
-    "[Wish 1 for your year]",
-    "[Wish 2 for your year]",
-    "[Wish 3 for your year]",
-    "[Wish 4 for your year]",
-    "[Wish 5 for your year]",
-    "[Wish 6 for your year]",
-    "[Wish 7 for your year]",
-    "[Wish 8 for your year]",
-    "[Wish 9 for your year]",
-    "[Wish 10 for your year]",
-    "[Wish 11 for your year]",
-    "[Wish 12 for your year]",
-    "[Wish 13 for your year]",
-    "[Wish 14 for your year]",
-    "[Wish 15 for your year]",
-    "[Wish 16 for your year]",
-    "[Wish 17 for your year]",
-    "[Wish 18 for your year]",
-    "[Wish 19 for your year]",
-    "[Wish 20 for your year]",
-    "[Wish 21 for your year]",
-    "[Wish 22 for your year]",
-    "[Wish 23 for your year]",
-    "[Wish 24 for your year]"
+    "A year full of reasons to smile.",
+    "Mornings that start slow and soft.",
+    "Good news arriving when you least expect it.",
+    "Every plan you make working out.",
+    "Friends who feel like home.",
+    "A new place that steals your heart.",
+    "Health, rest, and gentle days.",
+    "Courage for every new beginning.",
+    "Laughter until your cheeks hurt.",
+    "Dreams that start coming true.",
+    "Quiet evenings that feel like a hug.",
+    "Music that finds you at the right moment.",
+    "Kindness coming back to you, tenfold.",
+    "Confidence in everything you are.",
+    "Adventures, big and small.",
+    "A reason to dance in the kitchen.",
+    "People who make you feel understood.",
+    "Peace on the difficult days.",
+    "Surprises that make you gasp.",
+    "Time for the things you love.",
+    "Growth that feels exciting, not heavy.",
+    "Moments you’ll want to remember forever.",
+    "Love that feels safe and easy.",
+    "And me, cheering for you through all of it."
   ],
   "movie": {
     "clips": [
@@ -395,9 +394,9 @@
     "line": "Different days. Different places. Same person I keep choosing."
   },
   "finale": {
-    "headline": "HAPPY BIRTHDAY, DHEEPIKA.",
-    "lastThing": "[Your most personal message — only ever stored encrypted]",
-    "secretEnding": "[A secret ending for finding every hidden heart]",
+    "headline": "Every flower here is yours.",
+    "lastThing": "If you’ve come all the way here, through the garden, past the cake and up into the sky, then you already know. But I’ll say it anyway. You are my favourite part of every day. Thank you for being born, and thank you for letting me be part of your story. Here’s to this year, and every one after it.",
+    "secretEnding": "You found every hidden heart. Of course you did: you notice the small things, the same way you noticed me. This is the last secret: every heart in this garden was always yours.",
     "voice": {
       "src": "media/voice.m4a",
       "type": "audio"
