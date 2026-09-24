@@ -113,7 +113,20 @@ Commit `public/vault/` (encrypted only), push, and Vercel deploys. Never commit
 
 ## QA
 
-<!-- QA-RESULTS -->
+Last full run, on the local build and then on the live site:
+
+| Check | Result |
+|---|---|
+| `bdplay` 1280×800 and 390×844 | 14/14 chapters done, 14/14 hidden hearts, secret ending, 0 console errors |
+| `sweep` 1280×800 and 390×844 (local); 1280×800 (live) | every section reached; `/garden`, `/garden/<chapter>`, `/for-you`, `/`, old `/work…` and `/contact` links all arrive; unknown path shows the 404; 0 errors |
+| `workreverse` | forward and reverse scroll match (spread 0) |
+| `cake` | cage opens; hold to blow; darkness, then petals; the microphone is never requested without a tap; 0 errors |
+| `lanterns` | a real tap releases a wish; its words show; it becomes a star and is remembered |
+| `finale` 1280×800, 390×844, 844×390 | stars → 25 · 11 → DHEEPIKA, Happy birthday, final words, One last thing; 0 errors |
+| `opening` 360×800, 375×812, 412×915, 430×932, 844×390 | title *For Dheepika · 25 · 11*, no studio remnants, 0 errors |
+| `keepsakes` | the PNG card and the letter PDF are valid files (PDF cross‑references checked); the music toggles |
+| `manor` 1280×800 and 390×844 (local and live) | renders, 0 errors |
+| Live headers | `X-Robots-Tag: noindex, nofollow, noarchive`, `Referrer-Policy: no-referrer`; `/vault/meta.json` served as JSON (no 404) |
 
 Other targeted checks: `qa/opening.mjs` (loader, opening, threshold, leftover-text scan),
 `qa/cake.mjs` (cage, candles, blowing, darkness, burst, microphone never requested unasked),
