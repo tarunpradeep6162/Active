@@ -287,3 +287,7 @@
 @media (prefers-reduced-motion: reduce) {
   .bd-chapter *, .bd-chapter *::before { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
 }
+
+.bd-timeline__intro { margin: 0 auto 10px; max-width: 46ch; text-align: center; font: italic 500 clamp(17px, 2vw, 22px)/1.5 var(--serif); color: var(--bd-cream, #f8f1e8); }
+.bd-timeline__outro { margin: 0 auto 16px; max-width: 52ch; text-align: center; font: italic 500 clamp(17px, 2vw, 22px)/1.55 var(--serif); color: var(--bd-cream, #f8f1e8); white-space: pre-line; }
+.bd-timeline__stop p { white-space: pre-line; }

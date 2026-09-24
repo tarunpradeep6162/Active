@@ -99,6 +99,8 @@ export interface BirthdayContent {
   secret: { intro: string; clues: SecretClue[]; reveal: { text: string; media?: MediaRef } };
   songs: Song[];
   timeline: TimelineStop[];
+  /** optional words around the timeline: an opening before the first date, a closing after the last */
+  timelineStory?: { intro: string; outro: string };
   emptyFrame: string;
   gifts: [Gift, Gift, Gift];
   wish: { line: string };

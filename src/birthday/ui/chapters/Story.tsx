@@ -38,6 +38,7 @@ export function Timeline({ slug, onDone }: ChapterProps) {
   }, [i]);
   return (
     <div className="bd-timeline">
+      {c.timelineStory?.intro && i === 0 && <p className="bd-timeline__intro">{c.timelineStory.intro}</p>}
       <ol className="bd-timeline__track" aria-label="Our timeline">
         {stops.map((t, k) => (
           <li key={k}>
@@ -50,10 +51,13 @@ export function Timeline({ slug, onDone }: ChapterProps) {
       </ol>
       <article className="bd-timeline__stop" key={i}>
         {'empty' in s ? (
-          <div className="bd-emptyframe">
-            <div className="bd-emptyframe__frame" aria-hidden="true" />
-            <p>{s.text}</p>
-          </div>
+          <>
+            {c.timelineStory?.outro && <p className="bd-timeline__outro">{c.timelineStory.outro}</p>}
+            <div className="bd-emptyframe">
+              <div className="bd-emptyframe__frame" aria-hidden="true" />
+              <p>{s.text}</p>
+            </div>
+          </>
         ) : (
           <>
             <Media media={s.media} label={`${s.label} — photo or clip`} className="bd-timeline__media" />
