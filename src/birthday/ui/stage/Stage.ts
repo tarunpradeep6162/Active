@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { SERIF } from '../../../utils/fonts';
+import { freezeOnLeave } from './freeze';
 
 /**
  * Shared base for the cinematic chapter stages (each renders into its own canvas).
@@ -45,6 +46,10 @@ export abstract class Stage {
 
   /** Call at the end of the subclass constructor, once the scene is built. */
   protected begin() {
+    this.unfreeze = freezeOnLeave(() => {
+      this.frozen = true;
+      this.stop();
+    });
     this.io.observe(this.canvas);
     this.ro.observe(this.canvas);
     this.resize();
@@ -72,8 +77,11 @@ export abstract class Stage {
     if (!this.running) this.frame();
   }
 
+  private frozen = false;
+  private unfreeze: () => void = () => {};
+
   private start() {
-    if (this.running) return;
+    if (this.running || this.frozen) return;
     this.running = true;
     const loop = () => {
       if (!this.running) return;
@@ -110,6 +118,7 @@ export abstract class Stage {
   }
 
   dispose() {
+    this.unfreeze();
     this.stop();
     this.io.disconnect();
     this.ro.disconnect();

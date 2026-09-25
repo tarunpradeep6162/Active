@@ -8,6 +8,7 @@ import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { freezeOnLeave } from './freeze';
 
 const BASE = '/manor/';
 type Model = { geo: THREE.BufferGeometry; mat: THREE.MeshStandardMaterial; height: number };
@@ -583,7 +584,14 @@ export class ManorScene {
     if (this.ready && !this.running) this.frame();
   }
 
+  private frozen = false;
+  private unfreeze = freezeOnLeave(() => {
+    this.frozen = true;
+    this.stop();
+  });
+
   private start() {
+    if (this.frozen) return;
     if (this.running || !this.ready) return;
     this.running = true;
     const loop = () => {
@@ -631,6 +639,7 @@ export class ManorScene {
   }
 
   dispose() {
+    this.unfreeze();
     this.disposed = true;
     this.stop();
     this.io.disconnect();

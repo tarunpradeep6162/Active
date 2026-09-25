@@ -3,6 +3,7 @@ import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeom
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { SERIF } from '../../../utils/fonts';
+import { freezeOnLeave } from './freeze';
 
 
 /** satin wrap, ribbon and inner‑glow colours for each of the three boxes */
@@ -385,7 +386,14 @@ export class GiftScene {
     this.sparkleU.uPx.value = 40 * this.renderer.getPixelRatio() * (h / 600);
     if (!this.running) this.frame();
   }
+  private frozen = false;
+  private unfreeze = freezeOnLeave(() => {
+    this.frozen = true;
+    this.stop();
+  });
+
   private start() {
+    if (this.frozen) return;
     if (this.running) return;
     this.running = true;
     const loop = () => {
@@ -466,6 +474,7 @@ export class GiftScene {
   }
 
   dispose() {
+    this.unfreeze();
     this.stop();
     this.io.disconnect();
     this.ro.disconnect();
