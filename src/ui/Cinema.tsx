@@ -408,11 +408,29 @@ export function Replay() {
     const id = setTimeout(() => (i < last ? setI(i + 1) : undefined), 3800);
     return () => clearTimeout(id);
   }, [on, i, last]);
+  // each card comes up out of a soft blur (frame by frame, in step with the world)
+  const cardRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!on) return;
+    const t0 = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const el = cardRef.current;
+      if (!el) return;
+      const k = Math.min(1, (now - t0) / 700);
+      el.style.opacity = String(k);
+      el.style.filter = k < 1 ? `blur(${(1 - k) * 6}px)` : '';
+      el.style.transform = `translateY(${(1 - k) * 8}px)`;
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [on, i]);
   if (!on) return null;
   const card = cards[Math.min(i, last)];
   return (
     <div className="replay" role="dialog" aria-label="Your night, replayed" onClick={() => i < last && setI(i + 1)}>
-      <div className="replay__card" key={card.k} aria-live="polite">
+      <div className="replay__card" key={card.k} ref={cardRef} style={{ opacity: 0 }} aria-live="polite">
         <p className="replay__big">{card.big}</p>
         {card.small?.map((s, n) => (
           <p className="replay__small" key={n}>

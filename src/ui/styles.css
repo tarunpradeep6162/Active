@@ -646,10 +646,7 @@ html.is-film .finale-tools, html.is-film .skydraw.is-drawing { display: none; }
 .replay { position: fixed; inset: 0; z-index: 41; display: grid; place-items: center; background: #04050b; color: var(--soft, #f8f1e8); text-align: center; cursor: pointer; animation: ec-in 1s ease both; }
 .replay::before, .replay::after { content: ''; position: absolute; left: 0; right: 0; height: 9vh; background: #000; }
 .replay::before { top: 0; } .replay::after { bottom: 0; }
-.replay__card { display: grid; gap: 14px; justify-items: center; padding: 0 24px; animation: rp-card 3.8s ease both; }
-@keyframes rp-card { 0% { opacity: 0; filter: blur(6px); transform: translateY(8px); } 15%, 85% { opacity: 1; filter: blur(0); transform: none; } 100% { opacity: .0; } }
-.replay__card:last-child, .replay__card:has(.replay__sig) { animation-fill-mode: forwards; animation-name: rp-last; }
-@keyframes rp-last { 0% { opacity: 0; filter: blur(6px); } 20%, 100% { opacity: 1; filter: blur(0); } }
+.replay__card { display: grid; gap: 14px; justify-items: center; padding: 0 24px; }
 .replay__big { margin: 0; max-width: 24ch; font: 400 clamp(26px, 3.6vw, 46px)/1.2 var(--serif); }
 .replay__small { margin: 0; max-width: 40ch; font: italic 400 clamp(17px, 1.8vw, 22px)/1.5 var(--serif); color: var(--rose-3, #f2c1cb); }
 .replay__sig { width: min(300px, 70vw); height: 84px; }
@@ -657,7 +654,7 @@ html.is-film .finale-tools, html.is-film .skydraw.is-drawing { display: none; }
 .replay__dots span { width: 6px; height: 6px; border-radius: 50%; background: rgba(243, 223, 167, .25); }
 .replay__dots span.is-on { background: var(--champagne-3, #f3dfa7); }
 .replay__close { position: absolute; top: calc(9vh + 14px); right: 16px; z-index: 1; }
-@media (prefers-reduced-motion: reduce) { .replay__card, .endcredits, .endcredits__post { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .endcredits, .endcredits__post { animation: none; } }
 .opening__film--cut { border-color: rgba(243, 223, 167, .3); color: var(--champagne-3, #f3dfa7); }
 .film-subtitle { position: fixed; left: 50%; bottom: calc(9vh + 64px + var(--safe-bottom, 0px)); translate: -50% 0; z-index: 70; margin: 0; max-width: min(640px, 90vw); text-align: center; pointer-events: none;
   font: italic 400 clamp(17px, 1.9vw, 24px)/1.4 var(--serif); color: var(--soft, #f8f1e8); text-shadow: 0 0 10px rgba(0, 0, 0, .95), 0 0 2px #000; }
