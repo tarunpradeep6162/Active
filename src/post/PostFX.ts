@@ -76,6 +76,10 @@ uniform float uBloomStrength; uniform float uHasBloom;
 uniform float uTime; uniform vec2 uResolution; uniform float uScrollVelocity;
 uniform float uChromatic; uniform float uBlur; uniform float uDim; uniform float uExposure;
 uniform vec3 uGlowA; uniform vec3 uGlowB; uniform float uReveal; uniform float uLetterbox; uniform float uStreak;
+// the cinematographer (see Director.ts): focus, lens, light shafts, the hour, cuts
+uniform vec2 uFocusPt; uniform float uFocusR; uniform float uFocusAmt; uniform float uLens; uniform float uBlink;
+uniform vec2 uRayPt; uniform float uRays; uniform vec3 uRayTint; uniform vec3 uTint; uniform float uTintAmt;
+uniform vec3 uCandle; uniform float uRain; uniform float uMist;
 ${math}
 ${noise}
 vec3 aces(vec3 x){ const float a = 2.51, b = .03, c = 2.43, d = .59, e = .14; return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0., 1.); }
@@ -83,13 +87,36 @@ void main(){
   vec2 uv = vUv;
   vec2 c = uv - .5;
   float r2 = dot(c, c);
+  float aspect = uResolution.x / uResolution.y;
+  // lens character: a whisper of barrel distortion (the corners stay put)
+  if (uLens > .001) {
+    float k = .07 * uLens;
+    uv = .5 + c * (1. + k * r2) / (1. + k * .5);
+    c = uv - .5;
+  }
   // velocity‑scaled chromatic fringe, strongest at the edges
   float ca = uChromatic * (.0012 + abs(uScrollVelocity) * .004) * r2 * 4.;
   vec3 col;
   col.r = texture(tScene, uv + c * ca).r;
   col.g = texture(tScene, uv).g;
   col.b = texture(tScene, uv - c * ca).b;
+  // depth of field: a focus pull toward one point on screen, and the lens softening its edges
+  float dof = uFocusAmt * smoothstep(uFocusR, uFocusR + .38, length((uv - uFocusPt) * vec2(aspect, 1.)));
+  dof = max(dof, uLens * smoothstep(.16, .5, r2) * .35);
+  if (dof > .001) {
+    // a touch of lateral colour where the lens is soft
+    vec3 bl = vec3(texture(tBlur, uv + c * .006 * uLens).r, texture(tBlur, uv).g, texture(tBlur, uv - c * .006 * uLens).b);
+    col = mix(col, bl * 1.05, clamp(dof, 0., 1.));
+  }
   if (uHasBloom > .5) col += texture(tBloom, uv).rgb * uBloomStrength;
+  // light shafts: the brightest light (the moon, the sun, the spotlight, the lanterns) pours
+  // through whatever stands in front of it
+  if (uHasBloom > .5 && uRays > .001) {
+    vec2 d = (uv - uRayPt) / 32.;
+    vec2 q = uv; float dec = 1.; vec3 acc = vec3(0.);
+    for (int i = 0; i < 32; i++) { q -= d; acc += texture(tStreak, q).rgb * dec; dec *= .955; }
+    col += acc / 32. * uRays * uRayTint;
+  }
   // anamorphic streaks: the brightest lights (candles, fairy lights, the sun) stretch sideways
   // into thin champagne lines, like a cinema lens (squared, so only real highlights streak)
   if (uHasBloom > .5 && uStreak > .001) {
@@ -102,9 +129,29 @@ void main(){
     }
     col += s * vec3(1., .8, .7) * uStreak;
   }
+  // candlelight: the flames warm everything around them, breathing as they flicker
+  if (uCandle.z > .001) {
+    float cd = length((uv - uCandle.xy) * vec2(aspect, 1.));
+    col += vec3(1., .6, .28) * uCandle.z * (exp(-cd * 2.6) * .22 + exp(-cd * 8.) * .28);
+  }
+  // rain: fine streaks falling past the lens (two depths)
+  if (uRain > .001) {
+    float rs = 0.;
+    for (int L = 0; L < 2; L++) {
+      float fl = float(L);
+      float sc = mix(70., 130., fl);
+      vec2 g = vec2((uv.x * aspect + uv.y * .06) * sc, uv.y * 2.4 + uTime * mix(1.9, 1.3, fl));
+      float id = floor(g.x);
+      float h = hash11(id * 1.37 + fl * 7.1);
+      float y = fract(g.y * .5 + h * 10.);
+      float st = smoothstep(0., .015, y) * smoothstep(.13, .015, y);
+      st *= smoothstep(.7, 1., 1. - abs(fract(g.x) - .5) * 2.) * step(.5, h);
+      rs += st * mix(1., .55, fl);
+    }
+    col += vec3(.72, .76, .92) * rs * uRain * .16;
+  }
   if (uBlur > .001) col = mix(col, texture(tBlur, uv).rgb * 1.1, clamp(uBlur, 0., 1.));
   // corner glow (teal wash seen on the reference) — screen space so it frames every scene
-  float aspect = uResolution.x / uResolution.y;
   vec2 p = c * vec2(aspect, 1.);
   float g1 = exp(-2.2 * length(p - vec2(.62 * aspect, -.55)));
   float g2 = exp(-2.6 * length(p - vec2(-.62 * aspect, .55)));
@@ -117,6 +164,14 @@ void main(){
   col += mix(vec3(.018, .004, .03), vec3(.02, .012, -.012), smoothstep(.15, .75, l)) * (1. - abs(l - .5) * 1.2);
   col = mix(vec3(l), col, 1.06);
   col = clamp((col - .5) * 1.04 + .5, 0., 1.);
+  // mist rolling low across the frame
+  if (uMist > .001) {
+    float m = fbm2(vec2(uv.x * aspect * 1.4 + uTime * .035, uv.y * 3.2 - uTime * .012));
+    float band = smoothstep(.62, .05, uv.y);
+    col = mix(col, vec3(.62, .56, .7), clamp(smoothstep(.35, .8, m) * band * uMist * .38, 0., 1.));
+  }
+  // the hour of the night: the whole frame leans toward the light of the moment
+  col = mix(col, col * uTint * 1.08 + (uTint - 1.) * .012, uTintAmt);
   // soft vignette (oval, gentle)
   col *= mix(1., smoothstep(1.1, .22, length(c * vec2(.92, 1.))), .5);
   col *= 1. - uDim;
@@ -126,7 +181,7 @@ void main(){
   // letterbox for the big moments
   float bar = uLetterbox * .075;
   col *= smoothstep(bar, bar + .004, uv.y) * smoothstep(bar, bar + .004, 1. - uv.y);
-  col *= uReveal;
+  col *= uReveal * (1. - uBlink);
   o = vec4(col, 1.);
 }`;
 
@@ -172,6 +227,19 @@ export class PostFX {
     uExposure: { value: 1 },
     uLetterbox: { value: 0 },
     uStreak: { value: 0.045 },
+    uFocusPt: { value: new THREE.Vector2(0.5, 0.5) },
+    uFocusR: { value: 0.3 },
+    uFocusAmt: { value: 0 },
+    uLens: { value: 0 },
+    uBlink: { value: 0 },
+    uRayPt: { value: new THREE.Vector2(0.5, 0.8) },
+    uRays: { value: 0 },
+    uRayTint: { value: new THREE.Color(1, 0.85, 0.65) },
+    uTint: { value: new THREE.Color(1, 1, 1) },
+    uTintAmt: { value: 0 },
+    uCandle: { value: new THREE.Vector3(0.5, 0.5, 0) },
+    uRain: { value: 0 },
+    uMist: { value: 0 },
     uGlowA: { value: new THREE.Color('#1e6f6a') },
     uGlowB: { value: new THREE.Color('#123a44') },
   });
@@ -307,8 +375,8 @@ export class PostFX {
         this.draw(this.up, this.ups[i]);
       }
     }
-    const blurAmt = this.composite.uniforms.uBlur.value as number;
-    if (blurAmt > 0.001) {
+    const cu = this.composite.uniforms;
+    if ((cu.uBlur.value as number) > 0.001 || (cu.uFocusAmt.value as number) > 0.001 || (cu.uLens.value as number) > 0.001) {
       this.blur.uniforms.tInput.value = this.sceneRT.texture;
       this.blur.uniforms.uTexel.value.set(1 / this.blurRT.width, 1 / this.blurRT.height);
       this.draw(this.blur, this.blurRT);

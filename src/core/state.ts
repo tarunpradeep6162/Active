@@ -90,6 +90,10 @@ export const state = {
   cakeReady: false,
   /** 0..1 the room going dark after the candles go out */
   cakeDark: 0,
+  /** 0…1 how much the camera breathes in the hand (close, emotional shots) */
+  handheld: 0,
+  /** 0…1 rain over the lake (the lantern sky opens in rain, then it clears) */
+  rain: 0,
   /** 0…1 the camera's slow push‑in on the cake once the cage opens */
   labDolly: 0,
   /** 0..1 intro reveal after preload */
@@ -179,6 +183,8 @@ type Events = {
   birthdayMidnight: void;
   /** play the whole journey as a film */
   playFilm: void;
+  /** a hard cut in the film: jump straight to this journey progress behind a blink of black */
+  filmCut: number;
   /** a sound for a moment (heard only while the sound is on) */
   sfx: import('../audio/AudioEngine').Sfx;
   scrollTo: number;

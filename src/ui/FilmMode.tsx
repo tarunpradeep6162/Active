@@ -11,7 +11,8 @@ import { useStore } from './useStore';
  * swiping or a key press pauses it; she can resume or stop at any time.
  */
 
-type Shot = { to: [SectionId, number]; travel: number; hold?: number; act?: 'openCage' | 'blow' | 'lantern' };
+/** cut: no travel, the new shot is simply there (a blink of black, like a splice) */
+type Shot = { to: [SectionId, number]; travel: number; hold?: number; cut?: boolean; act?: 'openCage' | 'blow' | 'lantern' };
 
 const SCRIPT: Shot[] = [
   { to: ['intro', 0], travel: 0, hold: 5 },
@@ -19,10 +20,12 @@ const SCRIPT: Shot[] = [
   { to: ['manifesto', 0.55], travel: 6, hold: 2.5 },
   { to: ['work', 0.02], travel: 5 },
   { to: ['work', 0.98], travel: 46 },
-  { to: ['lab', 0.6], travel: 6, hold: 1.5, act: 'openCage' },
+  { to: ['lab', 0.6], travel: 0, cut: true, hold: 1.6 },
+  { to: ['lab', 0.6], travel: 0, hold: 1.2, act: 'openCage' },
   { to: ['lab', 0.6], travel: 0, hold: 4, act: 'blow' },
   { to: ['lab', 0.6], travel: 0, hold: 7 },
-  { to: ['portal', 0.45], travel: 7, hold: 1.5, act: 'lantern' },
+  { to: ['portal', 0.45], travel: 0, cut: true, hold: 1.8 },
+  { to: ['portal', 0.45], travel: 0, hold: 1.5, act: 'lantern' },
   { to: ['portal', 0.45], travel: 0, hold: 4.5, act: 'lantern' },
   { to: ['portal', 0.45], travel: 0, hold: 4.5 },
   { to: ['outro', 0.995], travel: 40, hold: 5 },
@@ -101,6 +104,10 @@ export function FilmMode() {
       last = now;
       const shot = SCRIPT[c.shot];
       if (!shot) return setMode('off');
+      if (shot.cut && c.t === 0) {
+        events.emit('filmCut', at(shot.to));
+        c.from = at(shot.to);
+      }
       c.t += dt;
       const k = shot.travel > 0 ? smooth(Math.min(1, c.t / shot.travel)) : 1;
       const p = c.from + (at(shot.to) - c.from) * k;

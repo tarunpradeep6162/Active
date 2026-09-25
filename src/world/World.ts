@@ -428,7 +428,7 @@ export class World {
     this.gardenSky.update(camera, skyAmt, clamp(0.1 + wt * 0.95) * (1 - this.gardenReveal) + this.gardenReveal, state.viewport.dpr);
     // the night lake under the lanterns: there once the camera has come down into their sky
     const lp = state.section === 'portal' ? state.sectionProgress : state.section === 'outro' ? 1 : 0;
-    this.portal.lake.update(camera, smoothstep(0.04, 0.16, lp) * (1 - smoothstep(0.88, 0.98, lp)), 0);
+    this.portal.lake.update(camera, smoothstep(0.04, 0.16, lp) * (1 - smoothstep(0.88, 0.98, lp)), 0, state.rain);
     if (state.section === 'portal' || state.section === 'lab' || state.section === 'outro') {
       this.portal.update(t, state.viewport.dpr);
       state.starsLit = this.portal.starsLit;

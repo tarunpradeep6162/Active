@@ -29,6 +29,7 @@ export class CameraRig {
   private up = new THREE.Vector3();
   private worldUp = new THREE.Vector3(0, 1, 0);
   private roll = 0;
+  private hand = 0;
   private fov = 40;
   private initialised = false;
   /** Set by the TransitionController when a project is opened. */
@@ -82,6 +83,13 @@ export class CameraRig {
       if (state.section === 'lab' && state.labDolly > 0) this.desiredPos.addScaledVector(this.fwd, state.labDolly * 1.7).addScaledVector(this.up, state.labDolly * 0.2);
       const t = state.time;
       this.desiredPos.addScaledVector(this.right, Math.sin(t * 0.31) * 0.04 + Math.sin(t * 0.83) * 0.015).addScaledVector(this.up, Math.sin(t * 0.27 + 1.3) * 0.03);
+      // handheld: on close shots the camera breathes like it is held by someone, never on a rail
+      this.hand += (state.handheld - this.hand) * dampFactor(1.5, dt);
+      if (this.hand > 0.001) {
+        const n = (a: number, b: number, c: number) => Math.sin(t * a + b) * 0.6 + Math.sin(t * c + b * 2.3) * 0.4;
+        this.desiredPos.addScaledVector(this.right, n(1.1, 0, 2.3) * 0.035 * this.hand).addScaledVector(this.up, n(1.37, 1.7, 2.9) * 0.03 * this.hand);
+        this.desiredTgt.addScaledVector(this.right, n(0.9, 3.1, 1.9) * 0.02 * this.hand).addScaledVector(this.up, n(0.71, 0.4, 1.6) * 0.015 * this.hand);
+      }
     }
 
     // project focus
@@ -112,7 +120,7 @@ export class CameraRig {
     }
     cam.lookAt(this.curTgt);
     this.debugTarget.copy(this.curTgt);
-    const targetRoll = reduced ? 0 : clamp(-p.vx * 0.004 - s.velocity * 0.006, -0.05, 0.05) + p.targetX * -0.012;
+    const targetRoll = reduced ? 0 : clamp(-p.vx * 0.004 - s.velocity * 0.006, -0.05, 0.05) + p.targetX * -0.012 + Math.sin(state.time * 0.93 + 0.7) * 0.006 * this.hand;
     this.roll = lerp(this.roll, targetRoll, dampFactor(3, dt));
     cam.rotateZ(this.roll);
 

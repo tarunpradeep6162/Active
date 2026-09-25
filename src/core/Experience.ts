@@ -23,12 +23,15 @@ import { UIDriver } from '../ui/UIDriver';
 import { DebugOverlay } from '../ui/DebugOverlay';
 import { clamp, easeInOutCubic } from '../utils/math';
 import type { ParticleRequest } from '../workers/particles.worker';
+import { Director } from '../post/Director';
 
 const nextFrame = () => new Promise<void>((r) => requestAnimationFrame(() => r()));
 
 export class Experience {
   readonly renderer: THREE.WebGLRenderer;
   private post: PostFX;
+  private director: Director;
+  private cutPending = false;
   private rig = new CameraRig();
   private scroll: ScrollEngine;
   private pointer = new Pointer();
@@ -83,6 +86,7 @@ export class Experience {
     this.settings = tierSettings(state.performanceTier);
     this.initialParticleScale = this.settings.particleScale;
     this.post = new PostFX(this.renderer, this.settings);
+    this.director = new Director(this.post.composite, this.settings.chromatic);
     this.scroll = new ScrollEngine();
     this.governor = new FpsGovernor(() => this.applyTier());
     const dbg = new URLSearchParams(location.search).get('debug');
@@ -131,6 +135,11 @@ export class Experience {
     });
     events.on('jumpToProject', (slug) => this.world && this.transition?.jump(this.world.progressForCard(slug)));
     events.on('scrollTo', (p) => this.transition?.jump(p));
+    // a film cut: the new shot is there at once (the Director blinks the frame)
+    events.on('filmCut', (p) => {
+      this.scroll.jumpTo(p, true);
+      this.cutPending = true;
+    });
 
     this.canvas.addEventListener('webglcontextrestored', () => this.recoverContext());
     this.renderer.setAnimationLoop(() => this.frame());
@@ -159,6 +168,7 @@ export class Experience {
   private applyTier() {
     this.settings = tierSettings(state.performanceTier);
     this.post.applySettings(this.settings);
+    this.director.setLens(this.settings.chromatic);
     this.resize();
     this.world?.setParticleScale(this.settings.particleScale / this.initialParticleScale);
     this.trails?.setStrands(this.settings.trailStrands);
@@ -317,6 +327,10 @@ export class Experience {
 
     this.pointer.update(dt);
     this.scroll.update(dt);
+    if (this.cutPending) {
+      this.cutPending = false;
+      this.rig.snap();
+    }
     this.transition?.update(dt);
     this.audio.update(dt);
 
@@ -346,6 +360,7 @@ export class Experience {
     this.updateGardenMoments(dt);
     this.rig.update(dt);
     const cam = this.rig.camera;
+    if (this.world) this.director.update(dt, this.world, cam);
     if (this.trails && this.world) {
       this.trails.update(dt, cam);
       this.world.update(dt, cam, this.trails.pointerWorld, this.post.composite);

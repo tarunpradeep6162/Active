@@ -56,6 +56,7 @@ export class NightLake {
     uTime: globalUniforms.uTime,
     uAmt: { value: 0 },
     uSun: { value: 0 },
+    uRain: { value: 0 },
     uCamWorld: { value: new THREE.Matrix4() },
     uProjInv: { value: new THREE.Matrix4() },
     uWaterY: { value: 0 },
@@ -114,7 +115,7 @@ export class NightLake {
         fragmentShader: /* glsl */ `
           ${math}
           ${noise}
-          uniform float uAmt;
+          uniform float uAmt, uRain;
           varying vec3 vW;
           ${SKY}
           void main(){
@@ -125,6 +126,19 @@ export class NightLake {
             float amp = .05 / (1. + dist * .04);
             vec2 n = vec2(snoise(vec3(q * .35, uTime * .12)), snoise(vec3(q * .35 + 7.3, uTime * .12))) * amp
                    + vec2(sin(q.y * 2.1 + uTime * .9), cos(q.x * 1.7 - uTime * .7)) * amp * .35;
+            // rain: rings spreading where the drops land
+            if (uRain > .001) {
+              for (int L = 0; L < 2; L++) {
+                vec2 rq = q * (1.1 + float(L) * .7) + float(L) * 3.7;
+                vec2 cell = floor(rq), f = fract(rq) - .5;
+                vec2 o = (hash22(cell + float(L) * 9.) - .5) * .5;
+                float ph = fract(uTime * .8 + hash12(cell * 1.7 + float(L)));
+                vec2 dv = f - o;
+                float d = length(dv);
+                float ring = exp(-pow((d - ph * .45) * 28., 2.)) * (1. - ph);
+                n += dv / (d + 1e-3) * ring * .35 * uRain / (1. + dist * .03);
+              }
+            }
             vec3 N = normalize(vec3(n.x, 1., n.y));
             vec3 R = reflect(-V, N);
             R.y = abs(R.y);
@@ -138,9 +152,10 @@ export class NightLake {
     this.water.renderOrder = -997;
   }
 
-  /** amt: how present the lake is (0…1) · sun: the sunrise (0…1) */
-  update(camera: THREE.PerspectiveCamera, amt: number, sun: number) {
+  /** amt: how present the lake is (0…1) · sun: the sunrise (0…1) · rain: rings on the water (0…1) */
+  update(camera: THREE.PerspectiveCamera, amt: number, sun: number, rain = 0) {
     this.uniforms.uAmt.value = amt;
+    this.uniforms.uRain.value = rain;
     this.uniforms.uSun.value = sun;
     this.sky.visible = this.water.visible = amt > 0.001;
     if (!this.sky.visible) return;
