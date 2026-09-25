@@ -447,7 +447,7 @@
 .bd-chapter.is-open .bd-chapter__kicker::after { animation: bd-line 1.2s cubic-bezier(.2, .7, .2, 1) .5s both; transform-origin: left; }
 .bd-chapter.is-open .bd-chapter__kicker span { animation: bd-in 1s ease .45s both; }
 .bd-chapter.is-open .bd-chapter__slate { animation: bd-in 1s ease 1s both; }
-.bd-chapter__title { background: linear-gradient(100deg, var(--ink) 42%, #fff4d6 50%, var(--ink) 58%) 120% 0 / 260% 100% no-repeat; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.bd-chapter__title { background: linear-gradient(100deg, var(--ink) 42%, #fff4d6 50%, var(--ink) 58%) 120% 0 / 260% 100% repeat-x; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 .bd-chapter.is-open .bd-chapter__title { animation: bd-title 1.6s cubic-bezier(.2, .7, .2, 1) .6s both, bd-sheen 2.4s ease-in-out 2.1s 1 both; }
 @keyframes bd-line { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes bd-title { from { opacity: 0; letter-spacing: .14em; filter: blur(8px); } }
@@ -464,3 +464,47 @@
 @keyframes bd-reel { from { transform: translateY(8px); } }
 @media (max-width: 480px) { .bd-reel { gap: 2px; padding: 6px 4px; } .bd-reel__frame { width: 21px; height: 16px; font-size: 8px; } }
 @media (prefers-reduced-motion: reduce) { .bd-frame::before, .bd-frame::after { transition: none; } }
+
+/* ── the letter, by candlelight ──────────────────────────────────────────────────────── */
+@property --flick { syntax: '<number>'; inherits: false; initial-value: 1; }
+.bd-letter[data-live="true"] .bd-paper, .bd-paper { position: relative; color: #3b2620; border-radius: 3px; transform: rotate(-.6deg);
+  /* warm candlelight falling across aged paper with fine fibres */
+  background:
+    radial-gradient(120% 80% at 15% 0%, rgba(255, 214, 150, calc(.28 * var(--flick))), transparent 60%),
+    radial-gradient(140% 120% at 50% 50%, transparent 55%, rgba(120, 72, 40, .22)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .32 0 0 0 0 .22 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E"),
+    linear-gradient(160deg, #f8efdd, #efe0c4);
+  box-shadow: 0 40px 90px rgba(0, 0, 0, .55), 0 0 70px rgba(255, 190, 120, .16), inset 0 0 40px rgba(140, 90, 50, .18);
+  animation: bd-paper-rise 1.2s cubic-bezier(.2, .8, .2, 1) both, bd-flick 5s ease-in-out infinite; }
+@keyframes bd-flick { 0%, 100% { --flick: 1; } 23% { --flick: .82; } 41% { --flick: 1.08; } 67% { --flick: .9; } 83% { --flick: 1.04; } }
+.bd-paper p { animation: bd-ink 1.4s ease both; }
+@keyframes bd-ink { from { filter: blur(3px); color: rgba(59, 38, 32, .2); } }
+.bd-paper__greeting, .bd-paper__sign { font: 34px/1.2 var(--hand); color: #7a1f38; }
+.bd-paper__sign { margin-bottom: .2em !important; }
+.bd-paper__flourish { display: block; width: 180px; height: 22px; margin: 0 0 .6em; overflow: visible; }
+.bd-paper__flourish path { fill: none; stroke: #b8893a; stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: 260; stroke-dashoffset: 260; animation: bd-draw 1.8s ease .3s forwards; }
+@keyframes bd-draw { to { stroke-dashoffset: 0; } }
+.bd-paper__seal { position: sticky; float: right; bottom: 0; display: grid; place-items: center; width: 54px; height: 54px; margin: -30px -8px 0 0; border-radius: 50%; color: rgba(255, 220, 220, .85); font-size: 20px;
+  background: radial-gradient(circle at 35% 30%, #c2334f, #7a1428 70%); box-shadow: 0 4px 10px rgba(80, 10, 20, .45), inset 0 0 0 4px rgba(90, 10, 25, .35);
+  clip-path: polygon(50% 0, 62% 6%, 76% 4%, 84% 16%, 97% 24%, 95% 40%, 100% 54%, 91% 66%, 92% 82%, 78% 88%, 66% 99%, 50% 94%, 34% 100%, 22% 88%, 8% 84%, 9% 68%, 0 55%, 5% 40%, 3% 24%, 16% 16%, 24% 4%, 38% 6%);
+  animation: bd-in 1.2s ease 1s both; }
+.bd-caret { background: #b8893a; box-shadow: 0 0 6px rgba(255, 200, 120, .9); }
+.bd-paper[data-done="true"] .bd-caret { display: none; }
+@media (prefers-reduced-motion: reduce) { .bd-paper, .bd-paper p { animation: none; } .bd-paper__flourish path { animation: none; stroke-dashoffset: 0; } }
+
+/* ── the timeline: a title card for every date, the story line by line ───────────────── */
+.bd-timeline__kicker { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 0; font: italic 500 clamp(17px, 1.9vw, 22px) var(--serif); letter-spacing: .08em; color: var(--bd-gold); }
+.bd-timeline__kicker::before, .bd-timeline__kicker::after { content: ''; width: clamp(24px, 5vw, 70px); height: 1px; background: linear-gradient(90deg, transparent, rgba(255, 216, 154, .7)); animation: bd-line 1.1s cubic-bezier(.2, .7, .2, 1) .1s both; transform-origin: right; }
+.bd-timeline__kicker::after { background: linear-gradient(270deg, transparent, rgba(255, 216, 154, .7)); transform-origin: left; }
+.bd-timeline__stop h3 { animation: bd-title 1.4s cubic-bezier(.2, .7, .2, 1) .2s both; }
+.bd-timeline__lines span { display: block; animation: bd-ink 1.4s ease both; animation-delay: calc(.5s + var(--n) * .45s); }
+/* the date strip: a thread of gold lit up to where she is */
+.bd-timeline__track li { position: relative; }
+.bd-timeline__track li::after { content: ''; position: absolute; left: calc(50% + 6px); right: calc(-50% + 6px); top: 13px; height: 1px; background: rgba(255, 216, 154, .15); pointer-events: none; }
+.bd-timeline__track li:last-child::after { display: none; }
+.bd-timeline__track li[data-passed="true"]::after { background: linear-gradient(90deg, rgba(255, 216, 154, .9), rgba(255, 216, 154, .55)); box-shadow: 0 0 8px rgba(255, 216, 154, .6); }
+.bd-timeline__track li[data-passed="true"] .bd-dot { background: var(--bd-gold); box-shadow: 0 0 8px rgba(255, 216, 154, .7); }
+.bd-timeline__track button[aria-current="true"] .bd-dot { box-shadow: 0 0 0 4px rgba(255, 216, 154, .18), 0 0 14px rgba(255, 216, 154, .9); }
+@media (prefers-reduced-motion: reduce) { .bd-timeline__lines span, .bd-timeline__stop h3 { animation: none; } }
+
+.bd-letter[data-live="true"] .bd-paper { margin-top: 10px; max-height: calc(100% - 10px); }

@@ -12,6 +12,7 @@ export function Letter({ slug, onDone }: ChapterProps) {
   const [phase, setPhase] = useState<'sealed' | 'opening' | 'open'>('sealed');
   const open = phase === 'open';
   const full = [c.letter.greeting, ...c.letter.paragraphs, c.letter.signoff].join('\n\n');
+  const parts = c.letter.paragraphs.length + 2;
   const text = useTypewriter(full, open, 42);
   const ref = useRef<HTMLCanvasElement>(null);
   const stage = useRef<{ open(): void; dispose(): void } | null>(null);
@@ -61,11 +62,22 @@ export function Letter({ slug, onDone }: ChapterProps) {
         </button>
       )}
       {open && (
-        <div className="bd-paper" aria-live="polite">
-          {text.split('\n\n').map((p, k) => (
-            <p key={k}>{p}</p>
+        <div className="bd-paper" aria-live="polite" data-done={text.length === full.length}>
+          {/* each paragraph flows in like ink; the greeting and the sign-off are in her hand */}
+          {text.split('\n\n').map((p, k, all) => (
+            <p key={k} className={k === 0 ? 'bd-paper__greeting' : k === parts - 1 && all.length === parts ? 'bd-paper__sign' : ''}>
+              {p}
+            </p>
           ))}
           <span className="bd-caret" aria-hidden="true" />
+          {text.length === full.length && (
+            <>
+              <svg className="bd-paper__flourish" viewBox="0 0 220 24" aria-hidden="true">
+                <path d="M4 16 C40 4 70 22 104 12 S170 2 216 10" />
+              </svg>
+              <span className="bd-paper__seal" aria-hidden="true">♥</span>
+            </>
+          )}
         </div>
       )}
       {open && text.length === full.length && (

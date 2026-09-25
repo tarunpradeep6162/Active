@@ -39,6 +39,10 @@ const steps = {
     await shot('wish');
     info.stage = await page.evaluate(() => document.querySelector('.bd-wish')?.dataset.stage);
   },
+  'the-letter': async () => {
+    await click('.bd-letter__open');
+    for (const [ms, n] of [[3000, 'opening'], [6000, 'writing'], [12000, 'written']]) { await page.waitForTimeout(ms); await shot(n); }
+  },
   'music-room': async () => {
     await page.click('.bd-songs li:nth-child(1) button');
     await page.waitForTimeout(1200);

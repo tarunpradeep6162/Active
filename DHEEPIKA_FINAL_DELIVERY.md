@@ -42,13 +42,13 @@ Without WebGL, the earlier flat versions come back.
 |---|---------|-----------|
 | 1 | 25 · 11 | One star in a nebula. Touching it twice makes it burst into a galaxy that gathers into the date. |
 | 2 | Memory Universe | Polaroids orbit a glowing core that sends slow shafts of light through drifting dust. The one she touches comes forward. |
-| 3 | The Letter | An envelope in candlelight. The wax seal breaks and the letter rises. |
+| 3 | The Letter | An envelope in candlelight. The wax seal breaks and the letter rises on warm, fibred paper in flickering candlelight. Each paragraph flows in like ink; the greeting and the sign‑off are in handwriting, a gold flourish draws itself beneath, and a broken wax seal rests at the corner. |
 | 4 | 14 Things | The reasons are stars. Threads of light join the ones she finds, then her name is written in stars. |
 | 5 | Catch My Heart | A tulip stands behind the game, its head where the petals fall from. It begins as a closed bud. Each catch brings a petal home and opens it further, and winning makes it bloom fully in a spiral of light petals. |
 | 6 | Know Us? | Two glass hearts (rose and gold) joined by a thread of light. Each answer draws them closer: a right one makes them glow, a wrong one makes them tremble. They meet above her next‑date card. |
 | 7 | Our Secret | A brass cryptex with one engraved ring per clue. A right answer turns its ring to the symbol and lights it; a wrong one makes it shudder. With all five aligned it opens and light pours out. |
 | 8 | Music Room | A walnut record player. Choosing a song writes the title on the label, the tonearm finds the groove, the record spins up and notes rise. |
-| 9 | Our Timeline | A river of light winding into the stars, with a lantern at every date. Moving through the story carries the camera along it, and the last stop opens onto a horizon. |
+| 9 | Our Timeline | A river of light winding into the stars, with a numbered lantern at every date. Moving through the story carries the camera along it; each date opens with a title card and its words arrive line by line, while a thread of gold lights the date strip up to where she is. The last stop opens onto a horizon. |
 | 10 | Choose a Gift | Three satin boxes. The one she chooses opens. |
 | 11 | Make a Wish | One candle. Its flame leans while she holds, then goes out in a curl of smoke, and her wish climbs as a spiral of gold sparks. |
 | 12 | Future Universe | The manor at golden hour, behind the possibilities. |

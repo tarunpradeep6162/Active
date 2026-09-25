@@ -63,6 +63,9 @@ export function Beginning({ slug, onDone }: ChapterProps) {
 }
 
 /* 9 ── Timeline: Before Us → … → What Comes Next, ending on the empty frame. */
+/** each lantern on the river carries its number; the date itself is on the page's title card */
+const NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+
 export function Timeline({ slug, onDone }: ChapterProps) {
   const c = useContent();
   const [i, setI] = useState(0);
@@ -71,7 +74,7 @@ export function Timeline({ slug, onDone }: ChapterProps) {
   const track = useRef<HTMLOListElement>(null);
   // the river of light in 3D: one lantern per date; moving through the story travels along it
   const scene = useStage(() =>
-    import('../stage/TimelineScene').then(({ TimelineScene }) => (cv: HTMLCanvasElement) => new TimelineScene(cv, stops.map((t, k) => ('empty' in t ? '…' : k === 0 && c.timelineStory?.intro ? '' : filled(t.date) || t.label)))),
+    import('../stage/TimelineScene').then(({ TimelineScene }) => (cv: HTMLCanvasElement) => new TimelineScene(cv, stops.map((t, k) => ('empty' in t ? '…' : k === 0 && c.timelineStory?.intro ? '' : NUMERALS[k] ?? String(k + 1))))),
   );
   useEffect(() => scene.stage.current?.go(i), [i, scene.live]);
   useEffect(() => {
@@ -87,7 +90,7 @@ export function Timeline({ slug, onDone }: ChapterProps) {
       {c.timelineStory?.intro && i === 0 && <p className="bd-timeline__intro">{c.timelineStory.intro}</p>}
       <ol className="bd-timeline__track" aria-label="Our timeline" ref={track}>
         {stops.map((t, k) => (
-          <li key={k}>
+          <li key={k} data-passed={k < i}>
             <button type="button" aria-current={k === i} onClick={() => setI(k)}>
               <span className="bd-dot" />
               <span className="bd-timeline__label">{t.label}</span>
@@ -108,9 +111,20 @@ export function Timeline({ slug, onDone }: ChapterProps) {
           <>
             {/* a date without a photo simply tells the story */}
             {s.media && <Media media={s.media} label={`${s.label} — photo or clip`} className="bd-timeline__media" />}
+            {/* a title card for every date: the date between two lines of light, then the moment */}
+            {filled(s.date) && (
+              <p className="bd-timeline__kicker">
+                <span>{s.date}</span>
+              </p>
+            )}
             <h3>{s.label}</h3>
-            {filled(s.date) && <p className="bd-meta">{s.date}</p>}
-            <p>{s.text}</p>
+            <p className="bd-timeline__lines">
+              {s.text.split('\n').map((line, n) => (
+                <span key={n} style={{ ['--n' as string]: n }}>
+                  {line}
+                </span>
+              ))}
+            </p>
           </>
         )}
       </article>

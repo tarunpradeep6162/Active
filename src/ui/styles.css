@@ -286,7 +286,7 @@ body {
 .opening__name { position: absolute; left: 0; right: 0; top: 67vh; margin: 0; font: 500 clamp(44px, 9vw, 110px)/1 var(--serif); letter-spacing: .08em; color: var(--soft);
   text-shadow: 0 0 40px rgba(243, 223, 167, .35); animation: op-name 3.4s cubic-bezier(.2, .7, .2, 1) 7.6s both;
   /* a slow sheen of light passing across her name, like light on a title card */
-  background: linear-gradient(100deg, var(--soft) 42%, #fff4d6 50%, var(--soft) 58%) 120% 0 / 260% 100% no-repeat; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  background: linear-gradient(100deg, var(--soft) 42%, #fff4d6 50%, var(--soft) 58%) 120% 0 / 260% 100% repeat-x; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 .opening[data-hidden='false'] .opening__name { animation: op-name 3.4s cubic-bezier(.2, .7, .2, 1) 7.6s both, op-sheen 7s ease-in-out 11s infinite; }
 .opening__enter { position: absolute; left: 50%; top: 80vh; translate: -50% 0; pointer-events: auto; background: rgba(7, 9, 20, .35); border: 1px solid rgba(230, 201, 137, .45); color: var(--champagne-3);
   border-radius: 999px; min-height: 46px; padding: 0 26px; font: 11px var(--mono); letter-spacing: .28em; text-transform: uppercase; cursor: pointer; animation: op-in 1.6s ease 9.4s both; }
@@ -499,7 +499,7 @@ html.no-webgl #interface { position: static; pointer-events: auto; }
 .foryou__kicker { display: flex; align-items: center; justify-content: center; gap: 14px; }
 .foryou__kicker::before, .foryou__kicker::after { content: ''; width: clamp(28px, 6vw, 80px); height: 1px; background: linear-gradient(90deg, transparent, rgba(230, 201, 137, .7)); }
 .foryou__kicker::after { background: linear-gradient(270deg, transparent, rgba(230, 201, 137, .7)); }
-.foryou__title { background: linear-gradient(100deg, var(--soft) 42%, #fff4d6 50%, var(--soft) 58%) 120% 0 / 260% 100% no-repeat; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; text-shadow: none; }
+.foryou__title { background: linear-gradient(100deg, var(--soft) 42%, #fff4d6 50%, var(--soft) 58%) 120% 0 / 260% 100% repeat-x; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; text-shadow: none; }
 .foryou.is-open .foryou__title { animation: fy-title 1.6s cubic-bezier(.2, .7, .2, 1) .15s both, fy-sheen 2.4s ease-in-out 1.6s both; }
 @keyframes fy-title { from { letter-spacing: .12em; filter: blur(6px); } }
 @keyframes fy-sheen { from { background-position: 120% 0; } to { background-position: -20% 0; } }
