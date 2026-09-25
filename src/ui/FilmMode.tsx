@@ -111,8 +111,9 @@ export function FilmMode() {
         if (shot.act === 'blow') state.filmBlow = true; // the cake's own label blows, as if she held the button
         if (shot.act === 'lantern') events.emit('releaseNextLantern', undefined);
       }
-      // the candles: hold until they are really out (on a slow device it takes longer), at most 20 s
-      const waiting = shot.act === 'blow' && state.filmBlow && c.t < shot.travel + 20;
+      // the candles: hold until the cage has lifted and they are really out (on a slow device the
+      // cake's own clock runs behind real time), at most a minute
+      const waiting = shot.act === 'blow' && state.filmBlow && c.t < shot.travel + 60;
       if (!waiting && c.t >= shot.travel + (shot.hold ?? 0)) {
         if (shot.act === 'blow') state.filmBlow = false;
         c.shot++;

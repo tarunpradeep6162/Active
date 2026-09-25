@@ -9,15 +9,18 @@ const { browser, page, logs } = await openSite('recreation', { width: W, height:
 await page.evaluate(() => { try { localStorage.removeItem('bday-lanterns-v1'); } catch {} });
 await page.evaluate(() => document.querySelector('.opening__film').click());
 const seen = new Set(), t0 = Date.now();
+const words = new Set();
+page.on('console', () => {});
 let n = 0, lastShot = 0, cage = false, blown = false, stars0 = null, stars = 0;
 while (Date.now() - t0 < 30 * 60000) {
   await page.waitForTimeout(2000);
-  const s = await page.evaluate(() => ({ film: !!document.querySelector('.film-controls'), sec: __state.section, p: __state.scroll.progress, cage: __state.cageOpen, dark: __state.cakeDark, stars: __state.starsLit, box: __exp.renderer?.info ? 0 : 0 }));
+  const s = await page.evaluate(() => ({ film: !!document.querySelector('.film-controls'), sec: __state.section, p: __state.scroll.progress, cage: __state.cageOpen, dark: __state.cakeDark, wished: document.querySelector('.lab-label')?.dataset.stage === 'wished', stars: __state.starsLit }));
   if (stars0 === null) stars0 = s.stars;
-  seen.add(s.sec); cage ||= s.cage; blown ||= s.dark > 0.05; stars = Math.max(stars, s.stars);
+  seen.add(s.sec); cage ||= s.cage; blown ||= s.dark > 0.05 || s.wished; stars = Math.max(stars, s.stars);
   if (Date.now() - lastShot > 12000) { lastShot = Date.now(); await page.screenshot({ path: `qa/out/film/${W}-${String(++n).padStart(2, '0')}-${s.sec}.png` }); }
+  for (const w of await page.evaluate(() => [...document.querySelectorAll('.sky-wish')].map((e) => e.textContent))) words.add(w);
   if (!s.film) break;
 }
 const end = await page.evaluate(() => ({ p: __state.scroll.progress, film: !!document.querySelector('.film-controls'), letterboxOff: true }));
-console.log(JSON.stringify({ W, secs: Math.round((Date.now() - t0) / 1000), sections: [...seen], cageOpened: cage, candlesOut: blown, lanternsLetGo: stars - (stars0 ?? 0), endProgress: +end.p.toFixed(3), closed: !end.film, errors: logs.filter((l) => /error/i.test(l)).slice(0, 3) }));
+console.log(JSON.stringify({ W, secs: Math.round((Date.now() - t0) / 1000), sections: [...seen], cageOpened: cage, candlesOut: blown, lanternsLetGo: Math.max(stars - (stars0 ?? 0), words.size), endProgress: +end.p.toFixed(3), closed: !end.film, errors: logs.filter((l) => /error/i.test(l)).slice(0, 3) }));
 await browser.close();
