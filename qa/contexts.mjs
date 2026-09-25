@@ -29,5 +29,5 @@ for (let r = 0; r < rounds; r++)
   }
 const res = await page.evaluate(() => ({ ...__ctx, canvases: document.querySelectorAll('.bd-cosmos canvas, .bd-giftstage canvas').length }));
 const warn = logs.filter((l) => /too many active webgl|context lost|CONTEXT_LOST/i.test(l));
-console.log(JSON.stringify({ W, visited: new Set(seen).size, ...res, alive: res.made - res.lost, warnings: warn.slice(0, 3), errors: logs.filter((l) => /error/i.test(l)).slice(0, 3) }));
+console.log(JSON.stringify({ W, seen, visited: new Set(seen).size, ...res, alive: res.made - res.lost, warnings: warn.slice(0, 3), errors: logs.filter((l) => /error/i.test(l)).slice(0, 3) }));
 await browser.close();
