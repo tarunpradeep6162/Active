@@ -29,6 +29,7 @@ export function App() {
           <ChapterView />
           <Contact />
           <Nav />
+          <div className="journey-line" aria-hidden="true" />
         </>
       )}
       <WebGLLost />

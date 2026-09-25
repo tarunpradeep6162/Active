@@ -429,3 +429,38 @@
 .bd-game[data-live="true"] .bd-game__overlay { background: linear-gradient(transparent 20%, rgba(8, 6, 14, .55) 60%); align-content: end; padding-bottom: 8%; }
 .bd-game[data-live="true"][data-state="won"] .bd-game__overlay { background: none; }
 .bd-game[data-live="true"] .bd-game__overlay p { text-shadow: 0 1px 14px rgba(7, 9, 20, .9); }
+
+/* ── the chapter as a film: a frame, a title card and a reel ─────────────────────────── */
+/* the frame: letterbox bars and a vignette, above the chapter's 3D scene, beneath its words */
+.bd-frame { position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(130% 100% at 50% 50%, transparent 55%, rgba(4, 3, 10, .55) 100%); }
+.bd-frame::before, .bd-frame::after { content: ''; position: absolute; left: 0; right: 0; height: 3.4vh; background: #030206; transform: scaleY(0); transition: transform 900ms cubic-bezier(.6, 0, .2, 1) 300ms; }
+.bd-frame::before { top: 0; transform-origin: top; }
+.bd-frame::after { bottom: 0; transform-origin: bottom; }
+.bd-chapter.is-open .bd-frame::before, .bd-chapter.is-open .bd-frame::after { transform: scaleY(1); }
+.bd-chapter__head, .bd-chapter__foot { position: relative; z-index: 1; }
+/* the title card: a kicker between two lines of light, then the title settling into focus */
+.bd-chapter__kicker { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 0 0 6px; font: italic 500 clamp(13px, 1.3vw, 16px) var(--serif); letter-spacing: .18em; color: var(--bd-gold); text-transform: none; }
+.bd-chapter__kicker::before, .bd-chapter__kicker::after { content: ''; width: clamp(28px, 6vw, 80px); height: 1px; background: linear-gradient(90deg, transparent, rgba(255, 216, 154, .7)); transform: scaleX(0); }
+.bd-chapter__kicker::after { background: linear-gradient(270deg, transparent, rgba(255, 216, 154, .7)); }
+.bd-chapter.is-open .bd-chapter__kicker::before { animation: bd-line 1.2s cubic-bezier(.2, .7, .2, 1) .5s both; transform-origin: right; }
+.bd-chapter.is-open .bd-chapter__kicker::after { animation: bd-line 1.2s cubic-bezier(.2, .7, .2, 1) .5s both; transform-origin: left; }
+.bd-chapter.is-open .bd-chapter__kicker span { animation: bd-in 1s ease .45s both; }
+.bd-chapter.is-open .bd-chapter__slate { animation: bd-in 1s ease 1s both; }
+.bd-chapter__title { background: linear-gradient(100deg, var(--ink) 42%, #fff4d6 50%, var(--ink) 58%) 120% 0 / 260% 100% no-repeat; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.bd-chapter.is-open .bd-chapter__title { animation: bd-title 1.6s cubic-bezier(.2, .7, .2, 1) .6s both, bd-sheen 2.4s ease-in-out 2.1s 1 both; }
+@keyframes bd-line { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes bd-title { from { opacity: 0; letter-spacing: .14em; filter: blur(8px); } }
+@keyframes bd-sheen { from { background-position: 120% 0; } to { background-position: -20% 0; } }
+/* the reel: fourteen frames of film between perforated edges */
+.bd-reel { flex-basis: 100%; order: -1; display: flex; justify-content: center; gap: 4px; padding: 7px 10px; margin: 0 auto 4px; max-width: max-content;
+  background: repeating-linear-gradient(90deg, rgba(255, 216, 154, .22) 0 4px, transparent 4px 9px) top / 100% 2px no-repeat,
+              repeating-linear-gradient(90deg, rgba(255, 216, 154, .22) 0 4px, transparent 4px 9px) bottom / 100% 2px no-repeat; }
+.bd-reel__frame { width: 24px; height: 18px; padding: 0; border: 1px solid rgba(255, 216, 154, .25); border-radius: 2px; background: rgba(10, 8, 18, .55); color: rgba(242, 232, 220, .45); font: 9px var(--mono); cursor: pointer; transition: transform .3s ease, border-color .3s ease, background .3s ease, box-shadow .3s ease; }
+.bd-reel__frame[data-done='true'] { background: rgba(255, 216, 154, .16); color: var(--bd-gold); border-color: rgba(255, 216, 154, .5); }
+.bd-reel__frame[aria-current='true'] { border-color: var(--bd-gold); color: #fff8ee; background: rgba(255, 216, 154, .28); box-shadow: 0 0 14px rgba(255, 216, 154, .45); transform: scale(1.15); }
+.bd-reel__frame:hover, .bd-reel__frame:focus-visible { border-color: var(--bd-gold); transform: translateY(-2px); }
+.bd-chapter.is-open .bd-reel { animation: bd-reel 1s ease .9s both; }
+@keyframes bd-reel { from { transform: translateY(8px); } }
+@media (max-width: 480px) { .bd-reel { gap: 2px; padding: 6px 4px; } .bd-reel__frame { width: 21px; height: 16px; font-size: 8px; } }
+@media (prefers-reduced-motion: reduce) { .bd-frame::before, .bd-frame::after { transition: none; } }

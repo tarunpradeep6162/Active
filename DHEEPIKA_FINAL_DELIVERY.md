@@ -79,6 +79,13 @@ Without WebGL, the earlier flat versions come back.
   banding.
 - **Letterbox**: bars slide in for the opening title and the two big moments, the cake leaving its cage and her name
   forming in the stars.
+- **Chapters as film**: each chapter opens inside letterbox bars and a soft vignette, with a
+  title card (*Chapter VIII* between two lines of light, the title settling into focus and a
+  sheen passing over it). A reel of fourteen film frames at the bottom shows where she is and
+  which chapters are opened, and lets her jump to any of them.
+- **Navigation**: a thread of gold across the top of the screen shows how far through the
+  journey she is; the garden menu slides in item by item, with a line of light drawn under
+  each choice.
 - **Light leaks**: a warm leak of light sweeps across the frame at every change of scene and
   whenever a chapter opens (never with reduced motion).
 - **Lens**: the brightest lights (candles, fairy lights, the sun) stretch into faint horizontal

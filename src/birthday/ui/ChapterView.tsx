@@ -35,6 +35,8 @@ const CHAPTERS: Record<string, (p: ChapterProps) => React.ReactElement | null> =
 };
 
 /** Replaces the portfolio detail panel: an opened card becomes a full chapter stage. */
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV'];
+
 export function ChapterView() {
   const route = useStore((s) => s.route);
   const open = route.name === 'project';
@@ -50,9 +52,10 @@ export function ChapterView() {
   const vault = useVaultState();
   const prog = useProgress();
   const closeRef = useRef<HTMLButtonElement>(null);
+  // a light leak as a chapter opens, and on every cut to another chapter
   useEffect(() => {
     if (open) lightLeak();
-  }, [open]);
+  }, [open, p?.slug]);
   useEffect(() => {
     if (open) window.setTimeout(() => closeRef.current?.focus({ preventScroll: true }), 700);
   }, [open, p?.slug]);
@@ -62,8 +65,14 @@ export function ChapterView() {
   const Chapter = CHAPTERS[p.slug];
   return (
     <section className={`bd-chapter ${open ? 'is-open' : ''}`} aria-hidden={!open} aria-label={`Chapter ${idx + 1}: ${p.title}`}>
-      <header className="bd-chapter__head">
-        <p className="bd-meta">
+      {/* the frame: letterbox bars and a soft vignette, like a film */}
+      <div className="bd-frame" aria-hidden="true" />
+      {/* a title card, replayed on every chapter */}
+      <header className="bd-chapter__head" key={p.slug}>
+        <p className="bd-chapter__kicker" aria-hidden="true">
+          <span>Chapter {ROMAN[idx]}</span>
+        </p>
+        <p className="bd-meta bd-chapter__slate">
           {String(idx + 1).padStart(2, '0')} / {PROJECTS.length} · {prog.done.includes(p.slug) ? 'opened ✓' : p.description}
         </p>
         <h2 className="bd-chapter__title">{p.title}</h2>
@@ -73,6 +82,24 @@ export function ChapterView() {
         {open && vault !== 'locked' && vault !== 'checking' && <Chapter key={p.slug} slug={p.slug} onDone={() => markDone(p.slug)} />}
       </div>
       <footer className="bd-chapter__foot">
+        {/* the reel: every chapter as a frame of film; gold once opened, lit where she is */}
+        <nav className="bd-reel" aria-label="Chapters">
+          {PROJECTS.map((c, k) => (
+            <button
+              key={c.slug}
+              type="button"
+              className="bd-reel__frame"
+              data-done={prog.done.includes(c.slug)}
+              aria-current={c.slug === p.slug ? 'true' : undefined}
+              aria-label={`Chapter ${k + 1}: ${c.title}`}
+              title={c.title}
+              tabIndex={open ? 0 : -1}
+              onClick={() => c.slug !== p.slug && events.emit('navigate', { name: 'project', slug: c.slug })}
+            >
+              <span>{k + 1}</span>
+            </button>
+          ))}
+        </nav>
         <span className="bd-meta" title="Hidden hearts found">
           ♥ {prog.hearts.length} / {PROJECTS.length}
         </span>

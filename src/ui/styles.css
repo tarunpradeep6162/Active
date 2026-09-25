@@ -435,3 +435,21 @@ html.no-webgl #interface { position: static; pointer-events: auto; }
 .lightleak.is-on[data-side='r'] { animation-name: leak-r; }
 @keyframes leak-l { 0% { opacity: 0; transform: translateX(-22%); } 28% { opacity: .85; } 100% { opacity: 0; transform: translateX(18%); } }
 @keyframes leak-r { 0% { opacity: 0; transform: translateX(22%) scaleX(-1); } 28% { opacity: .85; } 100% { opacity: 0; transform: translateX(-18%) scaleX(-1); } }
+
+/* ── navigation, as titles in a film ─────────────────────────────────────────────────── */
+/* the journey line: a thread of gold across the top of the frame, as far as she has come */
+.journey-line { position: fixed; left: 0; top: 0; z-index: 60; height: 2px; width: calc(var(--progress, 0) * 100%); pointer-events: none;
+  background: linear-gradient(90deg, rgba(232, 166, 181, 0), rgba(232, 166, 181, .6) 40%, rgba(243, 223, 167, .95)); box-shadow: 0 0 10px rgba(243, 223, 167, .55); opacity: calc(var(--reveal, 1) * .9); }
+.journey-line::after { content: ''; position: absolute; right: -3px; top: -2px; width: 6px; height: 6px; border-radius: 50%; background: #fff4d6; box-shadow: 0 0 10px 3px rgba(243, 223, 167, .8); }
+/* the garden menu: each way in appears in turn, with a line of light drawn under it */
+.work-panel[data-hidden='false'] .work-panel__q { animation: wp-in 1s ease both; }
+.work-panel[data-hidden='false'] .work-panel__list li { animation: wp-in .9s ease both; }
+.work-panel__list li:nth-child(1) { animation-delay: .1s; } .work-panel__list li:nth-child(2) { animation-delay: .18s; } .work-panel__list li:nth-child(3) { animation-delay: .26s; }
+.work-panel__list li:nth-child(4) { animation-delay: .34s; } .work-panel__list li:nth-child(5) { animation-delay: .42s; } .work-panel__list li:nth-child(6) { animation-delay: .5s; }
+.work-panel__list button { position: relative; }
+.work-panel__list button::after { content: ''; position: absolute; left: 0; right: 0; bottom: -3px; height: 1px; background: linear-gradient(90deg, rgba(243, 223, 167, .9), rgba(232, 166, 181, 0)); transform: scaleX(0); transform-origin: left; transition: transform .45s cubic-bezier(.2, .7, .2, 1); }
+.work-panel__list button:hover::after, .work-panel__list button:focus-visible::after, .work-panel__list button[aria-pressed='true']::after { transform: scaleX(1); }
+.ask input:focus { box-shadow: 0 0 0 1px rgba(243, 223, 167, .5), 0 0 22px rgba(243, 223, 167, .18); }
+/* (movement only: the menu must never depend on an animation to be visible) */
+@keyframes wp-in { from { transform: translateX(-12px); } }
+@media (prefers-reduced-motion: reduce) { .work-panel[data-hidden='false'] .work-panel__list li, .work-panel[data-hidden='false'] .work-panel__q { animation: none; } }
