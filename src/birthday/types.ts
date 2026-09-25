@@ -71,6 +71,9 @@ export interface SignatureInk {
   strokes: string[];
 }
 
+/** the moments in the film where your voice can come in */
+export type NarrationCue = 'opening' | 'garden' | 'cake' | 'lanterns' | 'sunrise';
+
 export interface BirthdayContent {
   /** true while the content is the shipped placeholder set */
   placeholder: boolean;
@@ -118,6 +121,10 @@ export interface BirthdayContent {
   manor: { kicker: string; title: string; line: string };
   wishes: string[];
   movie: { clips: MediaRef[]; line: string };
+  /** the film's credits: the opening titles (role, name) and the line that closes the end credits */
+  credits?: { opening: [string, string][]; closing: string };
+  /** your voice for the film (optional): short recordings played as narration at these moments */
+  narration?: { at: NarrationCue; media: MediaRef; text?: string }[];
   finale: {
     voice?: MediaRef;
     headline: string;

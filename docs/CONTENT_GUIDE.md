@@ -41,6 +41,12 @@ Nothing personal is ever committed.
      spelling you'd accept.
    - For songs, write your note about what the song means to you. Don't paste lyrics. Add
      `audio` only for files you have the right to use.
+   - `credits.opening` is the film's opening titles as `[role, name]` pairs (`{signature}`
+     becomes your signature line); `credits.closing` ends the end credits.
+   - `narration` (optional) is your voice for the film: `{ "at": "opening" | "garden" | "cake" |
+     "lanterns" | "sunrise", "media": { "src": "media/voice-cake.m4a", "type": "audio" }, "text":
+     "an optional subtitle" }`. Each plays at its moment in the film, and the music steps back.
+   - `signatureInk` is your real signature: sign at `/?sign`, press *Copy the code*, paste it here.
 3. Put photos, videos and audio in `birthday-private/media/` and reference them as
    `{ "src": "media/file.jpg", "type": "image", "alt": "…" }` (`type` is `image`, `video` or
    `audio`). Compress large videos first; each file is loaded when its chapter needs it.

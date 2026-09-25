@@ -393,6 +393,32 @@
     ],
     "line": "Different days. Different places. Same person I keep choosing."
   },
+  "credits": {
+    "opening": [
+      [
+        "",
+        "A film for Dheepika"
+      ],
+      [
+        "Starring",
+        "Dheepika"
+      ],
+      [
+        "And",
+        "a garden that grew just for her"
+      ],
+      [
+        "Music",
+        "a little music box, made for tonight"
+      ],
+      [
+        "Written & directed by",
+        "{signature}"
+      ]
+    ],
+    "closing": "Thank you for watching. Happy birthday."
+  },
+  "narration": [],
   "finale": {
     "headline": "Every flower here is yours.",
     "lastThing": "If you’ve come all the way here, through the garden, past the cake and up into the sky, then you already know. But I’ll say it anyway. You are my favourite part of every day. Thank you for being born, and thank you for letting me be part of your story. Here’s to this year, and every one after it.",

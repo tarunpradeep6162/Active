@@ -603,3 +603,61 @@ html.is-signing #experience { display: none; }
 .paperflower { position: fixed; inset: 0; z-index: 4; display: grid; place-items: center; pointer-events: none; }
 .paperflower svg { width: min(46vmin, 360px); height: auto; overflow: visible; translate: 0 -3vh; filter: drop-shadow(0 10px 30px rgba(0, 0, 0, .5)); }
 @media (prefers-reduced-motion: reduce) { .paperflower { display: none; } }
+
+/* ---------------------------------------------------------------- opening credits */
+.credits-open { position: fixed; left: 0; right: 0; top: 68vh; display: grid; place-items: center; pointer-events: none; z-index: 3; }
+.credit { grid-area: 1 / 1; margin: 0; display: grid; justify-items: center; gap: 8px; text-align: center; padding: 0 20px; will-change: opacity, transform; }
+.credit__role { font: 10px var(--mono); letter-spacing: .42em; text-transform: uppercase; color: var(--champagne-3, #f3dfa7); opacity: .8; }
+.credit__name { font: 400 clamp(24px, 3.4vw, 44px)/1.15 var(--serif); letter-spacing: .04em; color: var(--soft, #f8f1e8); text-shadow: 0 0 30px rgba(7, 9, 20, .9), 0 0 2px rgba(0, 0, 0, .8); }
+html.is-film .credits-open { top: 64vh; }
+
+/* ---------------------------------------------------------------- end credits */
+.endcredits { position: fixed; inset: 0; z-index: 40; overflow: hidden; color: var(--soft, #f8f1e8); text-align: center;
+  background: linear-gradient(to bottom, rgba(4, 5, 11, .96), rgba(4, 5, 11, .78) 30%, rgba(4, 5, 11, .78) 70%, rgba(4, 5, 11, .96)); animation: ec-in 1.2s ease both; }
+.endcredits::before, .endcredits::after { content: ''; position: absolute; left: 0; right: 0; height: 7.5vh; background: #000; z-index: 2; }
+.endcredits::before { top: 0; } .endcredits::after { bottom: 0; }
+@keyframes ec-in { from { opacity: 0; } }
+.endcredits__roll { position: absolute; left: 0; right: 0; top: 0; padding: 0 20px 20vh; display: grid; justify-items: center; will-change: transform; }
+.endcredits__roll h3 { margin: 64px 0 10px; font: 10px var(--mono); letter-spacing: .42em; text-transform: uppercase; color: var(--champagne-3, #f3dfa7); font-weight: 400; }
+.endcredits__roll p { margin: 0; font: 400 clamp(18px, 2vw, 26px)/1.45 var(--serif); max-width: 34ch; }
+.endcredits__title { font: 400 clamp(34px, 5vw, 64px)/1.1 var(--serif) !important; letter-spacing: .03em; }
+.endcredits__date { margin-top: 10px !important; font: 12px var(--mono) !important; letter-spacing: .4em; color: var(--rose-3, #f2c1cb); }
+.endcredits__chapters { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font: 400 clamp(17px, 1.8vw, 23px)/1.4 var(--serif); }
+.endcredits__chapters span { display: inline-block; min-width: 3.2em; font: 10px var(--mono); letter-spacing: .2em; color: var(--champagne-3, #f3dfa7); opacity: .75; }
+.endcredits__sig { width: min(320px, 70vw); height: 90px; }
+.endcredits__closing { margin-top: 80px !important; font-style: italic !important; color: var(--rose-3, #f2c1cb); }
+.endcredits__post { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 18px; padding: 0 24px; background: #04050b; animation: ec-in 1.6s ease both; }
+.endcredits__post p { margin: 0; max-width: 42ch; font: 400 clamp(18px, 2vw, 24px)/1.55 var(--serif); }
+.endcredits__ps { font: italic 500 clamp(30px, 4vw, 44px) var(--serif) !important; color: var(--champagne-3, #f3dfa7); }
+.endcredits__actions, .finale-tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 14px; }
+.endcredits__actions button, .finale-tools button, .replay__close { min-height: 44px; padding: 0 20px; border-radius: 999px; border: 1px solid rgba(243, 223, 167, .45); background: rgba(7, 9, 20, .45); color: var(--champagne-3, #f3dfa7);
+  font: 11px var(--mono); letter-spacing: .18em; text-transform: uppercase; cursor: pointer; pointer-events: auto; backdrop-filter: blur(6px); }
+
+/* ---------------------------------------------------------------- her own constellation */
+.skydraw { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 2; }
+.skydraw.is-drawing { pointer-events: auto; touch-action: none; cursor: crosshair; z-index: 25; }
+.finale-tools { position: fixed; left: 16px; bottom: calc(24px + var(--safe-bottom, 0px)); z-index: 26; justify-content: flex-start; margin: 0; animation: ec-in .8s ease both; }
+.finale-tools button { min-height: 38px; padding: 0 14px; font-size: 10px; }
+.finale-tools--drawing { left: 50%; translate: -50% 0; justify-content: center; align-items: center; }
+.finale-tools--drawing span { width: 100%; text-align: center; font: italic 16px var(--serif); color: var(--soft, #f8f1e8); text-shadow: 0 0 12px rgba(0, 0, 0, .9); }
+html.is-film .finale-tools, html.is-film .skydraw.is-drawing { display: none; }
+
+/* ---------------------------------------------------------------- the replay */
+.replay { position: fixed; inset: 0; z-index: 41; display: grid; place-items: center; background: #04050b; color: var(--soft, #f8f1e8); text-align: center; cursor: pointer; animation: ec-in 1s ease both; }
+.replay::before, .replay::after { content: ''; position: absolute; left: 0; right: 0; height: 9vh; background: #000; }
+.replay::before { top: 0; } .replay::after { bottom: 0; }
+.replay__card { display: grid; gap: 14px; justify-items: center; padding: 0 24px; animation: rp-card 3.8s ease both; }
+@keyframes rp-card { 0% { opacity: 0; filter: blur(6px); transform: translateY(8px); } 15%, 85% { opacity: 1; filter: blur(0); transform: none; } 100% { opacity: .0; } }
+.replay__card:last-child, .replay__card:has(.replay__sig) { animation-fill-mode: forwards; animation-name: rp-last; }
+@keyframes rp-last { 0% { opacity: 0; filter: blur(6px); } 20%, 100% { opacity: 1; filter: blur(0); } }
+.replay__big { margin: 0; max-width: 24ch; font: 400 clamp(26px, 3.6vw, 46px)/1.2 var(--serif); }
+.replay__small { margin: 0; max-width: 40ch; font: italic 400 clamp(17px, 1.8vw, 22px)/1.5 var(--serif); color: var(--rose-3, #f2c1cb); }
+.replay__sig { width: min(300px, 70vw); height: 84px; }
+.replay__dots { position: absolute; bottom: calc(9vh + 18px); display: flex; gap: 8px; }
+.replay__dots span { width: 6px; height: 6px; border-radius: 50%; background: rgba(243, 223, 167, .25); }
+.replay__dots span.is-on { background: var(--champagne-3, #f3dfa7); }
+.replay__close { position: absolute; top: calc(9vh + 14px); right: 16px; z-index: 1; }
+@media (prefers-reduced-motion: reduce) { .replay__card, .endcredits, .endcredits__post { animation: none; } }
+.opening__film--cut { border-color: rgba(243, 223, 167, .3); color: var(--champagne-3, #f3dfa7); }
+.film-subtitle { position: fixed; left: 50%; bottom: calc(9vh + 64px + var(--safe-bottom, 0px)); translate: -50% 0; z-index: 70; margin: 0; max-width: min(640px, 90vw); text-align: center; pointer-events: none;
+  font: italic 400 clamp(17px, 1.9vw, 24px)/1.4 var(--serif); color: var(--soft, #f8f1e8); text-shadow: 0 0 10px rgba(0, 0, 0, .95), 0 0 2px #000; }

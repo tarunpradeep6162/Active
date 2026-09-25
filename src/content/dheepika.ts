@@ -200,6 +200,19 @@ export const PLACEHOLDER: BirthdayContent = {
     'And me, cheering for you through all of it.',
   ],
   movie: { clips: [], line: 'Different days. Different places. Same person I keep choosing.' },
+  // the film's titles (edit freely: "{signature}" becomes your signature line)
+  credits: {
+    opening: [
+      ['', 'A film for Dheepika'],
+      ['Starring', 'Dheepika'],
+      ['And', 'a garden that grew just for her'],
+      ['Music', 'a little music box, made for tonight'],
+      ['Written & directed by', '{signature}'],
+    ],
+    closing: 'Thank you for watching. Happy birthday.',
+  },
+  // your voice for the film: add short recordings here (media/…) and they play at these moments
+  narration: [],
   finale: {
     // HAPPY BIRTHDAY itself is saved for the sky at the very end
     headline: 'Every flower here is yours.',

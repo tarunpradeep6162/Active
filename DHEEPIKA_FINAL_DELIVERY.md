@@ -24,7 +24,12 @@ nothing on the page says it). To change the URL, add a domain or rename the proj
 | 5 | **The lantern sky**: a still night lake under the Milky Way, with a far shore of hills and pines. Paper lanterns rise off the water and their light shimmers in it. Twelve hover close; touching one lets its wish go. Its words rise, and it climbs into a star that stays in her sky. | `src/scenes/LanternSky.ts`, `src/scenes/NightLake.ts`, `LanternSkyLabel` |
 | 6 | **The finale**: over the same lake, the stars gather into *25 · 11*, then into **DHEEPIKA**, mirrored in the water. *Happy birthday* above, *25 · November* below, rose and champagne fireworks launched as rockets from the shore, the sun rising behind the hills right under her name with a golden path across the water, the final words one at a time, then **One last thing**: your voice note and last message. | `src/scenes/Constellation.ts`, `FinaleSky` |
 | + | **Someday** (inside chapter 12, Future Universe): a photographic manor at golden hour. It's a cream villa of our own design, with arched windows that reflect the sky, classical cornices, balustraded balconies, a porch of columns and an ivy arch. Rose blossom shrubs frame a gravel path, with full trees and a real cloudy sky. It's dressed with CC0 (public‑domain) Poly Haven assets: photoscanned plaster, grass and gravel, a captured sky for the lighting, and scanned shrubs. It loads about 5 MB, only when the chapter opens (credits in `public/manor/CREDITS.txt`). | `src/birthday/ui/ManorScene.ts`, `public/manor/` |
-| + | **Play the film** (button beside *Enter our garden*): the whole journey hands‑free, like a short movie (about 2½ minutes): the opening, the threshold, down through the garden, the cage opening and the candles going out, two lanterns let go over the lake, and the finale's sunrise. Letterboxed, with a small pause / stop control; her own scrolling or a key pauses it, Escape stops it | `src/ui/FilmMode.tsx` |
+| + | **Play the film** (button beside *Enter our garden*): the whole journey hands‑free, like a short movie (about 2½ minutes): the opening credits, the threshold, down through the garden, a hard cut to the cake as the cage opens and the candles go out, a cut to the lake to let two lanterns go, then the finale's sunrise and the end credits. It is scored: the sound comes up with it, the music gathers as the cage opens, holds its breath before the candles and swells at the sunrise. Letterboxed, with pause / sound / stop controls; her own scrolling or a key pauses it, Escape stops it. **Director's cut** (the button beside it) also steps into three chapters: the letter being written, the three gift boxes (left closed for her to choose herself) and the wish | `src/ui/FilmMode.tsx` |
+| + | **Your voice** (optional): record short lines and add them as `narration` in the content (moments: `opening`, `garden`, `cake`, `lanterns`, `sunrise`, with optional subtitle `text`); in the film they play at those moments and the music steps back while you speak | `narration` in the content |
+| + | **Opening credits**: as she scrolls through the opening night, film titles come up one by one in the lower third: *A film for Dheepika*, *Starring Dheepika*, … *Written & directed by* your signature line (edit them in `credits.opening`) | `OpeningCredits` in `src/ui/Cinema.tsx` |
+| + | **The paper flower**: the night opens on a folded paper flower in the dark that unfolds petal by petal like an invitation, then drifts away as the emblem comes to light (once per visit) | `PaperFlower` in `src/ui/Cinema.tsx` |
+| + | **Her own constellation**: once her name is written in the stars, *Draw your own stars* lets her draw across the sky with a finger or the mouse; every point becomes a twinkling star joined by faint gold lines, and it stays in that sky on her device | `FinaleTools` in `src/ui/Cinema.tsx` |
+| + | **End credits** (*Roll the credits* at the sunrise, and at the end of the film): the fourteen chapters roll up like the end of a movie, then *Made with love by* and your signature. After them, a post‑credits scene: the secret ending if she found every heart (or a hint that there are hearts to find), and **Replay your night**: a short film of title cards made from what she did (when she opened the cage and blew out the candles, the wishes she let go, how many chapters and hearts, the gift she chose, the stars she drew). It is remembered only in her browser | `EndCredits`, `Replay` in `src/ui/Cinema.tsx`, `src/ui/journal.ts` |
 | + | **Her birthday**: before 25 November the opening counts down to it (days, hours, minutes, seconds, on her own clock); on the day it says *It’s today ♥*. At midnight, or the first time she opens the site on the day, a surprise plays over whatever she is looking at: the screen goes dark, *Happy birthday* and her name come up like a title card, and rose and champagne fireworks fill the sky (with chimes if the music is on). It plays once per birthday. To preview it: add `?qa=1&now=2026-11-24T23:59:50` to the address | `src/ui/Birthday.tsx` |
 | + | **For you** (top‑right menu): a quiet room of its own, with a letterbox, drifting soft lights and a title card, and three glass cards that rise in turn: a message to future us (kept on her device), *Our next date* as an image, the letter as a PDF | `Contact` → For you, `src/birthday/keepsakes.ts` |
 | + | **Sound** (off by default): an original generative score that follows her through the journey (a hush of air under the stars, the music box in the garden, a warm room tone at the cake, water lapping at the lake, a crackle of fireworks at the finale), crossfading as she moves, and small sound effects for the moments: a chapter opening, the wax seal, a gift's ribbon, the candles going out, a lantern let go, a door, a star, a light leak | `src/audio/AudioEngine.ts` |
@@ -96,6 +101,27 @@ Without WebGL, the earlier flat versions come back.
 - **Camera**: in the cake room it pushes in slowly as the cake comes out of its cage. The lantern sky is framed level, and the finale drifts wide while the stars wander,
   then slowly pushes in as they spell DHEEPIKA.
 - **Light**: soft light shafts slant through the garden and warm toward sunset as she scrolls.
+- **The cinematographer** (`src/post/Director.ts`) runs the camera crew every frame:
+  - *focus pulls*: each new scene starts soft and the focus pulls in onto what the shot is about
+    (the emblem, the cake, the lanterns, her name), with the rest falling gently out of focus;
+  - *handheld*: close, emotional shots (the cake, the lanterns, the finale) breathe slightly, as if
+    held by someone; wide shots stay steady;
+  - *cuts*: the film cuts hard between scenes behind a blink of black;
+  - *lens*: a whisper of barrel distortion, softer edges and colour fringing at the corners;
+  - *light shafts*: light pours from the moon in the garden, the spotlight over the cake, the
+    lanterns and the sunrise, through whatever stands in front of it;
+  - *the hour*: the whole frame is graded to the time of night: blue night under the stars, violet
+    dusk at the threshold, moonlight turning to sunset in the garden, candlelight at the cake,
+    midnight over the lake, and dawn at the finale;
+  - *weather*: the lantern sky opens in a light rain (rings spread on the lake) that clears as the
+    lanterns rise; mist rolls low over the threshold and the first of the garden;
+  - *candlelight*: the lit candles warm the room around them and flicker; when they go out, the
+    room really goes dark.
+- **The garden grows**: tulips rise out of the ground and open as she descends to them, and a
+  single firefly flies ahead to the next chapter she hasn't reached, waiting there when she stops.
+- **Lanterns carry memories**: each lantern she lets go carries one of her photos, lit from
+  within, above its wish (once photos are added).
+- **The letter is written by hand**: wet ink settles letter by letter as a pen nib moves ahead.
 
 ## Art direction
 

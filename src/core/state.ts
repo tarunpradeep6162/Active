@@ -182,7 +182,15 @@ type Events = {
   /** midnight on her birthday (or her first visit on the day) */
   birthdayMidnight: void;
   /** play the whole journey as a film */
-  playFilm: void;
+  playFilm: 'film' | 'directors';
+  /** roll the end credits (the film's end, or she has stayed at the sunrise) */
+  rollCredits: void;
+  /** play back her own night as a short film of title cards */
+  replay: void;
+  /** the film's score: a musical cue for the shot (see AudioEngine.cue) */
+  filmCue: 'rise' | 'hush' | 'swell' | 'end' | 'reset';
+  /** narration is speaking: the music steps back */
+  duck: boolean;
   /** a hard cut in the film: jump straight to this journey progress behind a blink of black */
   filmCut: number;
   /** a sound for a moment (heard only while the sound is on) */

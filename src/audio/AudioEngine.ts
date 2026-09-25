@@ -67,6 +67,12 @@ export class AudioEngine {
     events.on('blowCandles', () => this.sfx('snuff'));
     events.on('lanternWish', () => this.sfx('lantern'));
     events.on('sfx', (k) => this.sfx(k));
+    // the film's score: the music follows the shots, and steps back under your voice
+    events.on('filmCue', (k) => this.cue(k));
+    events.on('duck', (on) => ((this.duckLevel = on ? 0.3 : 1), this.applyLevel(on ? 0.25 : 0.8)));
+    events.on('blowCandles', () => {
+      if (this.cueLevel < 1) setTimeout(() => ((this.cueLevel = 1.1), this.applyLevel(0.5)), 1200);
+    });
     // she turned the music on earlier in this session: resume on her next gesture
     if (readPref()) {
       const resume = () => {
@@ -399,9 +405,45 @@ export class AudioEngine {
     }
     const t = ctx.currentTime;
     this.master!.gain.cancelScheduledValues(t);
-    this.master!.gain.setTargetAtTime(this.on ? 0.9 : 0, t, 0.5);
+    this.master!.gain.setTargetAtTime(this.on ? 0.9 * this.cueLevel * this.duckLevel : 0, t, 0.5);
     store.set({ audioOn: this.on });
     if (!this.on) setTimeout(() => !this.on && ctx.suspend(), 1800);
+  }
+
+  private cueLevel = 1;
+  private duckLevel = 1;
+  private applyLevel(tc = 0.6) {
+    if (!this.ctx || !this.on) return;
+    this.master!.gain.setTargetAtTime(0.9 * this.cueLevel * this.duckLevel, this.ctx.currentTime, tc);
+  }
+
+  /**
+   * A cue from the film: rise (the music gathers as the cage opens) · hush (a held breath
+   * before the candles) · swell (the sunrise) · end (the credits) · reset (the film stopped).
+   */
+  cue(k: 'rise' | 'hush' | 'swell' | 'end' | 'reset') {
+    if (!this.ctx || !this.on) return;
+    const t = this.ctx.currentTime + 0.5;
+    const m = MIX[this.section] ?? MIX.work;
+    if (k === 'rise') {
+      this.cueLevel = 1.1;
+      this.padBus!.gain.setTargetAtTime(m.pad * 2.2, t, 2.5);
+      this.padLp!.frequency.setTargetAtTime(Math.max(m.bright, 2200), t, 2.5);
+    } else if (k === 'hush') {
+      this.cueLevel = 0.22;
+    } else if (k === 'swell') {
+      this.cueLevel = 1.2;
+      this.padBus!.gain.setTargetAtTime(m.pad * 3, t, 4);
+      this.padLp!.frequency.setTargetAtTime(3200, t, 4);
+      this.chime(2);
+    } else if (k === 'end') {
+      this.cueLevel = 0.75;
+      this.padLp!.frequency.setTargetAtTime(1200, t, 3);
+    } else {
+      this.cueLevel = 1;
+      this.section = '';
+    }
+    this.applyLevel(k === 'hush' ? 0.35 : 1.2);
   }
 
   update(_dt?: number) {

@@ -105,7 +105,7 @@ void main(){
   dof = max(dof, uLens * smoothstep(.16, .5, r2) * .35);
   if (dof > .001) {
     // a touch of lateral colour where the lens is soft
-    vec3 bl = vec3(texture(tBlur, uv + c * .006 * uLens).r, texture(tBlur, uv).g, texture(tBlur, uv - c * .006 * uLens).b);
+    vec3 bl = vec3(texture(tBlur, uv + c * .003 * uLens).r, texture(tBlur, uv).g, texture(tBlur, uv - c * .003 * uLens).b);
     col = mix(col, bl * 1.05, clamp(dof, 0., 1.));
   }
   if (uHasBloom > .5) col += texture(tBloom, uv).rgb * uBloomStrength;

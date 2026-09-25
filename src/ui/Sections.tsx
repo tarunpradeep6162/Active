@@ -87,8 +87,11 @@ export function IntroHint() {
         <button type="button" className="opening__enter" tabIndex={hidden ? -1 : 0} onClick={enter}>
           {c.opening.enter} <span aria-hidden="true">↓</span>
         </button>
-        <button type="button" className="opening__film" tabIndex={hidden ? -1 : 0} onClick={() => events.emit('playFilm', undefined)}>
+        <button type="button" className="opening__film" tabIndex={hidden ? -1 : 0} onClick={() => events.emit('playFilm', 'film')}>
           ▶ Play the film
+        </button>
+        <button type="button" className="opening__film opening__film--cut" tabIndex={hidden ? -1 : 0} onClick={() => events.emit('playFilm', 'directors')}>
+          Director’s cut
         </button>
       </div>
     </section>
