@@ -453,3 +453,61 @@ html.no-webgl #interface { position: static; pointer-events: auto; }
 /* (movement only: the menu must never depend on an animation to be visible) */
 @keyframes wp-in { from { transform: translateX(-12px); } }
 @media (prefers-reduced-motion: reduce) { .work-panel[data-hidden='false'] .work-panel__list li, .work-panel[data-hidden='false'] .work-panel__q { animation: none; } }
+
+/* ── the loader: a night coming out of the dark, before the film begins ─────────────── */
+.preloader__stars { position: absolute; inset: 0; opacity: .85;
+  background:
+    radial-gradient(1px 1px at 12% 18%, #fff4d6, transparent 60%), radial-gradient(1px 1px at 27% 72%, #f2c1cb, transparent 60%),
+    radial-gradient(1.4px 1.4px at 41% 33%, #fff, transparent 60%), radial-gradient(1px 1px at 58% 82%, #fff4d6, transparent 60%),
+    radial-gradient(1.2px 1.2px at 69% 22%, #fff, transparent 60%), radial-gradient(1px 1px at 83% 61%, #f2c1cb, transparent 60%),
+    radial-gradient(1.4px 1.4px at 91% 12%, #fff4d6, transparent 60%), radial-gradient(1px 1px at 6% 88%, #fff, transparent 60%),
+    radial-gradient(1px 1px at 35% 9%, #fff, transparent 60%), radial-gradient(1.2px 1.2px at 76% 91%, #fff4d6, transparent 60%),
+    radial-gradient(60% 50% at 50% 44%, rgba(106, 58, 90, .28), transparent 70%),
+    radial-gradient(90% 70% at 30% 90%, rgba(42, 36, 88, .35), transparent 70%);
+  animation: pl-twinkle 4s ease-in-out infinite alternate; }
+@keyframes pl-twinkle { to { opacity: .55; } }
+.preloader__frame { position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(#030206 0 4vh, transparent 4vh calc(100% - 4vh), #030206 calc(100% - 4vh)), radial-gradient(130% 100% at 50% 50%, transparent 55%, rgba(3, 2, 8, .7)); }
+.preloader__bud { filter: drop-shadow(0 0 calc(10px + var(--p) * 26px) rgba(243, 223, 167, calc(.2 + var(--p) * .5))); }
+.preloader__label { animation: pl-breathe 3.2s ease-in-out infinite; }
+@keyframes pl-breathe { 50% { letter-spacing: .42em; opacity: .55; } }
+.preloader__bar { position: absolute; left: 50%; top: calc(44% + 112px); width: min(220px, 50vw); height: 1px; translate: -50% 0; background: rgba(230, 201, 137, .15); overflow: hidden; }
+.preloader__bar span { position: absolute; inset: 0; transform-origin: left; background: linear-gradient(90deg, rgba(232, 166, 181, .4), #f3dfa7); box-shadow: 0 0 8px rgba(243, 223, 167, .8); transition: transform .6s ease; }
+/* the moment it is ready: the bud flares into light as the night opens */
+.preloader.is-done .preloader__bud { transform: scale(1.6); transition: transform 700ms cubic-bezier(.3, .6, .3, 1); filter: drop-shadow(0 0 60px rgba(255, 244, 214, .9)); }
+@media (prefers-reduced-motion: reduce) { .preloader__stars, .preloader__label { animation: none; } }
+
+/* ── For you: a quiet room of its own, with a title card ─────────────────────────────── */
+.foryou { z-index: 19; background: #07060f; } /* just beneath the nav pill (20) */
+/* the opening's titles never show through */
+.opening { opacity: calc(var(--reveal) * (1 - var(--scroll-intro-out, 0)) * (1 - var(--overlay, 0))); }
+.foryou__sky { position: fixed; inset: 0; pointer-events: none; z-index: -1;
+  background:
+    radial-gradient(50% 40% at 20% 20%, rgba(176, 74, 102, .22), transparent 70%),
+    radial-gradient(45% 45% at 85% 30%, rgba(90, 60, 150, .22), transparent 70%),
+    radial-gradient(60% 40% at 50% 100%, rgba(214, 180, 106, .14), transparent 70%),
+    radial-gradient(1px 1px at 14% 36%, #fff, transparent 60%), radial-gradient(1px 1px at 33% 12%, #fff4d6, transparent 60%),
+    radial-gradient(1.3px 1.3px at 62% 18%, #fff, transparent 60%), radial-gradient(1px 1px at 78% 70%, #f2c1cb, transparent 60%),
+    radial-gradient(1.2px 1.2px at 90% 44%, #fff, transparent 60%), radial-gradient(1px 1px at 8% 76%, #fff4d6, transparent 60%),
+    #07060f; }
+.foryou__sky::before { content: ''; position: absolute; inset: -20%;
+  background: radial-gradient(8% 8% at 20% 30%, rgba(255, 190, 160, .16), transparent 70%), radial-gradient(6% 6% at 75% 60%, rgba(243, 223, 167, .14), transparent 70%), radial-gradient(10% 10% at 55% 85%, rgba(232, 166, 181, .12), transparent 70%);
+  animation: fy-drift 26s ease-in-out infinite alternate; }
+.foryou__sky::after { content: ''; position: absolute; inset: 0;
+  background: linear-gradient(#030206 0 3.4vh, transparent 3.4vh calc(100% - 3.4vh), #030206 calc(100% - 3.4vh)), radial-gradient(130% 100% at 50% 50%, transparent 55%, rgba(3, 2, 8, .6)); }
+@keyframes fy-drift { to { transform: translate(6%, -4%) scale(1.08); } }
+.foryou__kicker { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.foryou__kicker::before, .foryou__kicker::after { content: ''; width: clamp(28px, 6vw, 80px); height: 1px; background: linear-gradient(90deg, transparent, rgba(230, 201, 137, .7)); }
+.foryou__kicker::after { background: linear-gradient(270deg, transparent, rgba(230, 201, 137, .7)); }
+.foryou__title { background: linear-gradient(100deg, var(--soft) 42%, #fff4d6 50%, var(--soft) 58%) 120% 0 / 260% 100% no-repeat; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; text-shadow: none; }
+.foryou.is-open .foryou__title { animation: fy-title 1.6s cubic-bezier(.2, .7, .2, 1) .15s both, fy-sheen 2.4s ease-in-out 1.6s both; }
+@keyframes fy-title { from { letter-spacing: .12em; filter: blur(6px); } }
+@keyframes fy-sheen { from { background-position: 120% 0; } to { background-position: -20% 0; } }
+/* the cards: glass with a gold edge, rising one after another */
+.foryou__card { position: relative; background: linear-gradient(160deg, rgba(248, 241, 232, .06), rgba(248, 241, 232, .015)); border-color: rgba(230, 201, 137, .3); box-shadow: 0 30px 60px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 244, 214, .12); backdrop-filter: blur(6px); transition: transform .5s ease, box-shadow .5s ease, border-color .5s ease; }
+.foryou__card::before { content: attr(data-icon); position: absolute; right: 18px; top: 14px; font: 22px var(--serif); color: rgba(230, 201, 137, .55); }
+.foryou__card:hover, .foryou__card:focus-within { transform: translateY(-4px); border-color: rgba(230, 201, 137, .55); box-shadow: 0 36px 70px rgba(0, 0, 0, .4), 0 0 40px rgba(243, 223, 167, .08), inset 0 1px 0 rgba(255, 244, 214, .18); }
+.foryou.is-open .foryou__card { animation: fy-rise 1s cubic-bezier(.2, .7, .2, 1) both; }
+.foryou.is-open .foryou__card:nth-child(1) { animation-delay: .35s; } .foryou.is-open .foryou__card:nth-child(2) { animation-delay: .5s; } .foryou.is-open .foryou__card:nth-child(3) { animation-delay: .65s; }
+@keyframes fy-rise { from { transform: translateY(18px); } }
+@media (prefers-reduced-motion: reduce) { .foryou__sky::before, .foryou.is-open .foryou__card, .foryou.is-open .foryou__title { animation: none; } }

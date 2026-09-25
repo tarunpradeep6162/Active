@@ -17,6 +17,9 @@ export function Preloader() {
   const p = Math.max(0.04, progress);
   return (
     <div className={`preloader ${loaded ? 'is-done' : ''}`} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} aria-label="Gathering memories">
+      {/* a night coming out of the dark, framed like a film before it begins */}
+      <div className="preloader__stars" aria-hidden="true" />
+      <div className="preloader__frame" aria-hidden="true" />
       <svg className="preloader__bud" viewBox="-40 -60 80 120" aria-hidden="true" style={{ ['--p' as string]: p }}>
         <defs>
           <radialGradient id="bud-light" cx="50%" cy="60%" r="60%">
@@ -32,6 +35,9 @@ export function Preloader() {
         <path d="M0 -38 C-5 -26 -5 -12 0 -2" />
       </svg>
       <p className="preloader__label">Gathering memories…</p>
+      <div className="preloader__bar" aria-hidden="true">
+        <span style={{ transform: `scaleX(${p})` }} />
+      </div>
     </div>
   );
 }
@@ -538,10 +544,13 @@ export function Contact() {
   const picks = c.thisOrThat.map((pair, k) => (prog.thisOrThat[k] !== undefined ? pair[prog.thisOrThat[k]] : null)).filter(Boolean) as string[];
   return (
     <section className={`contact foryou ${mounted ? 'is-open' : ''}`} aria-hidden={!open} aria-label="For you" role="dialog" aria-modal={open}>
-      <p className="foryou__kicker">25 · 11</p>
+      <div className="foryou__sky" aria-hidden="true" />
+      <p className="foryou__kicker">
+        <span>25 · 11</span>
+      </p>
       <h2 className="foryou__title">For you</h2>
       <div className="foryou__grid">
-        <article className="foryou__card">
+        <article className="foryou__card" data-icon="✉">
           <h3>A message to future us</h3>
           <label className="sr-only" htmlFor="future-us">
             {c.futurePrompt}
@@ -566,7 +575,7 @@ export function Contact() {
           </div>
           <p className="foryou__note">{saved ? 'Saved — ' : ''}Kept only on this device. Clearing the browser’s data removes it; nothing is sent anywhere.</p>
         </article>
-        <article className="foryou__card">
+        <article className="foryou__card" data-icon="✦">
           <h3>Our next date</h3>
           {picks.length ? (
             <ul className="foryou__picks">
@@ -581,7 +590,7 @@ export function Contact() {
             Save as an image
           </button>
         </article>
-        <article className="foryou__card">
+        <article className="foryou__card" data-icon="❦">
           <h3>Keep the letter</h3>
           <p className="foryou__note">The letter from the garden, as a small PDF to keep.</p>
           <button type="button" onClick={() => saveLetterPdf(c)}>
