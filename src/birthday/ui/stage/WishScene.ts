@@ -14,6 +14,7 @@ export class WishScene extends Stage {
   private sparkU = { uTime: this.u.uTime, uK: { value: 0 }, uPx: this.u.uPx };
   private light: THREE.PointLight;
   private halo: THREE.Mesh;
+  private bokeh!: THREE.Points;
   private hold = 0;
   private outAt = -1;
   private readonly wickY = 1.72;
@@ -60,6 +61,43 @@ export class WishScene extends Stage {
     candle.add(dish);
     candle.position.y = -1.3;
     this.scene.add(candle);
+
+    // a polished dark table the candle stands on, holding its light
+    const table = new THREE.Mesh(
+      this.track(new THREE.CylinderGeometry(3.4, 3.4, 0.12, 96)),
+      this.track(new THREE.MeshPhysicalMaterial({ color: '#120805', roughness: 0.4, metalness: 0.05, clearcoat: 0.8, clearcoatRoughness: 0.2, envMapIntensity: 0.12 })),
+    );
+    table.position.y = -1.305 - 0.06;
+    table.receiveShadow = true;
+    this.scene.add(table);
+    // warm lights far behind, softly out of focus
+    const nb = this.low ? 26 : 46;
+    const bp = new Float32Array(nb * 3), bs = new Float32Array(nb);
+    for (let i = 0; i < nb; i++) {
+      bp.set([(Math.random() - 0.5) * 22, -0.5 + Math.random() * 6, -9 - Math.random() * 6], i * 3);
+      bs[i] = Math.random();
+    }
+    const bg = this.track(new THREE.BufferGeometry());
+    bg.setAttribute('position', new THREE.BufferAttribute(bp, 3));
+    bg.setAttribute('aSeed', new THREE.BufferAttribute(bs, 1));
+    this.bokeh = new THREE.Points(
+      bg,
+      this.track(
+        new THREE.ShaderMaterial({
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+          uniforms: { uTime: this.u.uTime, uPx: this.u.uPx, uA: { value: 1 } },
+          vertexShader: `attribute float aSeed; uniform float uTime, uPx, uA; varying float vA; varying float vS;
+            void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.); gl_Position = projectionMatrix * mv;
+              vA = uA * (.5 + .5 * sin(uTime * (.4 + aSeed) + aSeed * 40.)); vS = aSeed; gl_PointSize = uPx * (6. + aSeed * 8.) / -mv.z; }`,
+          fragmentShader: `varying float vA; varying float vS; void main(){ float d = length(gl_PointCoord - .5); float a = smoothstep(.5, .4, d) * (.35 + .15 * smoothstep(.3, .47, d)) * vA * .22;
+            gl_FragColor = vec4(mix(vec3(1., .7, .4), vec3(1., .55, .6), step(.7, vS)) * a, a); }`,
+        }),
+      ),
+    );
+    this.bokeh.frustumCulled = false;
+    this.scene.add(this.bokeh);
 
     // warm light from the flame
     this.light = new THREE.PointLight('#ffb05a', 30, 18, 1.5);
@@ -213,6 +251,7 @@ export class WishScene extends Stage {
     this.light.intensity = 30 * flick * (1 - out) + 18 * (o < 0 ? 0 : ease(1.6, 3, o) * (1 - ease(5, 9, o)));
     this.light.color.set(o > 1.5 ? '#ffd28a' : '#ffb05a');
     (this.halo.material as THREE.ShaderMaterial).uniforms.uA.value = (1 + this.hold * 0.6) * (1 - out);
+    (this.bokeh.material as THREE.ShaderMaterial).uniforms.uA.value = (1 - this.hold * 0.6) * (1 - out * 0.7) + (o < 0 ? 0 : ease(2, 5, o) * 0.9);
     this.smokeU.uK.value = o < 0 ? 0 : ease(0.1, 3.6, o);
     this.sparkU.uK.value = o < 0 ? 0 : ease(1.3, 7.5, o) * 1.6;
     this.u.uGlow.value = 0.5 * (1 - out) + (o < 0 ? 0 : ease(2, 5, o) * 0.7);

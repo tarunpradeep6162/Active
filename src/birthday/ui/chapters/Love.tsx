@@ -291,7 +291,7 @@ export function Wish({ slug, onDone }: ChapterProps) {
     }
   };
   return (
-    <div className="bd-wish" data-stage={stage} data-live={scene.live}>
+    <div className="bd-wish" data-stage={stage} data-live={scene.live} style={{ ['--hold' as string]: hold }}>
       <Backdrop canvas={scene.ref} />
       {!scene.live && (
         <div className="bd-candle" style={{ ['--hold' as string]: hold }}>
@@ -303,7 +303,7 @@ export function Wish({ slug, onDone }: ChapterProps) {
         <>
           <p className="bd-hint">Close your eyes. Make a wish. Then hold the candle until it goes out.</p>
           <div className="bd-row">
-            <button type="button" className="bd-btn" onPointerDown={startHold} onPointerUp={stopHold} onPointerLeave={stopHold} onKeyDown={(e) => e.key === ' ' && startHold()} onKeyUp={stopHold}>
+            <button type="button" className="bd-btn bd-wish__hold" onPointerDown={startHold} onPointerUp={stopHold} onPointerLeave={stopHold} onKeyDown={(e) => e.key === ' ' && startHold()} onKeyUp={stopHold}>
               Hold to blow
             </button>
             {mic === 'off' && typeof navigator !== 'undefined' && navigator.mediaDevices && (

@@ -55,6 +55,7 @@ export class GiftScene {
   onRevealed?: () => void;
   private revealedFired = false;
   private hits: THREE.Mesh[] = [];
+  private beams: THREE.ShaderMaterial[] = [];
   private hitMat = new THREE.MeshBasicMaterial({ visible: false });
 
   constructor(private canvas: HTMLCanvasElement, opened: number | null) {
@@ -130,24 +131,43 @@ export class GiftScene {
     s.add(rim, rim.target);
 
     const X = [-2.35, 0, 2.35];
-    WRAPS.forEach((w, i) => this.boxes.push(this.makeBox(w, i, new THREE.Vector3(X[i], 0, i === 1 ? -0.35 : 0))));
+    // each box on its own small stage: a velvet plinth with a rose‑gold rim
+    const PH = 0.42;
+    const plinthTop = this.track(new THREE.MeshPhysicalMaterial({ color: '#2a1224', roughness: 0.85, sheen: 1, sheenColor: new THREE.Color('#c0607e'), sheenRoughness: 0.5 }));
+    const rimGold = this.track(new THREE.MeshPhysicalMaterial({ color: '#e8b48c', metalness: 1, roughness: 0.28, clearcoat: 0.5 }));
+    X.forEach((x, i) => {
+      const z = i === 1 ? -0.35 : 0;
+      const plinth = new THREE.Mesh(this.track(new THREE.CylinderGeometry(0.98, 1.05, PH, 64)), plinthTop);
+      plinth.position.set(x, PH / 2, z);
+      plinth.castShadow = plinth.receiveShadow = true;
+      const rim = new THREE.Mesh(this.track(new THREE.TorusGeometry(0.985, 0.022, 12, 96).rotateX(Math.PI / 2)), rimGold);
+      rim.position.set(x, PH, z);
+      const foot = new THREE.Mesh(this.track(new THREE.TorusGeometry(1.05, 0.02, 12, 96).rotateX(Math.PI / 2)), rimGold);
+      foot.position.set(x, 0.02, z);
+      s.add(plinth, rim, foot);
+    });
+    WRAPS.forEach((w, i) => this.boxes.push(this.makeBox(w, i, new THREE.Vector3(X[i], PH, i === 1 ? -0.35 : 0))));
 
     // soft spotlight beams from above (additive cones)
-    const beamMat = this.track(
-      new THREE.ShaderMaterial({
-        transparent: true,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-        side: THREE.DoubleSide,
-        uniforms: { uTime: this.sparkleU.uTime },
-        vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }`,
-        fragmentShader: `uniform float uTime; varying vec2 vUv;
-          void main(){ float a = pow(1. - vUv.y, 1.6) * .07 * (.85 + .15 * sin(uTime * .7 + vUv.x * 12.)); a *= smoothstep(0., .2, vUv.x) * smoothstep(1., .8, vUv.x) + .5;
-          gl_FragColor = vec4(vec3(1., .86, .7) * a, a); }`,
-      }),
-    );
+    // one spotlight per box: they breathe while she decides, then the chosen one blazes and the others fade
+    const beamMat = () =>
+      this.track(
+        new THREE.ShaderMaterial({
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+          side: THREE.DoubleSide,
+          uniforms: { uTime: this.sparkleU.uTime, uA: { value: 1 } },
+          vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }`,
+          fragmentShader: `uniform float uTime, uA; varying vec2 vUv;
+            void main(){ float a = pow(1. - vUv.y, 1.6) * .1 * uA * (.85 + .15 * sin(uTime * .7 + vUv.x * 12.)); a *= smoothstep(0., .2, vUv.x) * smoothstep(1., .8, vUv.x) + .5;
+            gl_FragColor = vec4(vec3(1., .86, .7) * a, a); }`,
+        }),
+      );
     for (const b of this.boxes) {
-      const cone = new THREE.Mesh(this.track(new THREE.CylinderGeometry(0.35, 1.35, 7, 32, 1, true)), beamMat);
+      const m = beamMat();
+      this.beams.push(m);
+      const cone = new THREE.Mesh(this.track(new THREE.CylinderGeometry(0.35, 1.35, 7, 32, 1, true)), m);
       cone.position.set(b.home.x, 3.5 + 0.2, b.home.z);
       s.add(cone);
     }
@@ -402,6 +422,11 @@ export class GiftScene {
     this.boxes.forEach((b, i) => {
       b.hover += ((h === i ? 1 : 0) - b.hover) * 0.12;
       const mine = i === this.chosen;
+      const beam = this.beams[i];
+      if (beam) {
+        const want = this.chosen < 0 ? 1 + b.hover * 0.8 + (this.still ? 0 : Math.sin(t * 0.9 + i * 2) * 0.12) : mine ? 2.2 : 0.2;
+        beam.uniforms.uA.value += (want - beam.uniforms.uA.value) * 0.06;
+      }
       const float = this.still ? 0 : Math.sin(t * 1.1 + i * 2.1) * 0.06;
       const sink = this.chosen >= 0 && !mine ? ease(0, 1.4, o) : 0;
       b.group.position.set(b.home.x, b.home.y + float + b.hover * 0.22 - sink * 0.35, b.home.z);

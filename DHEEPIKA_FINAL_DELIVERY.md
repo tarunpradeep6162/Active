@@ -49,8 +49,8 @@ Without WebGL, the earlier flat versions come back.
 | 7 | Our Secret | A brass cryptex with one engraved ring per clue. A right answer turns its ring to the symbol and lights it; a wrong one makes it shudder. With all five aligned it opens and light pours out. |
 | 8 | Music Room | A walnut record player. Choosing a song writes the title on the label, the tonearm finds the groove, the record spins up and notes rise. |
 | 9 | Our Timeline | A river of light winding into the stars, with a numbered lantern at every date. Moving through the story carries the camera along it; each date opens with a title card and its words arrive line by line, while a thread of gold lights the date strip up to where she is. The last stop opens onto a horizon. |
-| 10 | Choose a Gift | Three satin boxes. The one she chooses opens. |
-| 11 | Make a Wish | One candle. Its flame leans while she holds, then goes out in a curl of smoke, and her wish climbs as a spiral of gold sparks. |
+| 10 | Choose a Gift | Three satin boxes, each on a velvet plinth with a rose‑gold rim under its own spotlight that brightens as she hovers. The one she chooses blazes and opens while the others dim, and its message arrives on a gold‑foil keepsake card. |
+| 11 | Make a Wish | One candle on a dark polished table, with warm lights out of focus behind it. While she holds, the room closes in around the flame and a ring of gold fills round the button; then it goes out in a curl of smoke, and her wish climbs as a spiral of gold sparks. |
 | 12 | Future Universe | The manor at golden hour, behind the possibilities. |
 | 13 | Our Little Movie | A velvet cinema. The house lights dim, the curtains part and a projector beam lights the screen. Until her clips are added, the screen runs a film‑leader countdown. |
 | 14 | For Dheepika | Door 25: a gold arched door whose lights count the open chapters. It swings open, hearts and light pour through, and the camera passes into the light before the finale. |
