@@ -75,6 +75,9 @@ export const state = {
   wishHold: 0,
   /** 0..1 how hard she is blowing at the cake's candles (hold button or microphone) */
   cakeBlow: 0,
+  /** the film is playing (letterbox on) · and it is blowing the candles for her */
+  filmOn: false,
+  filmBlow: false,
   /** 0…1 progress through the finale sky (outro) */
   finaleLocal: 0,
   /** half the height of her name in stars, on screen (px) */
@@ -174,6 +177,8 @@ type Events = {
   toggleAudio: void;
   /** midnight on her birthday (or her first visit on the day) */
   birthdayMidnight: void;
+  /** play the whole journey as a film */
+  playFilm: void;
   scrollTo: number;
 };
 type Handler<T> = (payload: T) => void;

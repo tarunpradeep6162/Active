@@ -543,3 +543,23 @@ html.no-webgl #interface { position: static; pointer-events: auto; }
 @keyframes md-rise { from { opacity: 0; transform: translateY(10px); filter: blur(4px); } }
 @keyframes md-name { from { opacity: 0; letter-spacing: .4em; filter: blur(12px); } }
 @media (prefers-reduced-motion: reduce) { .midnight *, .midnight::before, .midnight::after { animation-duration: 1ms !important; animation-delay: 0s !important; } }
+
+/* ── the opening's two ways in, and the film ─────────────────────────────────────────── */
+.opening__actions { position: absolute; left: 0; right: 0; top: 80vh; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 12px; padding: 0 16px; pointer-events: none; }
+.opening__actions .opening__enter { position: static; translate: none; }
+.opening__film { pointer-events: auto; min-height: 46px; padding: 0 22px; border-radius: 999px; border: 1px solid rgba(242, 193, 203, .35); background: rgba(7, 9, 20, .25); color: var(--rose-3, #f2c1cb);
+  font: 11px var(--mono); letter-spacing: .24em; text-transform: uppercase; cursor: pointer; animation: op-in 1.6s ease 10s both; }
+.opening__film:hover, .opening__film:focus-visible { border-color: var(--rose-2, #e8a6b5); background: rgba(232, 166, 181, .1); }
+@media (max-width: 700px) { .opening__actions { top: 77vh; } }
+@media (max-height: 500px) and (orientation: landscape) { .opening__actions { top: auto; bottom: calc(10px + var(--safe-bottom)); } }
+
+/* while the film plays: the page's controls step aside */
+html.is-film :is(.work-panel, .endcap, .journey-line, .opening__actions, .lab-label__actions, .finale-sky__last) { opacity: 0 !important; pointer-events: none !important; transition: opacity .8s ease; }
+html.is-film .nav { opacity: .35; transition: opacity .8s ease; }
+html.is-film .nav:hover, html.is-film .nav:focus-within { opacity: 1; }
+.film-controls { position: fixed; left: 50%; bottom: calc(9vh + var(--safe-bottom, 0px)); translate: -50% 0; z-index: 70; display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 16px; border-radius: 999px;
+  background: rgba(7, 6, 12, .55); border: 1px solid rgba(243, 223, 167, .25); backdrop-filter: blur(6px); animation: md-rise 1s ease both; }
+.film-controls__label { font: 10px var(--mono); letter-spacing: .24em; text-transform: uppercase; color: rgba(243, 223, 167, .75); white-space: nowrap; }
+.film-controls button { min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(243, 223, 167, .35); background: none; color: var(--champagne-3, #f3dfa7); font: 10px var(--mono); letter-spacing: .18em; text-transform: uppercase; cursor: pointer; }
+.film-controls button:hover, .film-controls button:focus-visible { background: rgba(243, 223, 167, .12); }
+@media (max-width: 480px) { .film-controls__label { display: none; } }

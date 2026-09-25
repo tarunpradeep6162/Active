@@ -81,9 +81,14 @@ export function IntroHint() {
         {wish && <span className="opening__wish">{c.opening.shootingStar}</span>}
       </button>
       <h2 className="opening__name">{c.name}</h2>
-      <button type="button" className="opening__enter" tabIndex={hidden ? -1 : 0} onClick={enter}>
-        {c.opening.enter} <span aria-hidden="true">↓</span>
-      </button>
+      <div className="opening__actions">
+        <button type="button" className="opening__enter" tabIndex={hidden ? -1 : 0} onClick={enter}>
+          {c.opening.enter} <span aria-hidden="true">↓</span>
+        </button>
+        <button type="button" className="opening__film" tabIndex={hidden ? -1 : 0} onClick={() => events.emit('playFilm', undefined)}>
+          ▶ Play the film
+        </button>
+      </div>
     </section>
   );
 }
@@ -216,7 +221,7 @@ export function LabLabel() {
       const dt = Math.min(0.1, (now - last) / 1000);
       last = now;
       // hold: ~1.6 s of steady blowing; the microphone: sustained breath above the room's noise
-      const push = holding.current ? 0.65 : micLevel.current > 0.06 ? Math.min(1.4, micLevel.current * 9) : 0;
+      const push = holding.current || state.filmBlow ? 0.65 : micLevel.current > 0.06 ? Math.min(1.4, micLevel.current * 9) : 0;
       blow = state.cakeReady ? Math.max(0, Math.min(1, blow + (push > 0 ? push * dt : -dt * 0.8))) : 0;
       state.cakeBlow = blow;
       setHold((h) => (Math.abs(h - blow) > 0.01 || (blow === 0 && h !== 0) ? blow : h));

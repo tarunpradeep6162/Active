@@ -4,6 +4,7 @@ import { useStore } from './useStore';
 import { ChapterView } from '../birthday/ui/ChapterView';
 import { CursorTrail } from './CursorTrail';
 import { MidnightSurprise } from './Birthday';
+import { FilmMode } from './FilmMode';
 import '../birthday/ui/birthday.css';
 
 export function App() {
@@ -32,6 +33,7 @@ export function App() {
           <Nav />
           <div className="journey-line" aria-hidden="true" />
           <MidnightSurprise />
+          <FilmMode />
         </>
       )}
       <WebGLLost />

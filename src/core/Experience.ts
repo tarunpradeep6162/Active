@@ -372,7 +372,7 @@ export class Experience {
     // letterbox for the two big moments: the cake leaving its cage, and her name in the stars
     const cinema = state.reducedMotion
       ? 0
-      : Math.max(state.section === 'lab' && state.cageOpen && !state.cakeReady ? 1 : 0, state.section === 'intro' && state.reveal > 0.5 && state.sectionProgress < 0.08 ? 1 : 0, state.section === 'outro' ? Math.min(1, Math.max(0, (state.finaleLocal - 0.5) / 0.1)) * (1 - Math.min(1, Math.max(0, (state.finaleLocal - 0.9) / 0.08))) : 0);
+      : Math.max(state.filmOn ? 1 : 0, state.section === 'lab' && state.cageOpen && !state.cakeReady ? 1 : 0, state.section === 'intro' && state.reveal > 0.5 && state.sectionProgress < 0.08 ? 1 : 0, state.section === 'outro' ? Math.min(1, Math.max(0, (state.finaleLocal - 0.5) / 0.1)) * (1 - Math.min(1, Math.max(0, (state.finaleLocal - 0.9) / 0.08))) : 0);
     cu.uLetterbox.value += (cinema - cu.uLetterbox.value) * Math.min(1, dt * 1.6);
 
     this.ui.update();
