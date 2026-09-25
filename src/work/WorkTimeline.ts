@@ -90,8 +90,8 @@ export interface WorkCameraConfig {
   seam: SeamConfig;
 }
 
-export const WORK_DESKTOP: WorkCameraConfig = { rows: WORK_CAMERA_DESKTOP, fov: 35, cardCentres: CARD_CENTRES_DESKTOP, seam: SEAM_DESKTOP };
-export const WORK_PHONE: WorkCameraConfig = { rows: WORK_CAMERA_PHONE, fov: 55, cardCentres: CARD_CENTRES_PHONE, seam: SEAM_PHONE };
+const WORK_DESKTOP: WorkCameraConfig = { rows: WORK_CAMERA_DESKTOP, fov: 35, cardCentres: CARD_CENTRES_DESKTOP, seam: SEAM_DESKTOP };
+const WORK_PHONE: WorkCameraConfig = { rows: WORK_CAMERA_PHONE, fov: 55, cardCentres: CARD_CENTRES_PHONE, seam: SEAM_PHONE };
 
 /**
  * SceneState = f(workProgress): the camera orbits the static spine, descending, always

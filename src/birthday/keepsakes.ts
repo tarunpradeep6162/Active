@@ -5,8 +5,8 @@
  * The PDF is assembled here from page images (one JPEG per page) — no external library.
  */
 import type { BirthdayContent } from './types';
+import { SERIF } from '../utils/fonts';
 
-const SERIF = "'Cormorant Garamond', Georgia, serif";
 const HAND = "'Caveat', 'Segoe Script', cursive";
 const MONO = "'Share Tech Mono', ui-monospace, monospace";
 

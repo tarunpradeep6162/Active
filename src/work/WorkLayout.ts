@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 /**
- * Work‑scene layout, measured from the rendered reference scene (see WORK_SCROLL_MAP.md).
+ * Work‑scene layout, measured from the rendered reference scene (see docs/history/WORK_SCROLL_MAP.md).
  * All values are in the work scene's local space; WORK_ORIGIN places that space in our world.
  *
  *  spine    40 vertebrae on the Y axis, 0.65 apart, top at y 7.45, each twisted a further
@@ -23,7 +23,7 @@ export const HELIX_PHONE: HelixConfig = { radius: 3.8, startY: 4, stepDeg: -35, 
 // reference transform is 4 × 2.6 but its geometry spans ±0.38, so the visible card is 3.04 × 1.98
 export const CARD = { w: 3.04, h: 1.98 };
 /** Phone card (measured at 390×844: 0.725 × the desktop width, 1.03 × its height — near square). */
-export const CARD_PHONE = { w: 2.2, h: 2.04 };
+const CARD_PHONE = { w: 2.2, h: 2.04 };
 /** Active helix and card size — switched with the device class (see setWorkDevice). */
 export let HELIX: HelixConfig = HELIX_DESKTOP;
 export let CARD_SIZE = CARD;
@@ -31,8 +31,6 @@ export function setHelix(h: HelixConfig) {
   HELIX = h;
   CARD_SIZE = h === HELIX_PHONE ? CARD_PHONE : CARD;
 }
-export const CHAIN = { top: 3, count: 80 };
-export const GLITTER_CENTER_Y = -4.5;
 
 /** Local position and outward‑facing yaw of helix slot i. */
 export function helixSlot(i: number, out = new THREE.Vector3()) {

@@ -56,7 +56,3 @@ export function chooseThisOrThat(i: number, pick: 0 | 1) {
   data = { ...data, thisOrThat: { ...data.thisOrThat, [i]: pick } };
   save();
 }
-export function resetProgress() {
-  data = empty();
-  save();
-}

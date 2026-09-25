@@ -3,7 +3,6 @@ import { Ribbon } from './Ribbon';
 import { Sparks } from '../particles/Sparks';
 import { state } from '../core/state';
 import { damp } from '../utils/math';
-import type { Multiuser } from '../interaction/Multiuser';
 
 const DEPTH = 5.5;
 
@@ -20,17 +19,14 @@ export class TrailSystem {
   readonly group = new THREE.Group();
   readonly sparks = new Sparks();
   private local: TrailSet;
-  private remote = new Map<string, TrailSet>();
-  private pool: TrailSet[] = [];
   private ndc = new THREE.Vector3();
   private world = new THREE.Vector3();
   private dir = new THREE.Vector3();
   readonly pointerWorld = new THREE.Vector3(0, 0, -999);
 
-  constructor(strands: number, private multi: Multiuser | null) {
+  constructor(strands: number) {
     this.local = this.makeSet(strands);
     this.group.add(this.sparks.points);
-    for (let i = 0; i < 8; i++) this.pool.push(this.makeSet(Math.min(2, strands)));
   }
 
   private makeSet(n: number): TrailSet {
@@ -89,25 +85,6 @@ export class TrailSystem {
     this.toWorld(p.x, p.y, camera, this.pointerWorld);
     for (const s of this.local.strands) s.update(state.time, camera);
 
-    if (this.multi) {
-      for (const [id, peer] of this.multi.peers) {
-        let set = this.remote.get(id);
-        if (!set) {
-          set = this.pool.pop();
-          if (!set) continue;
-          this.remote.set(id, set);
-        }
-        this.feed(set, peer.x, peer.y, peer.speed, dt, camera, false);
-      }
-      for (const [id, set] of this.remote) {
-        if (!this.multi.peers.has(id)) {
-          set.strands.forEach((s) => s.clear());
-          set.started = false;
-          this.remote.delete(id);
-          this.pool.push(set);
-        } else set.strands.forEach((s) => s.update(state.time, camera));
-      }
-    }
     this.sparks.update(dt);
   }
 }

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { Stage, makeNebula, ease } from './Stage';
+import { SERIF } from '../../../utils/fonts';
 
 /**
  * Chapter 3 · The Letter — a sealed envelope floating in warm candlelight. Opening it: the wax
@@ -151,7 +152,7 @@ export class LetterScene extends Stage {
       const w = 300 + Math.random() * 120;
       for (let x = 60; x < 60 + w; x += 8 + Math.random() * 18) g.fillRect(x, y + Math.sin(x * 0.2) * 1.5, 4 + Math.random() * 10, 2);
     }
-    g.font = "italic 34px 'Cormorant Garamond', Georgia, serif";
+    g.font = `italic 34px ${SERIF}`;
     g.fillStyle = 'rgba(58, 34, 38, .8)';
     g.fillText('Dear Dheepika,', 56, 44);
     const t = this.track(new THREE.CanvasTexture(c));

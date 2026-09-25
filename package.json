@@ -8,7 +8,6 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "realtime": "node server/realtime.mjs",
     "vault": "node scripts/vault.mjs"
   },
   "dependencies": {
@@ -29,7 +28,6 @@
     "playwright": "^1.56.1",
     "sharp": "^0.35.4",
     "typescript": "^7.0.2",
-    "vite": "^8.3.0",
-    "ws": "^8.21.3"
+    "vite": "^8.3.0"
   }
 }

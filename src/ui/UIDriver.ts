@@ -70,7 +70,7 @@ export class UIDriver {
  * section length), pinned for m ∈ [0, 0.2], then leaving upward at ≈42 vh per section length.
  * Shared with the headline ring's timing in World.
  */
-export function headlineShift(m: number, phone = false) {
+function headlineShift(m: number, phone = false) {
   if (m < 0) return -m * 112;
   // phone (390×844): no pin, a steady climb of ≈34 vh per section length (1.7 vh per 1 % of work;
   // the phone headline section spans work p −0.2 … 0, so m = 0.5 at work p −0.1)

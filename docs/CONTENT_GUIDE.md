@@ -1,7 +1,8 @@
-# For Dheepika — how to fill in the Work chapters
+# For Dheepika — how to fill in the chapters
 
-The Work helix now carries 14 birthday chapters, one per card, in order. Everything outside
-Work (intro, headline, lab, tunnel, ending) is unchanged.
+The garden holds 14 chapters, one per chapter tulip, in this order. The personal content for
+all of them lives in one private file (below); `DHEEPIKA_FINAL_DELIVERY.md` has the checklist
+of what is still a placeholder.
 
 | # | Chapter | What she does | Extras folded in |
 |---|---|---|---|

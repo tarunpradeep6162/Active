@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { Stage, makeNebula, makeStarfield, ease } from './Stage';
+import { SERIF } from '../../../utils/fonts';
 
-const SERIF = "'Cormorant Garamond', Georgia, serif";
 const SLOTS = 12;
 const DECOYS = ['A', '7', '★', '∞', 'D', '9', '3', '☾', 'K', '4', '✦', '8'];
 

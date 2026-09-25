@@ -1,6 +1,6 @@
 /**
  * Work camera timeline — MEASURED from the rendered reference at 1440×900
- * (qa/workmap.mjs, 1 % steps of the work section; see WORK_SCROLL_MAP.md).
+ * (qa/workmap.mjs, 1 % steps of the work section; see docs/history/WORK_SCROLL_MAP.md).
  *
  * Each row: [work progress, orbit angle about the spine axis (deg, unwrapped),
  *            camera height (local units), camera distance from the axis].

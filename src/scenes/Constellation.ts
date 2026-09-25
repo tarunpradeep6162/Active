@@ -3,9 +3,9 @@ import { ANCHOR } from '../world/journey';
 import { globalUniforms } from '../world/uniforms';
 import { rng, clamp, smoothstep } from '../utils/math';
 import { NightLake, reflectionChunk } from './NightLake';
+import { SERIF } from '../utils/fonts';
 
 const O = ANCHOR.outro;
-const SERIF = "'Cormorant Garamond', Georgia, serif";
 /** the lake under the finale sky */
 const WATER_Y = O - 2.6;
 

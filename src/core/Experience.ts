@@ -7,7 +7,6 @@ import { PostFX } from '../post/PostFX';
 import { CameraRig } from '../camera/CameraRig';
 import { ScrollEngine } from '../scroll/ScrollEngine';
 import { Pointer } from '../interaction/Pointer';
-import { Multiuser } from '../interaction/Multiuser';
 import { TrailSystem } from '../trails/TrailSystem';
 import { TransitionController } from '../transitions/TransitionController';
 import { AudioEngine } from '../audio/AudioEngine';
@@ -33,7 +32,6 @@ export class Experience {
   private rig = new CameraRig();
   private scroll: ScrollEngine;
   private pointer = new Pointer();
-  private multi = new Multiuser();
   private trails: TrailSystem | null = null;
   private transition: TransitionController | null = null;
   private audio = new AudioEngine();
@@ -263,7 +261,7 @@ export class Experience {
       },
     });
 
-    this.trails = new TrailSystem(this.settings.trailStrands, this.multi);
+    this.trails = new TrailSystem(this.settings.trailStrands);
     world.scene.add(this.trails.group);
     // the chrome ribbon trail belonged to the old studio look; the petal + gold dust trail is a DOM
     // overlay (CursorTrail). Pointer tracking (pointerWorld) keeps feeding the particle fields.
@@ -320,7 +318,6 @@ export class Experience {
     this.pointer.update(dt);
     this.scroll.update(dt);
     this.transition?.update(dt);
-    this.multi.update(dt);
     this.audio.update(dt);
 
     // preloader choreography

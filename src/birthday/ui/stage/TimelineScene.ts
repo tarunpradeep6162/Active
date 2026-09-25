@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Stage, makeNebula, makeStarfield, ease } from './Stage';
+import { SERIF } from '../../../utils/fonts';
 
-const SERIF = "'Cormorant Garamond', Georgia, serif";
 
 /**
  * Chapter 9 · Our Timeline — a river of light winding away into the stars, with a lantern

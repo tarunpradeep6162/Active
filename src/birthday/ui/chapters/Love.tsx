@@ -363,7 +363,7 @@ function Manor() {
   useEffect(() => {
     let scene: { dispose(): void; onReady?: () => void } | null = null;
     let alive = true;
-    import('../ManorScene')
+    import('../stage/ManorScene')
       .then(({ ManorScene }) => {
         if (!alive || !ref.current) return;
         const s = new ManorScene(ref.current);

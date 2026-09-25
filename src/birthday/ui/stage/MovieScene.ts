@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { Stage, makeNebula, makeStarfield, ease } from './Stage';
+import { SERIF } from '../../../utils/fonts';
 
-const SERIF = "'Cormorant Garamond', Georgia, serif";
 
 /**
  * Chapter 13 · Our Little Movie — a small velvet cinema floating in the stars. The house lights

@@ -27,8 +27,7 @@ import { rng, clamp, smoothstep } from '../utils/math';
 
 const PETALS = 6;
 const AXIS_BLOOMS = 11;
-export const CHAPTER_BLOOMS = 14;
-export const SIGNIFICANT_BLOOMS = CHAPTER_BLOOMS + AXIS_BLOOMS; // 25 — for 25 · 11
+const CHAPTER_BLOOMS = 14;
 const BUDS = 20;
 const TOP = SPINE.top + 0.6;
 const BOTTOM = spineBottom() - 0.4;

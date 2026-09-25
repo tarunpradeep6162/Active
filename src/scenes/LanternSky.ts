@@ -6,13 +6,13 @@ import { rng, clamp, smoothstep } from '../utils/math';
 import { NightLake, reflectionChunk } from './NightLake';
 
 /** How many lanterns carry a wish she can read (and let go). */
-export const WISH_LANTERNS = 12;
+const WISH_LANTERNS = 12;
 /** the sky sits well below the lab so a level camera never sees the rig above */
-export const SKY_Y = ANCHOR.portal - 6;
+const SKY_Y = ANCHOR.portal - 6;
 const P = SKY_Y;
 const STORE = 'bday-lanterns-v1';
 /** the lake the lanterns rise from */
-export const WATER_Y = P - 2.5;
+const WATER_Y = P - 2.5;
 
 /**
  * The lantern sky, where the old underwater hex tunnel was: a night full of paper sky lanterns

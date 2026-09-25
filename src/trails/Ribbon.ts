@@ -5,7 +5,7 @@ import { globalUniforms } from '../world/uniforms';
 const MAX = 96;
 
 let sharedMaterial: THREE.ShaderMaterial | null = null;
-export function ribbonMaterial() {
+function ribbonMaterial() {
   if (sharedMaterial) return sharedMaterial;
   sharedMaterial = new THREE.ShaderMaterial({
     vertexShader: /* glsl */ `

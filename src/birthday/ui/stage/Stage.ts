@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { SERIF } from '../../../utils/fonts';
 
 /**
  * Shared base for the cinematic chapter stages (each renders into its own canvas).
@@ -134,7 +135,7 @@ export function sampleText(text: string, n: number, span: number, rnd: () => num
   g.textAlign = 'center';
   g.textBaseline = 'middle';
   let size = 240;
-  const font = (s: number) => `500 ${s}px 'Cormorant Garamond', Georgia, serif`;
+  const font = (s: number) => `500 ${s}px ${SERIF}`;
   g.font = font(size);
   const w = g.measureText(text).width;
   if (w > W * 0.94) {

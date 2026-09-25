@@ -367,7 +367,7 @@ export function Gifts({ slug, onDone }: ChapterProps) {
   };
   useEffect(() => {
     let alive = true;
-    import('../GiftScene')
+    import('../stage/GiftScene')
       .then(({ GiftScene }) => {
         if (!alive || !ref.current) return;
         const s = new GiftScene(ref.current, null);

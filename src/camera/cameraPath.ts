@@ -129,7 +129,6 @@ export function viewSegment(p: number) {
 }
 
 /** Read‑only view of the timeline (debug / docs). */
-export const cameraKeys = (): readonly Readonly<Key>[] => KEYS;
 
 /** Sample the journey camera at progress p (no allocations). Returns the FOV. */
 export function sampleCameraPath(p: number, outPos: THREE.Vector3, outTgt: THREE.Vector3): number {

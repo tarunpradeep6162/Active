@@ -37,7 +37,7 @@ export interface SectionRange {
  * (in vh, per device class). The last section therefore only plays partly, exactly as on the
  * reference, and every boundary lands on the same pixel at any viewport height.
  */
-export const RANGES: SectionRange[] = [];
+const RANGES: SectionRange[] = [];
 let rangePhone: boolean | null = null;
 export function computeRanges(phone = false) {
   if (phone === rangePhone) return false;

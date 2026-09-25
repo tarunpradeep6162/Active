@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { Stage, makeNebula, makeStarfield, ease } from './Stage';
+import { SERIF } from '../../../utils/fonts';
 
-const SERIF = "'Cormorant Garamond', Georgia, serif";
 const HAND = "'Caveat', cursive";
 
 export type MemoryCard = { caption: string; url?: string };

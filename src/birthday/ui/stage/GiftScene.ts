@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { SERIF } from '../../../utils/fonts';
 
-const SERIF = "'Cormorant Garamond', Georgia, serif";
 
 /** satin wrap, ribbon and inner‑glow colours for each of the three boxes */
 const WRAPS = [

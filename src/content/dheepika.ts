@@ -7,7 +7,7 @@ import type { BirthdayContent } from '../birthday/types';
  * can't be invented stay bracketed: dates, places, song titles, photos, videos and the voice
  * note. Nothing here claims a specific shared memory.
  * Real content goes in `birthday-private/content.json` (same shape, git‑ignored) and is
- * encrypted into the site with `npm run vault` (see BIRTHDAY.md).
+ * encrypted into the site with `npm run vault` (see docs/CONTENT_GUIDE.md).
  */
 const P = (s: string) => `[${s}]`;
 
