@@ -64,6 +64,13 @@ export interface Gift {
   media?: MediaRef;
 }
 
+/** a handwritten signature: SVG path strokes in a w × h box */
+export interface SignatureInk {
+  w: number;
+  h: number;
+  strokes: string[];
+}
+
 export interface BirthdayContent {
   /** true while the content is the shipped placeholder set */
   placeholder: boolean;
@@ -78,6 +85,8 @@ export interface BirthdayContent {
   threshold: { lines: string[]; copy: string[] };
   /** your name / signature, written in the handwritten face */
   signature: string;
+  /** your real signature as pen strokes (from the signing page, /?sign); drawn where the site signs off */
+  signatureInk?: SignatureInk;
   /** wishes carried by the lanterns in the sky */
   lanternWishes: string[];
   /** the last words after the sunrise, one per beat */

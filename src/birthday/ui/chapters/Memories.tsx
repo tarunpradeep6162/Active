@@ -243,6 +243,7 @@ export function Secret({ slug, onDone }: ChapterProps) {
             if (clue.answers.some((a) => norm(a) === norm(value))) {
               const next = solved.slice();
               next[i] = true;
+              events.emit('sfx', 'star');
               events.emit('gardenPulse', undefined);
               setSolved(next);
               setValue('');
@@ -250,6 +251,7 @@ export function Secret({ slug, onDone }: ChapterProps) {
               if (k >= 0) setI(k);
             } else {
               setWobble(true);
+              events.emit('sfx', 'wrong');
               window.setTimeout(() => setWobble(false), 450);
             }
           }}
@@ -355,6 +357,7 @@ export function Gifts({ slug, onDone }: ChapterProps) {
   const pick = (k: number) => {
     setChosen((cur) => {
       if (cur !== null) return cur;
+      events.emit('sfx', 'gift');
       chooseGift(k);
       onDone();
       return k;

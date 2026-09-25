@@ -171,8 +171,21 @@ export async function saveLetterPdf(c: BirthdayContent) {
   g.font = `italic 500 42px ${SERIF}`;
   g.fillText(c.letter.signoff, margin, y + 30);
   g.fillStyle = '#8a1c38';
-  g.font = `72px ${HAND}`;
-  g.fillText(c.signature, margin, y + 120);
+  if (c.signatureInk) {
+    // your real signature, in ink
+    const ink = c.signatureInk, h = 110, k = h / ink.h;
+    g.save();
+    g.translate(margin, y + 60);
+    g.scale(k, k);
+    g.strokeStyle = '#8a1c38';
+    g.lineWidth = 3 / k;
+    g.lineCap = g.lineJoin = 'round';
+    for (const d of ink.strokes) g.stroke(new Path2D(d));
+    g.restore();
+  } else {
+    g.font = `72px ${HAND}`;
+    g.fillText(c.signature, margin, y + 120);
+  }
 
   const jpegs = await Promise.all(pages.map((p) => new Promise<Uint8Array>((res) => p.toBlob(async (b) => res(new Uint8Array(await b!.arrayBuffer())), 'image/jpeg', 0.9))));
   download(new Blob([pdfFromJpegs(jpegs, W, H)], { type: 'application/pdf' }), 'a-letter-for-dheepika.pdf');

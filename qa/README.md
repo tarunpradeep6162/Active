@@ -18,6 +18,8 @@ export RECREATION_URL=http://localhost:4173/     # omit to test the live site
 | `gift.mjs`, `foryou.mjs`, `keepsakes.mjs` | the gift boxes; the For you page; that the PNG card and letter PDF are valid files |
 | `manor.mjs`, `manorposter.mjs` | the manor scene; regenerates its poster stills |
 | `film.mjs [w h]` | presses Play the film and lets it run to the end: every section, the cage, the candles, two lanterns, the sunrise, then it closes |
+| `sound.mjs` | turns the sound on and travels the journey: the score's levels change per section and every sound effect plays without errors |
+| `signature.mjs [w h]` | signs on `/?sign`, previews on the device, then checks the letter draws the signature stroke by stroke |
 | `birthday.mjs [w h]` | the countdown and the midnight surprise with a pretend clock: before, across midnight, first visit on the day (and not again after a reload), and after |
 | `perf.mjs` | draw calls, triangles and frame time per section (compare runs, don't trust the ms) |
 | `workreverse.mjs` | scroll determinism: forward and reverse must match |

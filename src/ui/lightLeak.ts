@@ -1,3 +1,4 @@
+import { events } from '../core/state';
 /**
  * A warm light leak sweeping across the frame, like light spilling into a film camera between
  * scenes. Played on every change of scene and when a chapter opens (never with reduced motion).
@@ -19,4 +20,5 @@ export function lightLeak() {
   void el.offsetWidth; // restart the animation
   el.dataset.side = Math.random() < 0.5 ? 'l' : 'r';
   el.classList.add('is-on');
+  events.emit('sfx', 'leak');
 }

@@ -8,6 +8,7 @@ import { useContent, useProgress, useVaultState, Media } from '../birthday/ui/sh
 import { Gate } from '../birthday/ui/ChapterView';
 import { saveFutureCard, saveLetterPdf, saveNextDateCard } from '../birthday/keepsakes';
 import { Countdown } from './Birthday';
+import { Signature } from '../birthday/ui/Signature';
 
 export function Preloader() {
   const progress = useStore((s) => s.loadProgress);
@@ -475,7 +476,7 @@ function LastThing({ onClose }: { onClose: () => void }) {
             <p className="lastthing__kicker">One last thing</p>
             {c.finale.voice ? <Media media={c.finale.voice} label="A voice note for you" /> : <p className="lastthing__note">[A voice note will play here]</p>}
             <p className="lastthing__text">{c.finale.lastThing}</p>
-            <p className="lastthing__sign">{c.signature}</p>
+            <Signature className="lastthing__sig" color="#e8a6b5" delay={0.6} />
           </>
         )}
         <button type="button" className="bd-link" onClick={onClose}>
@@ -604,6 +605,9 @@ export function Contact() {
             Keep this letter
           </button>
         </article>
+      </div>
+      <div className="foryou__sign">
+        <Signature className="foryou__sig" color="#f3dfa7" delay={0.4} />
       </div>
       <button ref={closeRef} className="contact__close" type="button" onClick={() => events.emit('navigate', { name: 'home' })}>
         Back to our garden ×

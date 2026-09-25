@@ -27,7 +27,8 @@ nothing on the page says it). To change the URL, add a domain or rename the proj
 | + | **Play the film** (button beside *Enter our garden*): the whole journey hands‑free, like a short movie (about 2½ minutes): the opening, the threshold, down through the garden, the cage opening and the candles going out, two lanterns let go over the lake, and the finale's sunrise. Letterboxed, with a small pause / stop control; her own scrolling or a key pauses it, Escape stops it | `src/ui/FilmMode.tsx` |
 | + | **Her birthday**: before 25 November the opening counts down to it (days, hours, minutes, seconds, on her own clock); on the day it says *It’s today ♥*. At midnight, or the first time she opens the site on the day, a surprise plays over whatever she is looking at: the screen goes dark, *Happy birthday* and her name come up like a title card, and rose and champagne fireworks fill the sky (with chimes if the music is on). It plays once per birthday. To preview it: add `?qa=1&now=2026-11-24T23:59:50` to the address | `src/ui/Birthday.tsx` |
 | + | **For you** (top‑right menu): a quiet room of its own, with a letterbox, drifting soft lights and a title card, and three glass cards that rise in turn: a message to future us (kept on her device), *Our next date* as an image, the letter as a PDF | `Contact` → For you, `src/birthday/keepsakes.ts` |
-| + | **Sound** (off by default): an original generative music box with chimes at the big moments | `src/audio/AudioEngine.ts` |
+| + | **Sound** (off by default): an original generative score that follows her through the journey (a hush of air under the stars, the music box in the garden, a warm room tone at the cake, water lapping at the lake, a crackle of fireworks at the finale), crossfading as she moves, and small sound effects for the moments: a chapter opening, the wax seal, a gift's ribbon, the candles going out, a lantern let go, a door, a star, a light leak | `src/audio/AudioEngine.ts` |
+| + | **Your handwritten signature**: sign once at `/?sign` (finger or mouse); wherever the site signs off to her (the end of the letter, *One last thing*, For you) it is written stroke by stroke in front of her, and the letter PDF carries it too. Until you sign, the sign‑off is written out in handwriting | `src/birthday/ui/Signature.tsx` |
 | + | **404**: "Looks like this path wandered out of the garden." / Return to our garden | `NotFound` |
 | + | **No WebGL**: a quiet page version of the same story (opening, memories, letter, final words) | `src/birthday/ui/FallbackStory.tsx` |
 
@@ -142,7 +143,8 @@ about 20 MB each).
 ## Sound and licensing
 
 The music is generated live in the browser: a music box improvising over an ordinary D‑major
-chord loop, a soft pad and a small room. It is original, uses no audio files and no existing
+chord loop, a soft pad and a small room, with a mix for each part of the journey (air, water,
+fireworks crackle) and short synthesised sound effects for the moments. It is original, uses no audio files and no existing
 melody, and is off by default. If she turns it on, that choice is remembered for the session
 and it resumes on her next tap. Songs in the Music Room chapter show your own notes about them,
 never lyrics. Add song audio only for files you have the right to use.
@@ -220,6 +222,9 @@ None of it claims a specific memory, date, place, nickname or promise that you d
 
 **Only you can add these (still marked with [brackets]):**
 - [ ] `signature`: your name, as you sign it (it's "Always yours" until you change it)
+- [ ] Your handwritten signature: open the site with `/?sign` on the end, sign in the box, then
+      **Copy the code** and send it to me (or paste it as `signatureInk` in your content).
+      **Preview on this device** shows it in place on that device only
 - [ ] Photos for `memories[]` (8), with a real `date` and `place` for each; and the `puzzle` photo
 - [ ] `timeline[]` dates for *We Met*, *Getting Closer* and *Us*, and change the texts if your story differs
 - [ ] `songs[]`: the real titles and artists (the notes are written; never paste lyrics; add `audio` only if you own the rights)

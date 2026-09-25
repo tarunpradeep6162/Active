@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { chooseThisOrThat } from '../../progress';
+import { events } from '../../../core/state';
 import { HiddenHeart, useContent, useProgress } from '../shared';
 import type { ChapterProps } from '../ChapterView';
 import { saveNextDateCard } from '../../keepsakes';
@@ -217,6 +218,7 @@ export function Quiz({ slug, onDone }: ChapterProps) {
             <button key={k} type="button" className={`bd-choice ${picked === k ? 'is-picked' : ''}`} disabled={picked !== null} onClick={() => {
               setPicked(k);
               scene.stage.current?.pulse(q.answer === null || q.answer === k);
+              events.emit('sfx', q.answer === null || q.answer === k ? 'star' : 'wrong');
             }}>
               {o}
             </button>

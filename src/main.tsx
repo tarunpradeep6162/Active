@@ -1,9 +1,10 @@
 import { createRoot } from 'react-dom/client';
 import './ui/styles.css';
 import { App } from './ui/App';
-import { state } from './core/state';
+import { state, events } from './core/state';
 import { FallbackStory } from './birthday/ui/FallbackStory';
 import './birthday/ui/birthday.css';
+import { SignPad } from './birthday/ui/Signature';
 
 function supportsWebGL2() {
   try {
@@ -15,7 +16,11 @@ function supportsWebGL2() {
 }
 
 const mount = document.getElementById('interface')!;
-if (!supportsWebGL2()) {
+if (new URLSearchParams(location.search).has('sign')) {
+  // the private signing page: no 3D, just a pad to sign on (a plain, scrolling page)
+  document.documentElement.classList.add('is-signing');
+  createRoot(mount).render(<SignPad />);
+} else if (!supportsWebGL2()) {
   // no 3D here: the story still arrives, as a quiet page
   document.documentElement.classList.add('no-webgl');
   createRoot(mount).render(<FallbackStory />);
@@ -31,6 +36,6 @@ if (!supportsWebGL2()) {
     });
     const q = new URLSearchParams(location.search);
     if (import.meta.env.DEV || q.has('debug') || q.has('qa'))
-      Object.assign(window, { __exp: exp, __state: state });
+      Object.assign(window, { __exp: exp, __state: state, __events: events });
   });
 }

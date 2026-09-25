@@ -179,6 +179,8 @@ type Events = {
   birthdayMidnight: void;
   /** play the whole journey as a film */
   playFilm: void;
+  /** a sound for a moment (heard only while the sound is on) */
+  sfx: import('../audio/AudioEngine').Sfx;
   scrollTo: number;
 };
 type Handler<T> = (payload: T) => void;

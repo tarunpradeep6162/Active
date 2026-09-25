@@ -54,7 +54,10 @@ export function ChapterView() {
   const closeRef = useRef<HTMLButtonElement>(null);
   // a light leak as a chapter opens, and on every cut to another chapter
   useEffect(() => {
-    if (open) lightLeak();
+    if (open) {
+      lightLeak();
+      events.emit('sfx', 'open');
+    }
   }, [open, p?.slug]);
   useEffect(() => {
     if (open) window.setTimeout(() => closeRef.current?.focus({ preventScroll: true }), 700);

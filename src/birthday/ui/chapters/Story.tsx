@@ -42,6 +42,7 @@ export function Beginning({ slug, onDone }: ChapterProps) {
   const touch = () => {
     const next = Math.min(2, awake + 1);
     setAwake(next);
+    events.emit('sfx', 'star');
     stage.current?.wake(next);
   };
   return (
@@ -237,6 +238,7 @@ export function Finale({ slug, onDone }: ChapterProps) {
     if (opening || begun.current) return;
     if (!scene.stage.current) return begin();
     setOpening(true);
+    events.emit('sfx', 'door');
     scene.stage.current.open();
     timers.current.push(window.setTimeout(() => beginRef.current(), 7000)); // never wait forever
   };

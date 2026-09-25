@@ -4,6 +4,7 @@ import { HiddenHeart, ParticleText, useContent, useTypewriter } from '../shared'
 import type { ChapterProps } from '../ChapterView';
 import { saveLetterPdf } from '../../keepsakes';
 import { Backdrop, useStage } from '../stage/useStage';
+import { Signature } from '../Signature';
 
 /* 3 ── A letter I never said out loud: a sealed envelope, then the letter writes itself. */
 export function Letter({ slug, onDone }: ChapterProps) {
@@ -39,6 +40,7 @@ export function Letter({ slug, onDone }: ChapterProps) {
   }, []);
   const breakSeal = () => {
     if (phase !== 'sealed') return;
+    events.emit('sfx', 'seal');
     if (stage.current) {
       setPhase('opening');
       stage.current.open();
@@ -72,6 +74,7 @@ export function Letter({ slug, onDone }: ChapterProps) {
           <span className="bd-caret" aria-hidden="true" />
           {text.length === full.length && (
             <>
+              <Signature className="bd-paper__signature" color="#7a1f38" delay={0.3} />
               <svg className="bd-paper__flourish" viewBox="0 0 220 24" aria-hidden="true">
                 <path d="M4 16 C40 4 70 22 104 12 S170 2 216 10" />
               </svg>
@@ -167,6 +170,7 @@ export function Reasons({ slug, onDone }: ChapterProps) {
             aria-label={`Reason ${k + 1}`}
             onClick={() => {
               setCur(k);
+              events.emit('sfx', 'star');
               if (seen.includes(k)) stage.current?.flare(k);
               setSeen((s) => (s.includes(k) ? s : [...s, k]));
             }}
@@ -216,6 +220,7 @@ export function Wish({ slug, onDone }: ChapterProps) {
   const blowOut = () => {
     stopMicRef.current();
     state.wishHold = 0;
+    events.emit('sfx', 'snuff');
     scene.stage.current?.blowOut();
     setStage('out');
     // the wish's light climbs the whole garden; every flower already visited glows as it passes
