@@ -28,6 +28,10 @@ export class AudioEngine {
     events.on('lanternWish', () => this.chime(0));
     events.on('blowCandles', () => this.chime(1));
     events.on('wishLight', () => this.chime(2));
+    events.on('birthdayMidnight', () => {
+      this.chime(2);
+      window.setTimeout(() => this.chime(1), 900);
+    });
     // she turned the music on earlier in this session: resume on her next gesture
     if (readPref()) {
       const resume = () => {

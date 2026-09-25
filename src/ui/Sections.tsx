@@ -7,6 +7,7 @@ import { rangeOf } from '../world/journey';
 import { useContent, useProgress, useVaultState, Media } from '../birthday/ui/shared';
 import { Gate } from '../birthday/ui/ChapterView';
 import { saveFutureCard, saveLetterPdf, saveNextDateCard } from '../birthday/keepsakes';
+import { Countdown } from './Birthday';
 
 export function Preloader() {
   const progress = useStore((s) => s.loadProgress);
@@ -59,6 +60,7 @@ export function IntroHint() {
   return (
     <section className="opening" aria-label="Opening" data-hidden={hidden} aria-hidden={hidden}>
       <p className="opening__date">{c.date}</p>
+      <Countdown />
       {c.opening.lines.map((l, i) => (
         <p key={i} className="opening__line" style={{ ['--i' as string]: i }}>
           {l}

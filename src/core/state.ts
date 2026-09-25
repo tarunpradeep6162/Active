@@ -172,6 +172,8 @@ type Events = {
   gardenPulse: void;
   filter: string | null;
   toggleAudio: void;
+  /** midnight on her birthday (or her first visit on the day) */
+  birthdayMidnight: void;
   scrollTo: number;
 };
 type Handler<T> = (payload: T) => void;

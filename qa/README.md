@@ -17,6 +17,7 @@ export RECREATION_URL=http://localhost:4173/     # omit to test the live site
 | `cake.mjs`, `lanterns.mjs`, `finale.mjs` | the cake (and that the microphone is never asked for unprompted), a real lantern tap, the finale sky |
 | `gift.mjs`, `foryou.mjs`, `keepsakes.mjs` | the gift boxes; the For you page; that the PNG card and letter PDF are valid files |
 | `manor.mjs`, `manorposter.mjs` | the manor scene; regenerates its poster stills |
+| `birthday.mjs [w h]` | the countdown and the midnight surprise with a pretend clock: before, across midnight, first visit on the day (and not again after a reload), and after |
 | `perf.mjs` | draw calls, triangles and frame time per section (compare runs, don't trust the ms) |
 | `workreverse.mjs` | scroll determinism: forward and reverse must match |
 | `validate.mjs` | context loss and restore, 50 route cycles, tiers, history |

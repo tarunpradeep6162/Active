@@ -511,3 +511,35 @@ html.no-webgl #interface { position: static; pointer-events: auto; }
 .foryou.is-open .foryou__card:nth-child(1) { animation-delay: .35s; } .foryou.is-open .foryou__card:nth-child(2) { animation-delay: .5s; } .foryou.is-open .foryou__card:nth-child(3) { animation-delay: .65s; }
 @keyframes fy-rise { from { transform: translateY(18px); } }
 @media (prefers-reduced-motion: reduce) { .foryou__sky::before, .foryou.is-open .foryou__card, .foryou.is-open .foryou__title { animation: none; } }
+
+/* ── her birthday: the countdown in the opening, and the midnight surprise ───────────── */
+.countdown { position: absolute; left: 0; right: 0; top: calc(14vh + clamp(44px, 5.4vw, 66px)); margin: 0; display: flex; justify-content: center; gap: clamp(12px, 2.4vw, 26px);
+  font: 10px var(--mono); letter-spacing: .28em; text-transform: uppercase; color: rgba(243, 223, 167, .7); animation: op-in 2s ease 1.6s both; }
+.countdown__unit { display: grid; justify-items: center; gap: 2px; }
+.countdown__unit b { font: 500 clamp(18px, 2.2vw, 26px)/1 var(--serif); letter-spacing: .04em; color: var(--champagne-3, #f3dfa7); font-variant-numeric: tabular-nums; text-shadow: 0 0 14px rgba(243, 223, 167, .35); }
+.countdown__unit i { font-style: normal; font-size: 9px; opacity: .7; }
+.countdown--today { font: italic 500 clamp(18px, 2.2vw, 26px) var(--serif); letter-spacing: .06em; text-transform: none; color: var(--rose-3, #f2c1cb); text-shadow: 0 0 18px rgba(242, 193, 203, .5); }
+.countdown--today span { background: linear-gradient(100deg, #f2c1cb 42%, #fff4d6 50%, #f2c1cb 58%) 120% 0 / 260% 100% repeat-x; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: op-sheen 5s ease-in-out infinite; }
+/* the opening lines move down a little to make room */
+.opening__line { top: calc(27.5vh + var(--i) * 4.4vh); }
+@media (max-height: 500px) and (orientation: landscape) { .countdown { top: 17vh; } .opening__line { top: calc(28vh + var(--i) * 7vh); } }
+
+.midnight { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; background: radial-gradient(120% 90% at 50% 45%, #140a1a, #030206); animation: md-in 1.4s ease both; }
+.midnight::before, .midnight::after { content: ''; position: absolute; left: 0; right: 0; height: 7vh; background: #000; z-index: 2; animation: md-bar 1.2s cubic-bezier(.6, 0, .2, 1) both; }
+.midnight::before { top: 0; transform-origin: top; } .midnight::after { bottom: 0; transform-origin: bottom; }
+.midnight__fireworks { position: absolute; inset: 0; width: 100%; height: 100%; }
+.midnight__card { position: relative; z-index: 3; display: grid; justify-items: center; gap: 12px; padding: 20px; text-align: center; }
+.midnight__time { margin: 0; font: 11px var(--mono); letter-spacing: .4em; color: rgba(243, 223, 167, .75); animation: md-rise 1.4s ease .6s both; }
+.midnight__title { margin: 0; font: italic 500 clamp(26px, 4vw, 44px)/1 var(--serif); color: var(--champagne-3, #f3dfa7); animation: md-rise 1.6s ease 1.2s both; }
+.midnight__name { margin: 0; font: 500 clamp(52px, 11vw, 140px)/1 var(--serif); letter-spacing: .12em; color: #fff8ee; text-shadow: 0 0 50px rgba(255, 214, 154, .45);
+  background: linear-gradient(100deg, #fff8ee 42%, #ffe8b8 50%, #fff8ee 58%) 120% 0 / 260% 100% repeat-x; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  animation: md-name 2.4s cubic-bezier(.2, .7, .2, 1) 1.8s both, op-sheen 6s ease-in-out 5s infinite; }
+.midnight__line { margin: 6px 0 10px; max-width: 30ch; font: italic 500 clamp(17px, 2vw, 22px)/1.5 var(--serif); color: rgba(248, 241, 232, .85); animation: md-rise 1.6s ease 3.6s both; }
+.midnight__go { min-height: 46px; padding: 0 26px; border-radius: 999px; border: 1px solid rgba(243, 223, 167, .55); background: rgba(10, 6, 14, .5); color: var(--champagne-3, #f3dfa7);
+  font: 11px var(--mono); letter-spacing: .26em; text-transform: uppercase; cursor: pointer; animation: md-rise 1.4s ease 4.6s both; }
+.midnight__go:hover, .midnight__go:focus-visible { background: rgba(243, 223, 167, .12); }
+@keyframes md-in { from { opacity: 0; } }
+@keyframes md-bar { from { transform: scaleY(0); } }
+@keyframes md-rise { from { opacity: 0; transform: translateY(10px); filter: blur(4px); } }
+@keyframes md-name { from { opacity: 0; letter-spacing: .4em; filter: blur(12px); } }
+@media (prefers-reduced-motion: reduce) { .midnight *, .midnight::before, .midnight::after { animation-duration: 1ms !important; animation-delay: 0s !important; } }

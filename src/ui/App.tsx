@@ -3,6 +3,7 @@ import { Preloader, IntroHint, Manifesto, WorkPanel, LabLabel, LanternSkyLabel, 
 import { useStore } from './useStore';
 import { ChapterView } from '../birthday/ui/ChapterView';
 import { CursorTrail } from './CursorTrail';
+import { MidnightSurprise } from './Birthday';
 import '../birthday/ui/birthday.css';
 
 export function App() {
@@ -30,6 +31,7 @@ export function App() {
           <Contact />
           <Nav />
           <div className="journey-line" aria-hidden="true" />
+          <MidnightSurprise />
         </>
       )}
       <WebGLLost />
