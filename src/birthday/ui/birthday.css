@@ -532,3 +532,11 @@
 .bd-giftcard__kind { color: #a4752f; }
 .bd-giftcard__text { color: #3b2620; }
 .bd-giftcard__text { animation: bd-ink 1.6s ease .6s both; }
+
+/* the letter written by an unseen hand: wet ink settling, and the nib moving on ahead */
+.bd-ink { display: inline; animation: bd-ink .6s ease-out both; }
+@keyframes bd-ink { 0% { opacity: 0; filter: blur(1.5px); color: #4a0f22; text-shadow: 0 0 1px rgba(74, 15, 34, .8); } 60% { opacity: 1; } 100% { filter: blur(0); } }
+.bd-nib { position: relative; display: inline-block; width: 0; height: 1em; vertical-align: baseline; pointer-events: none; }
+.bd-nib svg { position: absolute; left: 1px; bottom: -.1em; width: .85em; height: auto; transform-origin: 50% 100%; rotate: 28deg; filter: drop-shadow(-6px 8px 5px rgba(40, 20, 10, .35)); animation: bd-nib .22s ease-in-out infinite alternate; }
+@keyframes bd-nib { from { translate: 0 0; } to { translate: .6px -1.4px; } }
+@media (prefers-reduced-motion: reduce) { .bd-nib { display: none; } .bd-ink { animation: none; } }

@@ -23,6 +23,7 @@ import { smoothstep, clamp, dampFactor } from '../utils/math';
 import type { TierSettings } from '../core/Performance';
 import { PROJECTS } from '../app/projects';
 import { CARD_W, CARD_H } from '../scenes/ProjectCards';
+import { FireflyGuide } from '../scenes/FireflyGuide';
 
 interface Palette {
   top: THREE.Color;
@@ -87,6 +88,8 @@ export class World {
   readonly starSky = new StarSky();
   readonly portal: LanternSky;
   readonly finaleSky: Constellation;
+  /** the firefly that leads her to the next chapter */
+  readonly guide = new FireflyGuide();
   private manifestoRing: THREE.Group;
   private wreath: PetalWreath;
   private fields: Record<string, ParticleField> = {};
@@ -116,7 +119,7 @@ export class World {
     this.cards = new ProjectCards(titles);
     this.garden = new TulipGarden(titles, PROJECTS.map((p) => p.slug), settings.particleScale < 0.7);
     this.gardenSky = new GardenSky(settings.particleScale < 0.7);
-    this.scene.add(this.gardenSky.sky, this.gardenSky.bokeh, this.starSky.mesh);
+    this.scene.add(this.gardenSky.sky, this.gardenSky.bokeh, this.starSky.mesh, this.guide.points);
     this.portal = new LanternSky(settings.hexCount);
     this.finaleSky = new Constellation(getContent().name, getContent().date, settings.particleScale);
 
@@ -204,6 +207,7 @@ export class World {
     this.layoutGarden();
   }
 
+  private guideTgt = new THREE.Vector3();
   private restM: THREE.Matrix4[] = [];
   private layoutGarden() {
     this.restM = this.cards.cards.map((c, i) => (this.restM[i] ?? new THREE.Matrix4()).compose(c.base.position, c.base.quaternion, c.base.scale));
@@ -441,6 +445,19 @@ export class World {
     state.cakeDark = this.lab.dark;
     state.labDolly = this.lab.dolly;
     if (++this.rayFrame % 2 === 0) this.raycast(camera);
+    // the guide: ahead to the next chapter she hasn't reached
+    {
+      let next = -1;
+      for (let i = 0; i < PROJECTS.length; i++) if (workTimeline.cardCentre(i) > wt + 0.004 && (next < 0 || workTimeline.cardCentre(i) < workTimeline.cardCentre(next))) next = i;
+      let seen = 0;
+      if (next >= 0) {
+        this.garden.chapterHead(next, this.guideTgt);
+        this.tmpHead.copy(this.guideTgt).project(camera);
+        seen = this.tmpHead.z < 1 ? clamp(1 - (Math.max(Math.abs(this.tmpHead.x), Math.abs(this.tmpHead.y)) - 0.75) / 0.3) : 0;
+      }
+      const on = state.section === 'work' && this.garden.group.visible && state.focus < 0.3 && wt > 0.03 && !state.reducedMotion ? 1 : 0;
+      this.guide.update(dt, t, camera, next >= 0 ? this.guideTgt : null, seen, on, state.viewport.dpr);
+    }
     const gardenOn = this.garden.group.visible || state.focus > 0.001 || this.activeSlug !== null;
     if (!gardenOn) return;
     this.cards.update(dt, this.activeSlug, this.highlight, this.hovered, this.hitUv);
@@ -457,6 +474,7 @@ export class World {
       state.bloomX = clamp((this.tmpHead.x * 0.5 + 0.5) * state.viewport.width, 0, state.viewport.width);
       state.bloomY = clamp((-this.tmpHead.y * 0.5 + 0.5) * state.viewport.height, 0, state.viewport.height);
     }
+    this.garden.grow(camera.position.y, dt, state.focus > 0.01 || this.gardenReveal > 0.01);
     this.garden.hold = state.wishHold;
     this.garden.fireflyPx.value = 60 * state.viewport.dpr;
     this.garden.update(t, wt, (i) => workTimeline.cardCentre(i), state.focus > 0.5 ? active : -1, this.visited, this.gardenReveal);

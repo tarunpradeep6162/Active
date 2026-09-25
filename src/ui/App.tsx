@@ -5,6 +5,7 @@ import { ChapterView } from '../birthday/ui/ChapterView';
 import { CursorTrail } from './CursorTrail';
 import { MidnightSurprise } from './Birthday';
 import { FilmMode } from './FilmMode';
+import { PaperFlower } from './Cinema';
 import '../birthday/ui/birthday.css';
 
 export function App() {
@@ -32,6 +33,7 @@ export function App() {
           <Contact />
           <Nav />
           <div className="journey-line" aria-hidden="true" />
+          <PaperFlower />
           <MidnightSurprise />
           <FilmMode />
         </>

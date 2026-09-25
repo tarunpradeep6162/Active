@@ -66,12 +66,29 @@ export function Letter({ slug, onDone }: ChapterProps) {
       {open && (
         <div className="bd-paper" aria-live="polite" data-done={text.length === full.length}>
           {/* each paragraph flows in like ink; the greeting and the sign-off are in her hand */}
-          {text.split('\n\n').map((p, k, all) => (
-            <p key={k} className={k === 0 ? 'bd-paper__greeting' : k === parts - 1 && all.length === parts ? 'bd-paper__sign' : ''}>
-              {p}
-            </p>
-          ))}
-          <span className="bd-caret" aria-hidden="true" />
+          {text.split('\n\n').map((p, k, all) => {
+            const writing = k === all.length - 1 && text.length < full.length;
+            return (
+              <p key={k} className={k === 0 ? 'bd-paper__greeting' : k === parts - 1 && all.length === parts ? 'bd-paper__sign' : ''}>
+                {writing ? p.slice(0, -1) : p}
+                {/* an unseen hand: the newest letter is wet ink, and the pen nib moves on ahead of it */}
+                {writing && (
+                  <>
+                    <span key={text.length} className="bd-ink">
+                      {p.slice(-1)}
+                    </span>
+                    <span className="bd-nib" aria-hidden="true">
+                      <svg viewBox="0 0 40 90">
+                        <path d="M20 88 L10 52 L10 8 Q20 0 30 8 L30 52 Z" fill="#2b1a14" />
+                        <path d="M20 88 L14 58 L26 58 Z" fill="#c9a36a" />
+                        <path d="M20 88 L20 64" stroke="#2b1a14" strokeWidth="1.2" />
+                      </svg>
+                    </span>
+                  </>
+                )}
+              </p>
+            );
+          })}
           {text.length === full.length && (
             <>
               <Signature className="bd-paper__signature" color="#7a1f38" delay={0.3} />

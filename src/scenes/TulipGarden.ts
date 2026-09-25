@@ -46,6 +46,8 @@ const U = {
   uPulseAmt: { value: 0 },
   uReveal: { value: 0 },
   uFocus: globalUniforms.uFocus,
+  /** the growing front: tulips below this world y are still in the ground (see grow()) */
+  uGrowY: { value: 1e5 },
 };
 
 const commonGlsl = /* glsl */ `
@@ -94,12 +96,15 @@ const petalVert = /* glsl */ `
   attribute float aBloom;
   attribute vec3 aInfo; // x: inner petal, y: flower index, z: seed
   uniform float uTime;
-  uniform float uKeep;
+  uniform float uKeep, uGrowY;
   varying vec3 vN; varying vec3 vWorldPos; varying float vDepth; varying vec2 vUv; varying float vBloom; varying float vInner; varying float vSeed; varying float vKeep;
   mat2 rot(float a){ float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }
   void main(){
     vec3 p = position; vec3 n = normal;
-    float b = aBloom;
+    // the field grows in as she arrives: each tulip rises out of the ground and opens
+    float oy = (modelMatrix * instanceMatrix * vec4(0., 0., 0., 1.)).y;
+    float g = smoothstep(uGrowY - 2.4, uGrowY, oy + fract(aInfo.z * 7.3) * .8);
+    float b = aBloom * g;
     // tips curl outward as the flower opens
     p.z += b * .16 * p.y * p.y;
     // hinge: closed cup (tips lean in) → open (outer petals further than inner)
@@ -107,7 +112,7 @@ const petalVert = /* glsl */ `
     float th = mix(-.2, open, b) + sin(uTime * .8 + aInfo.y * 1.7 + aInfo.z * 6.) * .025 * b;
     p.yz = rot(-th) * p.yz; n.yz = rot(-th) * n.yz;
     p.z += .05 + .04 * b; // hinge ring
-    p *= mix(.92, 1.06, b) * mix(1., .88, aInfo.x);
+    p *= mix(.92, 1.06, b) * mix(1., .88, aInfo.x) * mix(.04, 1., g * g * (3. - 2. * g));
     vec4 wp = modelMatrix * instanceMatrix * vec4(p, 1.);
     vWorldPos = wp.xyz;
     vN = normalize(mat3(modelMatrix) * mat3(instanceMatrix) * n);
@@ -768,6 +773,16 @@ export class TulipGarden {
   /** Entry reveal front in local y (null = fully grown). */
   setReveal(front: number | null) {
     U.uRevealY.value = front === null ? 1e5 : WORK_ORIGIN.y + front;
+  }
+  /**
+   * The growing wave: tulips come up a little below wherever she has been, and stay grown.
+   * camY: the camera's world y (the garden descends).
+   */
+  grow(camY: number, dt: number, all = false) {
+    // an open chapter or the finale's pull-back sees the whole garden: everything comes up
+    const target = all ? Math.min(camY - 4.5, this.axisBottom - 4) : camY - 4.5;
+    if (U.uGrowY.value > 1e4) U.uGrowY.value = target + 6;
+    if (target < U.uGrowY.value) U.uGrowY.value += (target - U.uGrowY.value) * Math.min(1, dt * (all ? 3 : 1.4));
   }
   /** Exit dissolve 0…1. */
   setCrumble(c: number) {

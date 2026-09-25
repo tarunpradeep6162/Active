@@ -9,6 +9,7 @@ import { Gate } from '../birthday/ui/ChapterView';
 import { saveFutureCard, saveLetterPdf, saveNextDateCard } from '../birthday/keepsakes';
 import { Countdown } from './Birthday';
 import { Signature } from '../birthday/ui/Signature';
+import type { Memory } from '../birthday/types';
 
 export function Preloader() {
   const progress = useStore((s) => s.loadProgress);
@@ -360,14 +361,17 @@ export function LanternSkyLabel() {
   const c = useContent();
   const section = useStore((s) => s.section);
   const hidden = section !== 'portal';
-  const [said, setSaid] = useState<{ key: number; text: string; x: number; y: number }[]>([]);
+  const [said, setSaid] = useState<{ key: number; text: string; x: number; y: number; memory?: Memory }[]>([]);
   const [lit, setLit] = useState(0);
   useEffect(() => {
     const off = events.on('lanternWish', ({ index, x, y }) => {
         const list = c.lanternWishes.length ? c.lanternWishes : ['A wish, just for you.'];
         const key = performance.now();
         const text = list[index % list.length];
-        setSaid((s) => [...s.slice(-2), { key, text, x, y }]);
+        // a memory rises inside the lantern too: one of her photos, lit from within
+        const photos = c.memories.filter((m) => m.media?.type === 'image');
+        const memory = photos.length ? photos[index % photos.length] : undefined;
+        setSaid((s) => [...s.slice(-2), { key, text, x, y, memory }]);
         setTimeout(() => setSaid((s) => s.filter((w) => w.key !== key)), 6500);
     });
     return () => {
@@ -396,9 +400,14 @@ export function LanternSkyLabel() {
       <div className="sky-wishes" aria-live="polite">
         {!hidden &&
           said.map((w) => (
-            <p key={w.key} className="sky-wish" style={{ left: `clamp(24px, ${w.x}px, calc(100vw - 24px))`, top: `${Math.max(90, w.y)}px` }}>
-              {w.text}
-            </p>
+            <div key={w.key} className="sky-wish" style={{ left: `clamp(24px, ${w.x}px, calc(100vw - 24px))`, top: `${Math.max(90, w.y)}px` }}>
+              {w.memory && (
+                <figure className="sky-wish__memory">
+                  <Media media={w.memory.media} label={w.memory.caption} />
+                </figure>
+              )}
+              <p>{w.text}</p>
+            </div>
           ))}
       </div>
     </>
