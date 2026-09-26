@@ -18,7 +18,7 @@ export RECREATION_URL=http://localhost:4173/     # omit to test the live site
 | `gift.mjs`, `foryou.mjs`, `keepsakes.mjs` | the gift boxes; the For you page; that the PNG card and letter PDF are valid files |
 | `manor.mjs`, `manorposter.mjs` | the manor scene; regenerates its poster stills |
 | `film.mjs [w h]` | presses Play the film and lets it run to the end: every section, the cage, the candles, two lanterns, the sunrise, then it closes and the credits roll. `CUT=directors` plays the director's cut (it also opens the letter, the gifts and the wish) |
-| `shots.mjs [w h] [tag] [sec:l[:open],…]` | one frame per journey moment in a single page load (`lab:0.6:open` opens the cage first): the quickest look at the grade, focus, light shafts and weather |
+| `shots.mjs [w h] [tag] [sec:l[:open],…]` | one frame per journey moment in a single page load (`lab:0.6:open` opens the cage first), with the world's clock stepped forward so focus pulls and fades have finished: the quickest look at the grade, depth of field, reflections, light shafts and weather. `TIER=high` checks the anti‑aliased path |
 | `sound.mjs` | turns the sound on and travels the journey: the score's levels change per section and every sound effect plays without errors |
 | `signature.mjs [w h]` | signs on `/?sign`, previews on the device, then checks the letter draws the signature stroke by stroke |
 | `birthday.mjs [w h]` | the countdown and the midnight surprise with a pretend clock: before, across midnight, first visit on the day (and not again after a reload), and after |

@@ -15,7 +15,7 @@ import { useContent } from '../birthday/ui/shared';
 const q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams();
 const fake = (q.has('qa') || q.has('debug')) && q.get('now') ? Date.parse(q.get('now')!) : NaN;
 const offset = Number.isNaN(fake) ? 0 : fake - Date.now();
-export const now = () => new Date(Date.now() + offset);
+const now = () => new Date(Date.now() + offset);
 
 /** the day and month from the site's date ("25 · 11"), or 25 November */
 function birthday(date: string) {

@@ -39,9 +39,10 @@ export class FilmRecorder {
   constructor(private titles: Titles) {
     // 1280 wide, the screen's shape (never taller than 16:9 portrait allows)
     const src = document.getElementById('experience') as HTMLCanvasElement;
+    // the screen's shape, with the long side at 1280 (a phone records upright, not 1280 × 2770)
     const a = src.width / Math.max(1, src.height);
-    this.cv.width = 1280;
-    this.cv.height = Math.round(1280 / a / 2) * 2;
+    this.cv.width = a >= 1 ? 1280 : Math.round((1280 * a) / 2) * 2;
+    this.cv.height = a >= 1 ? Math.round(1280 / a / 2) * 2 : 1280;
   }
 
   start() {

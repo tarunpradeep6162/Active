@@ -632,6 +632,9 @@ export function Contact() {
           <button type="button" onClick={() => makePoster(c)}>
             Save the poster
           </button>
+          <button type="button" className="foryou__alt" onClick={() => makePoster(c, 'pdf')}>
+            or as a PDF to print
+          </button>
         </article>
         {canRecord() && (
           <article className="foryou__card" data-icon="●">

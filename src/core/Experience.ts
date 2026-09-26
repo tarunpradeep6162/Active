@@ -411,6 +411,8 @@ export class Experience {
     this.renderer.info.reset();
     const world = this.world && this.world.root.visible ? this.world : null;
     const edge = world ? this.rig.overlayEdge : null;
+    // the exit wipe draws a second camera: its pixels can't be reprojected, so no motion blur there
+    if (edge !== null) this.post.composite.uniforms.uMotion.value = 0;
     this.post.render(world ? world.scene : this.bootScene, cam, edge === null ? undefined : { camera: this.rig.overlayCamera, edge, slant: workTimeline.config.seam.wipeSlant, toggle: this.toggleBackdropDepth });
     this.debug?.frame(rawMs);
   }

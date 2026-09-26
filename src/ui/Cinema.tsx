@@ -514,9 +514,9 @@ export function WindowSeat() {
 }
 
 /** Her night as a poster to keep (her stars, her wishes, the date, your signature). */
-export function makePoster(c: ReturnType<typeof useContent>) {
+export function makePoster(c: ReturnType<typeof useContent>, format: 'png' | 'pdf' = 'png') {
   const j = getJournal();
-  savePoster(c, { stars: loadSky(), wishes: j.wishes.map((w) => c.lanternWishes[w % Math.max(1, c.lanternWishes.length)]).filter(Boolean) });
+  savePoster(c, { stars: loadSky(), wishes: j.wishes.map((w) => c.lanternWishes[w % Math.max(1, c.lanternWishes.length)]).filter(Boolean) }, format);
 }
 
 /** From anywhere (For you): back to the garden, then record her film. */

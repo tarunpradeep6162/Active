@@ -115,8 +115,13 @@ export function FilmMode() {
         } catch {
           /* none */
         }
-        recorder.current = new FilmRecorder({ name: c.name, date: c.date, signature: c.signature, stars });
-        recorder.current.start();
+        try {
+          recorder.current = new FilmRecorder({ name: c.name, date: c.date, signature: c.signature, stars });
+          recorder.current.start();
+        } catch {
+          // this browser can't record: the film still plays, it just isn't saved
+          recorder.current = null;
+        }
       }
       setMode('playing');
     });

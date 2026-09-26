@@ -5,7 +5,7 @@ import { openSite } from './browser.mjs';
 const W = +process.argv[2] || 1280, H = +process.argv[3] || 800, tag = process.argv[4] || 'a';
 const list = (process.argv[5] || 'intro:0.02,intro:0.5,manifesto:0.5,work:0.3,work:0.8,lab:0.6,lab:0.6:open,portal:0.5,outro:0.6,outro:0.97').split(',');
 fs.mkdirSync('qa/out/shots', { recursive: true });
-const { browser, page, logs } = await openSite('recreation', { width: W, height: H, mobile: W < 600, query: 'qa=1&tier=medium' });
+const { browser, page, logs } = await openSite('recreation', { width: W, height: H, mobile: W < 600, query: `qa=1&tier=${process.env.TIER || 'medium'}` });
 page.on('pageerror', (e) => logs.push(`pageerror: ${e.message}`));
 const files = [];
 for (const item of list) {

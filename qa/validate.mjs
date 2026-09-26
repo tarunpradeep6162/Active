@@ -45,17 +45,19 @@ const go = async (page, r) => { await page.evaluate((r) => __exp.transition.requ
   await ctx.close();
 }
 
-// 2 · 50 project open/close cycles: GPU resources, listeners, heap
+// 2 · chapter open/close cycles (CYCLES, default 12): GPU resources, listeners, heap
 {
   const { ctx, page, logs } = await open('/?qa=1&tier=low');
   await go(page, { name: 'work' });
   const snap = () => page.evaluate(() => ({ ...__exp.renderer.info.memory, programs: __exp.renderer.info.programs.length, listeners: window.__listeners, heapMB: performance.memory ? +(performance.memory.usedJSHeapSize / 1e6).toFixed(1) : null }));
-  const slugs = ['tidal-archive', 'kiln', 'echo-choir', 'deep-field-atlas', 'glass-orchard'];
+  // real chapters (a mix of light ones and ones with their own 3D scenes)
+  const slugs = ['fourteen-things', 'the-letter', 'know-us', 'gift-boxes', 'our-timeline'];
+  const cycles = +(process.env.CYCLES || 12);
   await go(page, { name: 'project', slug: slugs[0] }); await go(page, { name: 'work' });
   const s0 = await snap();
-  for (let i = 0; i < 50; i++) { await go(page, { name: 'project', slug: slugs[i % slugs.length] }); await go(page, { name: 'work' }); }
+  for (let i = 0; i < cycles; i++) { await go(page, { name: 'project', slug: slugs[i % slugs.length] }); await go(page, { name: 'work' }); }
   const s1 = await snap();
-  report.memory50 = { before: s0, after: s1, warnings: logs.slice(0, 5) };
+  report.memoryCycles = { cycles, before: s0, after: s1, warnings: logs.slice(0, 5) };
   await ctx.close();
 }
 
@@ -86,13 +88,13 @@ const go = async (page, r) => { await page.evaluate((r) => __exp.transition.requ
 
 // 5 · history / direct routes / refresh / rapid switching
 {
-  const { ctx, page, logs } = await open('/work/kiln?qa=1&tier=low');
+  const { ctx, page, logs } = await open('/garden/know-us?qa=1&tier=low');
   await idle(page);
   const direct = await page.evaluate(() => ({ url: location.pathname, route: __state.route, focus: __state.focus, locked: document.documentElement.classList.contains('scroll-locked') }));
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.__state && __state.reveal >= 1); await idle(page);
   const refreshed = await page.evaluate(() => ({ url: location.pathname, route: __state.route.name, focus: __state.focus }));
-  for (const slug of ['echo-choir', 'deep-field-atlas', 'glass-orchard']) await page.evaluate((s) => __exp.transition.request({ name: 'project', slug: s }, true), slug);
+  for (const slug of ['fourteen-things', 'music-room', 'our-timeline']) await page.evaluate((s) => __exp.transition.request({ name: 'project', slug: s }, true), slug);
   await page.waitForTimeout(200); await idle(page);
   const rapid = await page.evaluate(() => ({ url: location.pathname, route: __state.route, focus: __state.focus }));
   await page.goBack(); await page.waitForTimeout(200); await idle(page);

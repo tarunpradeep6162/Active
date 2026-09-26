@@ -191,8 +191,8 @@ export async function saveLetterPdf(c: BirthdayContent) {
   download(new Blob([pdfFromJpegs(jpegs, W, H)], { type: 'application/pdf' }), 'a-letter-for-dheepika.pdf');
 }
 
-/** Minimal PDF: one full‑page JPEG image per page (A4 points). */
-function pdfFromJpegs(jpegs: Uint8Array[], pxW: number, pxH: number): ArrayBuffer {
+/** Minimal PDF: one full‑page JPEG image per page (A4 points unless a page size is given). */
+function pdfFromJpegs(jpegs: Uint8Array[], pxW: number, pxH: number, PW = 595.28, PH = 841.89): ArrayBuffer {
   const enc = new TextEncoder();
   const parts: Uint8Array[] = [];
   const offsets: number[] = [];
@@ -208,7 +208,6 @@ function pdfFromJpegs(jpegs: Uint8Array[], pxW: number, pxH: number): ArrayBuffe
     body();
     push('\nendobj\n');
   };
-  const PW = 595.28, PH = 841.89;
   const n = jpegs.length;
   const pageIds = jpegs.map((_, i) => 3 + i * 3);
   push('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
@@ -244,7 +243,7 @@ function pdfFromJpegs(jpegs: Uint8Array[], pxW: number, pxH: number): ArrayBuffe
  * constellation she drew, the wishes she let go, the date, and your signature. Made from what
  * she did, drawn locally.
  */
-export function savePoster(c: BirthdayContent, mine: { stars: [number, number][][]; wishes: string[] }) {
+export function savePoster(c: BirthdayContent, mine: { stars: [number, number][][]; wishes: string[] }, format: 'png' | 'pdf' = 'png') {
   const W = 2400, H = 3200;
   const cv = document.createElement('canvas');
   cv.width = W;
@@ -349,5 +348,12 @@ export function savePoster(c: BirthdayContent, mine: { stars: [number, number][]
     g.font = `110px ${HAND}`;
     g.fillText(c.signature, W / 2, sy);
   }
-  cv.toBlob((b) => b && download(b, `${c.name.toLowerCase()}-her-night.png`), 'image/png');
+  const file = `${c.name.toLowerCase()}-her-night`;
+  if (format === 'png') return cv.toBlob((b) => b && download(b, `${file}.png`), 'image/png');
+  // a print‑ready PDF, 18 × 24 inches
+  cv.toBlob(async (b) => {
+    if (!b) return;
+    const jpg = new Uint8Array(await b.arrayBuffer());
+    download(new Blob([pdfFromJpegs([jpg], W, H, 1296, 1728)], { type: 'application/pdf' }), `${file}.pdf`);
+  }, 'image/jpeg', 0.93);
 }

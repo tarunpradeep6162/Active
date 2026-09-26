@@ -162,7 +162,7 @@ Without WebGL, the earlier flat versions come back.
 - **Her theme**: a short original melody that returns at each world, fuller each time: single
   music‑box notes at the opening, a harmony in the garden, strings under it at the cake, and all
   of it with a bass and a chime at the sunrise.
-- **A poster of her night** (after the credits, and in For you): a large image (2400 × 3200) of her
+- **A poster of her night** (after the credits, and in For you; as a PNG, or a print‑ready 18 × 24 in PDF): a large image (2400 × 3200) of her
   name at dawn over the lake, the constellation she drew, the wishes she let go, and your
   signature.
 - **Her film to keep** (after the credits, and in For you): a ~40‑second film of her night (the

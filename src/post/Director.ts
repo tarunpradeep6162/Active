@@ -61,7 +61,9 @@ export class Director {
       if (this.iris.phase === 'closing') this.iris = { phase: 'opening', t: 0, x: this.iris.x, y: this.iris.y };
     });
     // the film is about to cut: the iris closes onto the subject of this shot
-    events.on('filmCutStart', () => (this.iris = { phase: 'closing', t: 0, x: this.focus.x, y: this.focus.y }));
+    events.on('filmCutStart', () => {
+      if (!state.reducedMotion) this.iris = { phase: 'closing', t: 0, x: this.focus.x, y: this.focus.y };
+    });
     // slow motion at the big moments
     events.on('blowCandles', () => this.slow(2.2));
     events.on('slowmo', () => this.slow(2.2));
@@ -128,7 +130,8 @@ export class Director {
     this.prevVp.copy(this.vp);
     this.lastPos.copy(camera.position);
     this.hasPrev = true;
-    u.uMotion.value = reduced || !this.lens ? 0 : 0.5;
+    // (phones skip it: eight extra texture reads per pixel, for little gain on a small screen)
+    u.uMotion.value = reduced || !this.lens || state.viewport.mobile ? 0 : 0.5;
     u.uFilm.value = this.lens ? 1 : 0.5;
     u.uHdr.value = this.hdr ? 1 : 0;
     const k = dampFactor(5, dt);
