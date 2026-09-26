@@ -129,7 +129,7 @@ export class Director {
     this.lastPos.copy(camera.position);
     this.hasPrev = true;
     // (phones skip it: eight extra texture reads per pixel, for little gain on a small screen)
-    u.uMotion.value = reduced || !this.lens || state.viewport.mobile ? 0 : 0.5;
+    u.uMotion.value = 0; // no motion blur either: it softened every move
     u.uFilm.value = this.lens ? 1 : 0.5;
     const k = dampFactor(5, dt);
     f.x += (fx - f.x) * k;
@@ -138,7 +138,8 @@ export class Director {
     f.amt += ((reduced ? 0 : fa) - f.amt) * k;
     u.uFocusPt.value.set(f.x, f.y);
     u.uFocusR.value = f.r;
-    u.uFocusAmt.value = f.amt;
+    // no depth blur, no focus pulls: the picture stays sharp everywhere (they read as haze)
+    u.uFocusAmt.value = 0;
     u.uLens.value = this.lens ? 1 : 0;
 
     // ---- handheld: close, emotional shots breathe; wide shots stay on sticks
@@ -201,7 +202,7 @@ export class Director {
     state.rain += ((reduced ? rain * 0.5 : rain) - state.rain) * dampFactor(2, dt);
     u.uRain.value = reduced ? 0 : state.rain;
     const mist = sec === 'manifesto' ? 1 : sec === 'intro' ? clamp((lp - 0.75) / 0.2) : sec === 'work' ? 1 - clamp((lp - 0.04) / 0.18) : 0;
-    u.uMist.value += (mist * (1 - clamp(state.focus * 2)) - u.uMist.value) * dampFactor(2, dt);
+    u.uMist.value = 0 * mist; // the low mist is off: it read as haze over the threshold
 
     // ---- candlelight: the flames light the room and breathe; when they go out, real darkness
     const burning = sec === 'lab' && state.cakeReady ? 1 : 0;

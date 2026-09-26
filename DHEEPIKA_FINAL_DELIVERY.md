@@ -102,19 +102,17 @@ Without WebGL, the earlier flat versions come back.
   then slowly pushes in as they spell DHEEPIKA.
 - **Light**: soft light shafts slant through the garden and warm toward sunset as she scrolls.
 - **The cinematographer** (`src/post/Director.ts`) runs the camera crew every frame:
-  - *focus pulls*: each new scene starts soft and the focus pulls in onto what the shot is about
-    (the emblem, the cake, the lanterns, her name), with the rest falling gently out of focus;
   - *handheld*: close, emotional shots (the cake, the lanterns, the finale) breathe slightly, as if
     held by someone; wide shots stay steady;
   - *cuts*: the film cuts hard between scenes behind a blink of black;
-  - *lens*: a whisper of barrel distortion, softer edges and colour fringing at the corners;
+  - *lens*: a whisper of barrel distortion and colour fringing at the corners (the edges stay sharp);
   - *light shafts*: light pours from the moon in the garden, the spotlight over the cake, the
     lanterns and the sunrise, through whatever stands in front of it;
   - *the hour*: the whole frame is graded to the time of night: blue night under the stars, violet
     dusk at the threshold, moonlight turning to sunset in the garden, candlelight at the cake,
     midnight over the lake, and dawn at the finale;
   - *weather*: the lantern sky opens in a light rain (rings spread on the lake) that clears as the
-    lanterns rise; mist rolls low over the threshold and the first of the garden;
+    lanterns rise;
   - *candlelight*: the lit candles warm the room around them and flicker; when they go out, the
     room really goes dark.
 - **The garden grows**: tulips rise out of the ground and open as she descends to them, and a
@@ -125,13 +123,10 @@ Without WebGL, the earlier flat versions come back.
 
 ### The premium pass
 
-- **Real depth of field**: focus now follows the true distance of everything in the frame (from
-  the scene's depth), so the cake is sharp while the fairy lights behind it melt into soft discs;
-  each new scene racks focus from near to far.
+- **Sharp throughout**: depth of field, focus pulls, soft lens edges, motion blur and the low mist
+  were removed because they read as a haze over the picture. Every scene is now in full focus.
 - **Film stock**: a warm film look: light bleeds red‑orange around the brightest things
   (halation), the blacks are lifted to a soft fade, and a fine grain lives in the shadows.
-- **Motion blur**: fast moves smear slightly along the camera's motion, like a real shutter
-  (never across a cut; not on low‑power devices or with reduced motion).
 - **Real reflections**: once the cake room's lights are up, the rose‑gold cage reflects the actual
   room: the drape, the fairy lights, the flames.
 - **Soft shadows**: the cake casts a soft shadow on the floor that breathes with the candle

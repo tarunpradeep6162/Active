@@ -130,7 +130,6 @@ void main(){
     float coc = abs(d - uFocusDist) / max(d, .001) * uAperture;
     dof = uFocusAmt * smoothstep(.04, .9, coc);
   } else dof = uFocusAmt * smoothstep(uFocusR, uFocusR + .38, length((uv - uFocusPt) * vec2(aspect, 1.)));
-  dof = max(dof, uLens * smoothstep(.16, .5, r2) * .35);
   if (dof > .001) {
     // a touch of lateral colour where the lens is soft
     vec3 bl = texture(tBlur, uv).rgb;
@@ -335,9 +334,8 @@ export class PostFX {
 
   /** the scene target also keeps its depth, for focus by distance and motion blur */
   private makeSceneRT(w: number, h: number, samples: number) {
-    const rt = this.makeRT(w, h, samples);
-    rt.depthTexture = new THREE.DepthTexture(w, h, THREE.UnsignedIntType);
-    return rt;
+    // (depth of field and motion blur are off, so the scene's depth isn't kept as a texture)
+    return this.makeRT(w, h, samples);
   }
 
   private makeRT(w: number, h: number, samples: number) {
@@ -460,7 +458,7 @@ export class PostFX {
       }
     }
     const cu = this.composite.uniforms;
-    if ((cu.uBlur.value as number) > 0.001 || (cu.uFocusAmt.value as number) > 0.001 || (cu.uLens.value as number) > 0.001) {
+    if ((cu.uBlur.value as number) > 0.001 || (cu.uFocusAmt.value as number) > 0.001) {
       this.blur.uniforms.tInput.value = this.sceneRT.texture;
       this.blur.uniforms.uTexel.value.set(1 / this.blurRT.width, 1 / this.blurRT.height);
       this.draw(this.blur, this.blurRT);
