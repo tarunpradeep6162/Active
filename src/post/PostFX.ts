@@ -83,6 +83,8 @@ uniform vec3 uCandle; uniform float uRain; uniform float uMist;
 // real depth: focus by distance, camera motion blur, film emulation, HDR highlights
 uniform sampler2D tDepth; uniform float uHasDepth; uniform float uNear; uniform float uFar; uniform float uFocusDist; uniform float uAperture;
 uniform mat4 uInvViewProj; uniform mat4 uPrevViewProj; uniform float uMotion; uniform float uFilm; uniform float uHdr;
+uniform vec4 uIris;
+uniform vec2 uSeason;
 float viewDist(vec2 p){ float z = texture(tDepth, p).r; float ndc = z * 2. - 1.; return (2. * uNear * uFar) / (uFar + uNear - ndc * (uFar - uNear)); }
 ${math}
 ${noise}
@@ -201,6 +203,30 @@ void main(){
     float band = smoothstep(.62, .05, uv.y);
     col = mix(col, vec3(.62, .56, .7), clamp(smoothstep(.35, .8, m) * band * uMist * .38, 0., 1.));
   }
+  // the season in the garden: blossom petals, autumn leaves or snow drifting past the lens
+  if (uSeason.y > .001) {
+    int kind = int(uSeason.x + .5);
+    float acc = 0.;
+    for (int L = 0; L < 2; L++) {
+      float fl = float(L);
+      vec2 g = vec2(uv.x * aspect, uv.y) * mix(8., 15., fl);
+      g.y += uTime * mix(.34, .2, fl) * (kind == 2 ? .6 : 1.);
+      g.x += sin(uTime * .4 + g.y * .7) * .4;
+      vec2 id = floor(g), fr = fract(g) - .5, h = hash22(id + fl * 7.);
+      if (h.x < .38) {
+        vec2 d = fr - (h - .5) * .6;
+        float ang = uTime * (h.y - .5) * 2. + h.x * 6.;
+        d = mat2(cos(ang), -sin(ang), sin(ang), cos(ang)) * d;
+        float sz = mix(.05, .09, h.y) * (kind == 2 ? .75 : 1.);
+        float e = kind == 2 ? length(d) / sz : length(d * vec2(1., kind == 1 ? 1.8 : 2.6)) / sz;
+        acc += smoothstep(1., .35, e) * mix(1., .55, fl);
+      }
+    }
+    vec3 pc = kind == 0 ? vec3(1., .74, .82) : kind == 1 ? vec3(1., .64, .26) : vec3(.96, .97, 1.);
+    col = mix(col, pc, clamp(acc, 0., 1.) * uSeason.y * .8);
+    vec3 tint = kind == 1 ? vec3(1.07, .97, .84) : kind == 2 ? vec3(.9, .97, 1.1) : vec3(1.03, .97, 1.);
+    col *= mix(vec3(1.), tint, uSeason.y * .6);
+  }
   // the hour of the night: the whole frame leans toward the light of the moment
   col = mix(col, col * uTint * 1.08 + (uTint - 1.) * .012, uTintAmt);
   // soft vignette (oval, gentle)
@@ -219,6 +245,12 @@ void main(){
   if (uHdr > .001 && uHasBloom > .5) {
     vec3 hb = texture(tBloom, uv).rgb;
     col += max(hb - .6, 0.) * uHdr * 1.6;
+  }
+  // match cut iris: the frame closes to a point on the subject (a gold rim at its edge)
+  if (uIris.w > .5) {
+    float id = length((uv - uIris.xy) * vec2(aspect, 1.));
+    col *= 1. - smoothstep(uIris.z, uIris.z + .025, id);
+    col += vec3(1., .78, .45) * exp(-pow((id - uIris.z) * 60., 2.)) * .35 * step(.005, uIris.z);
   }
   // letterbox for the big moments
   float bar = uLetterbox * .075;
@@ -293,6 +325,8 @@ export class PostFX {
     uMotion: { value: 0 },
     uFilm: { value: 1 },
     uHdr: { value: 0 },
+    uIris: { value: new THREE.Vector4(0.5, 0.5, 2, 0) },
+    uSeason: { value: new THREE.Vector2(0, 0) },
     uGlowA: { value: new THREE.Color('#1e6f6a') },
     uGlowB: { value: new THREE.Color('#123a44') },
   });

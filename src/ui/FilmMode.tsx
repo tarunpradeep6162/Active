@@ -74,14 +74,14 @@ export function FilmMode() {
   const [mode, setMode] = useState<'off' | 'playing' | 'paused'>('off');
   const [cut, setCut] = useState<'film' | 'directors'>('film');
   const [subtitle, setSubtitle] = useState('');
-  const clock = useRef({ shot: 0, t: 0, from: 0, acted: false, begun: false, steps: 0, inChapter: false });
+  const clock = useRef({ shot: 0, t: 0, from: 0, acted: false, begun: false, spliced: false, steps: 0, inChapter: false });
   const script = cut === 'directors' ? DIRECTORS : FILM;
   const voice = useRef<HTMLAudioElement | null>(null);
 
   // start from the opening's buttons (or anywhere that emits playFilm)
   useEffect(() => {
     const off = events.on('playFilm', (which) => {
-      clock.current = { shot: 0, t: 0, from: 0, acted: false, begun: false, steps: 0, inChapter: false };
+      clock.current = { shot: 0, t: 0, from: 0, acted: false, begun: false, spliced: false, steps: 0, inChapter: false };
       setCut(which === 'directors' ? 'directors' : 'film');
       window.scrollTo({ top: 0, behavior: 'instant' });
       // a film has a score: the sound comes up with it (this is her tap, so the browser allows it)
@@ -174,10 +174,8 @@ export function FilmMode() {
       }
       if (!k.begun) {
         k.begun = true;
-        if (shot.cut) {
-          events.emit('filmCut', at(shot.to));
-          k.from = at(shot.to);
-        }
+        // a match cut: the iris closes on this shot's subject first, then the splice
+        if (shot.cut) events.emit('filmCutStart', undefined);
         if (shot.cue) events.emit('filmCue', shot.cue);
         if (shot.voice) speak(shot.voice);
         if (shot.chapter) {
@@ -188,6 +186,16 @@ export function FilmMode() {
         }
       }
       k.t += dt;
+      if (shot.cut && !k.spliced) {
+        if (k.t < 0.5) {
+          raf = requestAnimationFrame(run);
+          return;
+        }
+        k.spliced = true;
+        k.t = 0;
+        events.emit('filmCut', at(shot.to));
+        k.from = at(shot.to);
+      }
       if (shot.chapter) {
         // inside a chapter: its own moments, then back out to the garden
         const ch = shot.chapter;
@@ -233,6 +241,7 @@ export function FilmMode() {
         k.from = p;
         k.acted = false;
         k.begun = false;
+        k.spliced = false;
       }
       raf = requestAnimationFrame(run);
     };

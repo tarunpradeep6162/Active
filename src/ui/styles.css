@@ -658,3 +658,9 @@ html.is-film .finale-tools, html.is-film .skydraw.is-drawing { display: none; }
 .opening__film--cut { border-color: rgba(243, 223, 167, .3); color: var(--champagne-3, #f3dfa7); }
 .film-subtitle { position: fixed; left: 50%; bottom: calc(9vh + 64px + var(--safe-bottom, 0px)); translate: -50% 0; z-index: 70; margin: 0; max-width: min(640px, 90vw); text-align: center; pointer-events: none;
   font: italic 400 clamp(17px, 1.9vw, 24px)/1.4 var(--serif); color: var(--soft, #f8f1e8); text-shadow: 0 0 10px rgba(0, 0, 0, .95), 0 0 2px #000; }
+
+/* ---------------------------------------------------------------- the window seat */
+html.is-seat #interface > :not(.seat-hint), html.is-seat .nav, html.is-seat .journey-line, html.is-seat .lightleak { opacity: 0 !important; visibility: hidden; pointer-events: none !important; transition: opacity 1.2s ease, visibility 0s linear 1.2s; }
+.seat-hint { position: fixed; left: 50%; bottom: calc(9vh + 18px); translate: -50% 0; z-index: 30; margin: 0; pointer-events: none; font: italic 15px var(--serif); color: rgba(248, 241, 232, .75); text-shadow: 0 0 10px #000;
+  animation: seat-hint 6s ease forwards; }
+@keyframes seat-hint { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }

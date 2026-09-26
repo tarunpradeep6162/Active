@@ -3,6 +3,7 @@ import { state, events, type SectionId } from '../core/state';
 import { rangeOf, ANCHOR } from '../world/journey';
 import { clamp, dampFactor } from '../utils/math';
 import type { World } from '../world/World';
+import { currentSeason } from '../ui/seasons';
 
 /**
  * The cinematographer. Each frame it decides what a camera crew would: where the focus sits
@@ -25,6 +26,11 @@ const HOURS: Record<SectionId, Hour> = {
 };
 const SUNSET = col(1.1, 0.95, 0.86);
 const DAWN = col(1.12, 1.0, 0.88);
+
+const smoothIn = (x: number) => {
+  const t = Math.min(1, Math.max(0, x));
+  return t * t * (3 - 2 * t);
+};
 
 export class Director {
   private section: SectionId | null = null;
@@ -49,7 +55,26 @@ export class Director {
 
   constructor(private post: THREE.ShaderMaterial, private lens: boolean) {
     // a hard cut in the film: a blink of black, then the new shot
-    events.on('filmCut', () => (this.blink = 1));
+    events.on('filmCut', () => {
+      this.blink = 0.5;
+      // match cut: the iris opens again on what the new shot is about
+      if (this.iris.phase === 'closing') this.iris = { phase: 'opening', t: 0, x: this.iris.x, y: this.iris.y };
+    });
+    // the film is about to cut: the iris closes onto the subject of this shot
+    events.on('filmCutStart', () => (this.iris = { phase: 'closing', t: 0, x: this.focus.x, y: this.focus.y }));
+    // slow motion at the big moments
+    events.on('blowCandles', () => this.slow(2.2));
+    events.on('slowmo', () => this.slow(2.2));
+  }
+
+  private iris: { phase: 'off' | 'closing' | 'opening'; t: number; x: number; y: number } = { phase: 'off', t: 0, x: 0.5, y: 0.5 };
+  private slowT = 0;
+  private season = currentSeason();
+  private slowDur = 0;
+  private nameDone = false;
+  private slow(secs: number) {
+    if (state.reducedMotion) return;
+    this.slowT = this.slowDur = secs;
   }
 
   setLens(on: boolean) {
@@ -117,7 +142,7 @@ export class Director {
     u.uLens.value = this.lens ? 1 : 0;
 
     // ---- handheld: close, emotional shots breathe; wide shots stay on sticks
-    state.handheld = reduced ? 0 : sec === 'lab' ? (state.cageOpen ? 1 : 0.5) : sec === 'portal' ? 0.7 : sec === 'outro' ? 0.4 : sec === 'intro' ? 0.3 : 0.12;
+    state.handheld = reduced || state.seat ? 0 : sec === 'lab' ? (state.cageOpen ? 1 : 0.5) : sec === 'portal' ? 0.7 : sec === 'outro' ? 0.4 : sec === 'intro' ? 0.3 : 0.12;
 
     // ---- light shafts: where the light pours from
     let ra = 0;
@@ -187,6 +212,39 @@ export class Director {
     (u.uCandle.value as THREE.Vector3).set(this.v.x, this.v.y, this.candle * flick * (1 - clamp(state.focus * 2)));
     const exposure = sec === 'lab' ? 1 - state.cakeDark * 0.55 + this.candle * (flick - 0.82) * 0.25 : 1;
     u.uExposure.value += (exposure - u.uExposure.value) * dampFactor(8, dt);
+
+    // ---- the season in the garden (it moves on each time she comes back)
+    const sea = u.uSeason.value as THREE.Vector2;
+    sea.x = this.season;
+    const seaAmt = (sec === 'work' ? 1 : sec === 'manifesto' ? 0.4 : 0) * (1 - clamp(state.focus * 2)) * (state.reducedMotion ? 0.4 : 1);
+    sea.y += (seaAmt - sea.y) * dampFactor(1.5, dt);
+
+    // ---- slow motion: time sinks to a third, holds, and comes back (the sound stretches with it)
+    if (sec === 'outro' && state.finaleLocal > 0.56 && !this.nameDone) {
+      this.nameDone = true;
+      events.emit('slowmo', undefined);
+    }
+    if (sec !== 'outro' || state.finaleLocal < 0.4) this.nameDone = false;
+    if (this.slowT > 0) {
+      this.slowT = Math.max(0, this.slowT - dt);
+      const x = 1 - this.slowT / this.slowDur;
+      const env = Math.min(1, x / 0.15, (1 - x) / 0.35);
+      state.timeScale = 1 - 0.68 * Math.max(0, env);
+    } else state.timeScale = 1;
+
+    // ---- match cuts: an iris closes on this shot's subject and opens on the next one's
+    const ir = this.iris;
+    if (ir.phase !== 'off') {
+      ir.t += dt;
+      if (ir.phase === 'opening') {
+        ir.x += (f.x - ir.x) * Math.min(1, dt * 8);
+        ir.y += (f.y - ir.y) * Math.min(1, dt * 8);
+      }
+      const r = ir.phase === 'closing' ? 1.6 * (1 - smoothIn(ir.t / 0.5)) : 1.6 * smoothIn(ir.t / 0.7);
+      if (ir.phase === 'opening' && ir.t > 0.7) ir.phase = 'off';
+      if (ir.phase === 'closing' && ir.t > 1.5) ir.phase = 'off'; // the cut never came
+      (u.uIris.value as THREE.Vector4).set(ir.x, ir.y, Math.max(0, r), ir.phase === 'off' ? 0 : 1);
+    } else (u.uIris.value as THREE.Vector4).w = 0;
 
     // ---- cuts
     u.uBlink.value = reduced ? 0 : Math.sin(Math.min(1, this.blink) * Math.PI * 0.5) ** 0.5 * (this.blink > 0 ? 1 : 0);

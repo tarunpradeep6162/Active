@@ -5,7 +5,7 @@ import { ChapterView } from '../birthday/ui/ChapterView';
 import { CursorTrail } from './CursorTrail';
 import { MidnightSurprise } from './Birthday';
 import { FilmMode } from './FilmMode';
-import { PaperFlower, OpeningCredits, EndCredits, FinaleTools, Replay } from './Cinema';
+import { PaperFlower, OpeningCredits, EndCredits, FinaleTools, Replay, WindowSeat } from './Cinema';
 import { startJournal } from './journal';
 
 startJournal();
@@ -41,6 +41,7 @@ export function App() {
           <FinaleTools />
           <EndCredits />
           <Replay />
+          <WindowSeat />
           <MidnightSurprise />
           <FilmMode />
         </>

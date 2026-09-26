@@ -67,6 +67,9 @@ export class AudioEngine {
     events.on('blowCandles', () => this.sfx('snuff'));
     events.on('lanternWish', () => this.sfx('lantern'));
     events.on('sfx', (k) => this.sfx(k));
+    // slow motion: the sound stretches with the picture
+    events.on('slowmo', () => this.stretch());
+    events.on('blowCandles', () => this.stretch());
     // the film's score: the music follows the shots, and steps back under your voice
     events.on('filmCue', (k) => this.cue(k));
     events.on('duck', (on) => ((this.duckLevel = on ? 0.3 : 1), this.applyLevel(on ? 0.25 : 0.8)));
@@ -235,7 +238,7 @@ export class AudioEngine {
 
   private schedule() {
     const ctx = this.ctx!;
-    const beat = 60 / 66 / 2 / this.tempo; // eighth notes at 66 bpm, slower in the quieter worlds
+    const beat = 60 / 66 / 2 / (this.tempo * this.stretchK); // eighth notes at 66 bpm, slower in the quieter worlds
     while (this.next < ctx.currentTime + 0.25) {
       const bar = Math.floor(this.step / 8);
       const chord = AudioEngine.CHORDS[Math.floor(bar / 2) % 4];
@@ -408,6 +411,18 @@ export class AudioEngine {
     this.master!.gain.setTargetAtTime(this.on ? 0.9 * this.cueLevel * this.duckLevel : 0, t, 0.5);
     store.set({ audioOn: this.on });
     if (!this.on) setTimeout(() => !this.on && ctx.suspend(), 1800);
+  }
+
+  private stretchK = 1;
+  /** time slows: the notes spread out and the room goes muffled, then it all comes back */
+  private stretch() {
+    if (!this.ctx || !this.on) return;
+    const t = this.ctx.currentTime;
+    const m = MIX[this.section] ?? MIX.work;
+    this.stretchK = 0.45;
+    this.padLp!.frequency.setTargetAtTime(380, t, 0.12);
+    this.padLp!.frequency.setTargetAtTime(m.bright, t + 1.7, 0.5);
+    setTimeout(() => (this.stretchK = 1), 2200);
   }
 
   private cueLevel = 1;

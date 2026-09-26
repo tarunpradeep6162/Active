@@ -540,3 +540,10 @@
 .bd-nib svg { position: absolute; left: 1px; bottom: -.1em; width: .85em; height: auto; transform-origin: 50% 100%; rotate: 28deg; filter: drop-shadow(-6px 8px 5px rgba(40, 20, 10, .35)); animation: bd-nib .22s ease-in-out infinite alternate; }
 @keyframes bd-nib { from { translate: 0 0; } to { translate: .6px -1.4px; } }
 @media (prefers-reduced-motion: reduce) { .bd-nib { display: none; } .bd-ink { animation: none; } }
+
+/* the letter sent to the stars */
+.bd-sparks { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 80; }
+.bd-letter__after { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 22px; }
+.bd-letter__sky { display: grid; justify-items: center; gap: 10px; margin: 18vh auto 0; text-align: center; }
+.bd-letter__sky p { margin: 0; font: italic 400 clamp(22px, 2.6vw, 32px) var(--serif, serif); color: #f3dfa7; text-shadow: 0 0 24px rgba(255, 190, 110, .5); }
+.bd-letter[data-sky="true"] .bd-cosmos { opacity: 0; visibility: hidden; transition: opacity 1.2s ease, visibility 0s linear 1.2s; }

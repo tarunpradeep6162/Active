@@ -6,6 +6,8 @@ import { getProgress } from '../birthday/progress';
 import { Signature } from '../birthday/ui/Signature';
 import { PROJECTS } from '../app/projects';
 import { getJournal, note } from './journal';
+import { store } from '../core/state';
+import { rangeOf } from '../world/journey';
 
 /**
  * The film's own moments that sit over the world: the paper flower that opens the night.
@@ -363,6 +365,9 @@ export function FinaleTools() {
             <button type="button" onClick={() => events.emit('rollCredits', undefined)}>
               ▸ Roll the credits
             </button>
+            <button type="button" onClick={() => events.emit('windowSeat', true)}>
+              ☾ Just sit here
+            </button>
           </div>
         )
       )}
@@ -398,6 +403,7 @@ export function Replay() {
     }
     if (p.gift !== null && c.gifts[p.gift]) cards.push({ k: 'gift', big: 'You chose a gift:', small: [c.gifts[p.gift].label] });
     if (p.hearts.length) cards.push({ k: 'hearts', big: `You found ${p.hearts.length} hidden ${p.hearts.length === 1 ? 'heart' : 'hearts'}.` });
+    if (j.letterSky) cards.push({ k: 'letter', big: 'You sent my letter to the stars.' });
     if (j.stars) cards.push({ k: 'stars', big: `You drew ${j.stars} stars of your own into the sky.` });
     if (j.film) cards.push({ k: 'film', big: 'You watched our film.' });
     cards.push({ k: 'end', big: 'Thank you for tonight.' });
@@ -448,5 +454,51 @@ export function Replay() {
         ✕ Close
       </button>
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ the window seat */
+
+/**
+ * "Just sit here": everything on the page goes away and the camera settles on a view (the lake
+ * at dawn from the finale, the garden at sunset from anywhere else), letterboxed, with the music
+ * soft. Nothing to do. Any tap, key or scroll brings her back.
+ */
+export function WindowSeat() {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const off = events.on('windowSeat', (v) => {
+      if (v) {
+        const r = state.section === 'outro' ? rangeOf('outro') : rangeOf('work');
+        events.emit('scrollTo', r.start + (r.end - r.start) * (state.section === 'outro' ? 0.995 : 0.95));
+        if (!store.get().audioOn) events.emit('toggleAudio', undefined);
+      }
+      setOn(v);
+    });
+    return () => void off();
+  }, []);
+  useEffect(() => {
+    state.seat = on;
+    document.documentElement.classList.toggle('is-seat', on);
+    if (!on) return;
+    // let the view settle before listening, so the tap that started it doesn't end it
+    let armed = false;
+    const t = setTimeout(() => (armed = true), 1500);
+    const leave = () => armed && events.emit('windowSeat', false);
+    addEventListener('pointerdown', leave);
+    addEventListener('keydown', leave);
+    addEventListener('wheel', leave, { passive: true });
+    return () => {
+      clearTimeout(t);
+      removeEventListener('pointerdown', leave);
+      removeEventListener('keydown', leave);
+      removeEventListener('wheel', leave);
+    };
+  }, [on]);
+  if (!on) return null;
+  return (
+    <p className="seat-hint" aria-live="polite">
+      ☾ Just sitting here · tap to come back
+    </p>
   );
 }

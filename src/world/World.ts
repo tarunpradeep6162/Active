@@ -352,6 +352,14 @@ export class World {
     return true;
   }
 
+  /** 0…1 midnight on her birthday: every tulip opens and glows, the lakes ring (fades over ~14 s) */
+  private midnight = 0;
+  celebrate() {
+    this.midnight = 1;
+    for (const lake of [this.portal.lake, this.finaleSky.lake])
+      for (let i = 0; i < 4; i++) lake.ripple((Math.random() - 0.5) * 16, -4 - Math.random() * 14, 1.4);
+  }
+
   private waterPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   /** A touch on the lake (lantern sky or finale): a ring spreads from it. */
   touchWater(clientX: number, clientY: number, camera: THREE.Camera) {
@@ -488,10 +496,13 @@ export class World {
       state.bloomX = clamp((this.tmpHead.x * 0.5 + 0.5) * state.viewport.width, 0, state.viewport.width);
       state.bloomY = clamp((-this.tmpHead.y * 0.5 + 0.5) * state.viewport.height, 0, state.viewport.height);
     }
-    this.garden.grow(camera.position.y, dt, state.focus > 0.01 || this.gardenReveal > 0.01);
+    this.midnight = Math.max(0, this.midnight - dt / 14);
+    this.garden.grow(camera.position.y, dt, state.focus > 0.01 || this.gardenReveal > 0.01 || this.midnight > 0);
     this.garden.hold = state.wishHold;
     this.garden.fireflyPx.value = 60 * state.viewport.dpr;
-    this.garden.update(t, wt, (i) => workTimeline.cardCentre(i), state.focus > 0.5 ? active : -1, this.visited, this.gardenReveal);
+    // at midnight every flower opens and glows, then the garden settles back
+    const bloomAll = Math.max(this.gardenReveal, smoothstep(0, 0.15, this.midnight) * 0.75);
+    this.garden.update(t, wt, (i) => workTimeline.cardCentre(i), state.focus > 0.5 ? active : -1, this.visited, bloomAll);
   }
 
   private setStorm(id: 'storm' | 'outroStorm', streak: number, amount: number) {

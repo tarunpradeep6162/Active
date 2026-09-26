@@ -92,6 +92,12 @@ export const state = {
   cakeDark: 0,
   /** 0…1 how much the camera breathes in the hand (close, emotional shots) */
   handheld: 0,
+  /** the world's clock speed (slow motion at the big moments) */
+  timeScale: 1,
+  /** her phone's tilt, when she has let the site look around with it (−1…1) */
+  tilt: { x: 0, y: 0, on: false },
+  /** "just sit here": a quiet view with nothing to do */
+  seat: false,
   /** 0…1 rain over the lake (the lantern sky opens in rain, then it clears) */
   rain: 0,
   /** 0…1 the camera's slow push‑in on the cake once the cage opens */
@@ -191,6 +197,12 @@ type Events = {
   filmCue: 'rise' | 'hush' | 'swell' | 'end' | 'reset';
   /** narration is speaking: the music steps back */
   duck: boolean;
+  /** the film is about to cut: the iris closes on what the shot is about */
+  filmCutStart: void;
+  /** slow motion for a moment (the candles going out, her name complete) */
+  slowmo: void;
+  /** sit quietly with a view */
+  windowSeat: boolean;
   /** a hard cut in the film: jump straight to this journey progress behind a blink of black */
   filmCut: number;
   /** a sound for a moment (heard only while the sound is on) */

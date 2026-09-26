@@ -120,6 +120,13 @@ export class Experience {
       this.thinUntil = state.time + 5.5;
     });
     events.on('gardenPulse', () => this.world?.garden.pulse(state.time));
+    // midnight on her birthday: the whole world answers (every tulip opens, the lakes ring,
+    // a golden pulse runs up the garden, and time slows for a breath)
+    events.on('birthdayMidnight', () => {
+      this.world?.celebrate();
+      this.world?.garden.pulse(state.time);
+      events.emit('slowmo', undefined);
+    });
     events.on('gardenReveal', (on) => {
       this.revealTarget = on ? 1 : 0;
       if (on) {
@@ -326,7 +333,9 @@ export class Experience {
     const dt = Math.min(0.05, rawMs / 1000);
     this.last = now;
     state.delta = dt;
-    state.time += dt;
+    // slow motion slows the world's own clock (the page, scrolling and the film keep real time)
+    const sdt = dt * state.timeScale;
+    state.time += sdt;
     state.frame++;
     if (store.get().webglLost) return;
 
@@ -369,8 +378,8 @@ export class Experience {
     // real reflections in the rose gold, once the cake room's lights are up (not on low tier)
     if (this.world && this.settings.chromatic && state.section === 'lab' && state.cageOpen && state.cakeReady) this.world.lab.captureReflections(this.renderer, this.world.scene);
     if (this.trails && this.world) {
-      this.trails.update(dt, cam);
-      this.world.update(dt, cam, this.trails.pointerWorld, this.post.composite);
+      this.trails.update(sdt, cam);
+      this.world.update(sdt, cam, this.trails.pointerWorld, this.post.composite);
     }
 
     // global uniforms (written once per frame, shared by reference)
@@ -394,7 +403,7 @@ export class Experience {
     // letterbox for the two big moments: the cake leaving its cage, and her name in the stars
     const cinema = state.reducedMotion
       ? 0
-      : Math.max(state.filmOn ? 1 : 0, state.section === 'lab' && state.cageOpen && !state.cakeReady ? 1 : 0, state.section === 'intro' && state.reveal > 0.5 && state.sectionProgress < 0.08 ? 1 : 0, state.section === 'outro' ? Math.min(1, Math.max(0, (state.finaleLocal - 0.5) / 0.1)) * (1 - Math.min(1, Math.max(0, (state.finaleLocal - 0.9) / 0.08))) : 0);
+      : Math.max(state.filmOn || state.seat ? 1 : 0, state.section === 'lab' && state.cageOpen && !state.cakeReady ? 1 : 0, state.section === 'intro' && state.reveal > 0.5 && state.sectionProgress < 0.08 ? 1 : 0, state.section === 'outro' ? Math.min(1, Math.max(0, (state.finaleLocal - 0.5) / 0.1)) * (1 - Math.min(1, Math.max(0, (state.finaleLocal - 0.9) / 0.08))) : 0);
     cu.uLetterbox.value += (cinema - cu.uLetterbox.value) * Math.min(1, dt * 1.6);
 
     this.ui.update();

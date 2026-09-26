@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { state } from '../core/state';
 import { sampleCameraPath, inWorkTimeline, workOverlay, viewSegment } from './cameraPath';
 import { dampFactor, clamp, lerp, easeInOutCubic } from '../utils/math';
+import { rangeOf } from '../world/journey';
 
 /**
  * The only place the camera is mutated.
@@ -74,8 +75,13 @@ export class CameraRig {
       this.right.crossVectors(this.fwd, this.worldUp).normalize();
       this.up.crossVectors(this.right, this.fwd).normalize();
       const par = state.viewport.mobile ? 0.18 : 0.42;
-      this.desiredPos.addScaledVector(this.right, p.targetX * par).addScaledVector(this.up, p.targetY * par * 0.55);
-      this.desiredTgt.addScaledVector(this.right, p.targetX * par * 0.25).addScaledVector(this.up, p.targetY * par * 0.15);
+      // her phone's tilt looks around the scene like turning her head (when she allowed it)
+      const lx = p.targetX + (state.tilt.on ? state.tilt.x * 2.2 : 0), ly = p.targetY + (state.tilt.on ? state.tilt.y * 1.6 : 0);
+      this.desiredPos.addScaledVector(this.right, lx * par).addScaledVector(this.up, ly * par * 0.55);
+      this.desiredTgt.addScaledVector(this.right, lx * par * 0.25).addScaledVector(this.up, ly * par * 0.15);
+      // crane shots: at the end of a world the camera rises up and away, then drops into the next
+      const crane = this.crane(s.progress);
+      if (crane > 0) this.desiredPos.addScaledVector(this.worldUp, crane * 2.6).addScaledVector(this.fwd, -crane * 2.2);
       const v = clamp(s.velocity, -4, 4);
       this.desiredPos.addScaledVector(this.fwd, -Math.abs(v) * 0.18);
       this.desiredTgt.addScaledVector(this.up, -v * 0.1);
@@ -132,6 +138,17 @@ export class CameraRig {
       cam.updateProjectionMatrix();
     }
     this.updateOverlay();
+  }
+
+  /** 0…1 how far up the crane is: a hump across the end of the cake room and of the lantern sky */
+  private crane(progress: number) {
+    const hump = (a: number, b: number) => {
+      const x = (progress - a) / (b - a);
+      return x <= 0 || x >= 1 ? 0 : Math.sin(Math.PI * x) ** 2;
+    };
+    const lab = rangeOf('lab'), portal = rangeOf('portal'), outro = rangeOf('outro');
+    const w = (r: { start: number; end: number }) => (r.end - r.start) * 0.14;
+    return hump(lab.end - w(lab), lab.end + w(portal) * 0.5) + hump(portal.end - w(portal), portal.end + (outro.end - outro.start) * 0.05);
   }
 
   private updateOverlay() {

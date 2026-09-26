@@ -14,6 +14,7 @@ export interface Journal {
   wishes: number[];
   stars?: number;
   film?: number;
+  letterSky?: boolean;
 }
 
 let data: Journal = load();

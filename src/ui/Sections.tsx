@@ -8,6 +8,7 @@ import { useContent, useProgress, useVaultState, Media } from '../birthday/ui/sh
 import { Gate } from '../birthday/ui/ChapterView';
 import { saveFutureCard, saveLetterPdf, saveNextDateCard } from '../birthday/keepsakes';
 import { Countdown } from './Birthday';
+import { canTilt, setTilt } from './tilt';
 import { Signature } from '../birthday/ui/Signature';
 import type { Memory } from '../birthday/types';
 
@@ -53,6 +54,7 @@ export function IntroHint() {
   const c = useContent();
   const section = useStore((s) => s.section);
   const [wish, setWish] = useState(false);
+  const [tilt, setTiltOn] = useState(state.tilt.on);
   const starRef = useRef<HTMLButtonElement>(null);
   const hidden = section !== 'intro';
   const enter = () => {
@@ -93,6 +95,11 @@ export function IntroHint() {
         <button type="button" className="opening__film opening__film--cut" tabIndex={hidden ? -1 : 0} onClick={() => events.emit('playFilm', 'directors')}>
           Director’s cut
         </button>
+        {canTilt() && (
+          <button type="button" className="opening__film opening__film--cut" aria-pressed={tilt} tabIndex={hidden ? -1 : 0} onClick={() => setTilt(!tilt).then(setTiltOn)}>
+            {tilt ? '↻ Tilt on' : '↻ Tilt to look'}
+          </button>
+        )}
       </div>
     </section>
   );

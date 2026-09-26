@@ -5,6 +5,8 @@ import type { ChapterProps } from '../ChapterView';
 import { saveLetterPdf } from '../../keepsakes';
 import { Backdrop, useStage } from '../stage/useStage';
 import { Signature } from '../Signature';
+import { letterToStars } from '../letterToStars';
+import { note } from '../../../ui/journal';
 
 /* 3 ── A letter I never said out loud: a sealed envelope, then the letter writes itself. */
 export function Letter({ slug, onDone }: ChapterProps) {
@@ -38,6 +40,20 @@ export function Letter({ slug, onDone }: ChapterProps) {
       stage.current = null;
     };
   }, []);
+  // the letter, sent to the stars: its words rise off the page as sparks
+  const [burning, setBurning] = useState(false);
+  const [sky, setSky] = useState(false);
+  const toStars = () => {
+    const paper = document.querySelector<HTMLElement>('.bd-paper');
+    if (!paper || burning) return;
+    setBurning(true);
+    events.emit('sfx', 'star');
+    (state.reducedMotion ? Promise.resolve() : letterToStars(paper)).then(() => {
+      setBurning(false);
+      setSky(true);
+      note({ letterSky: true });
+    });
+  };
   const breakSeal = () => {
     if (phase !== 'sealed') return;
     events.emit('sfx', 'seal');
@@ -53,7 +69,7 @@ export function Letter({ slug, onDone }: ChapterProps) {
     return () => clearTimeout(id);
   }, [phase]);
   return (
-    <div className="bd-letter" data-live={live} data-phase={phase}>
+    <div className="bd-letter" data-live={live} data-phase={phase} data-sky={sky}>
       <div className="bd-cosmos" aria-hidden="true" onClick={breakSeal}>
         <canvas ref={ref} className="bd-cosmos__canvas bd-cosmos__canvas--interactive" />
       </div>
@@ -63,7 +79,7 @@ export function Letter({ slug, onDone }: ChapterProps) {
           <span className="bd-envelope__seal">♥</span>
         </button>
       )}
-      {open && (
+      {open && !sky && (
         <div className="bd-paper" aria-live="polite" data-done={text.length === full.length}>
           {/* each paragraph flows in like ink; the greeting and the sign-off are in her hand */}
           {text.split('\n\n').map((p, k, all) => {
@@ -100,10 +116,23 @@ export function Letter({ slug, onDone }: ChapterProps) {
           )}
         </div>
       )}
-      {open && text.length === full.length && (
-        <button type="button" className="bd-link" onClick={() => saveLetterPdf(c)}>
-          Keep this letter (PDF)
-        </button>
+      {open && text.length === full.length && !sky && (
+        <div className="bd-letter__after">
+          <button type="button" className="bd-link" onClick={() => saveLetterPdf(c)}>
+            Keep this letter (PDF)
+          </button>
+          <button type="button" className="bd-link" disabled={burning} onClick={toStars}>
+            ✦ Send it to the stars
+          </button>
+        </div>
+      )}
+      {sky && (
+        <div className="bd-letter__sky">
+          <p>Your letter is in the sky now.</p>
+          <button type="button" className="bd-link" onClick={() => setSky(false)}>
+            Read it again
+          </button>
+        </div>
       )}
       {phase === 'sealed' && (
         <button type="button" className="bd-btn bd-letter__open" onClick={breakSeal}>
