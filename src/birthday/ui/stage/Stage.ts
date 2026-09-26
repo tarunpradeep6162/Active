@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { SceneClock } from './clock';
+import { quiet } from '../../../renderer/quiet';
 import { SERIF } from '../../../utils/fonts';
 import { freezeOnLeave } from './freeze';
 
@@ -32,7 +33,7 @@ export abstract class Stage {
   ) {
     this.still = matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.low = matchMedia('(pointer: coarse)').matches || (navigator.hardwareConcurrency || 4) <= 4;
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: !!opts.alpha, premultipliedAlpha: true, powerPreference: 'high-performance' });
+    this.renderer = quiet(new THREE.WebGLRenderer({ canvas, antialias: true, alpha: !!opts.alpha, premultipliedAlpha: true, powerPreference: 'high-performance' }));
     const gl = this.renderer.getContext();
     const dbg = gl.getExtension('WEBGL_debug_renderer_info');
     if (dbg && /swiftshader|llvmpipe|software|basic render/i.test(String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)))) this.low = true;

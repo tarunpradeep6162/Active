@@ -101,7 +101,7 @@ void main(){
     c = uv - .5;
   }
   // velocity‑scaled chromatic fringe, strongest at the edges
-  float ca = uChromatic * (.0012 + abs(uScrollVelocity) * .004) * r2 * 4.;
+  float ca = uChromatic * (.0005 + abs(uScrollVelocity) * .0025) * r2 * 4.;
   vec3 col;
   col.r = texture(tScene, uv + c * ca).r;
   col.g = texture(tScene, uv).g;
@@ -133,7 +133,7 @@ void main(){
   dof = max(dof, uLens * smoothstep(.16, .5, r2) * .35);
   if (dof > .001) {
     // a touch of lateral colour where the lens is soft
-    vec3 bl = vec3(texture(tBlur, uv + c * .003 * uLens).r, texture(tBlur, uv).g, texture(tBlur, uv - c * .003 * uLens).b);
+    vec3 bl = texture(tBlur, uv).rgb;
     col = mix(col, bl * 1.05, clamp(dof, 0., 1.));
   }
   if (uHasBloom > .5) {
@@ -145,10 +145,10 @@ void main(){
   // light shafts: the brightest light (the moon, the sun, the spotlight, the lanterns) pours
   // through whatever stands in front of it
   if (uHasBloom > .5 && uRays > .001) {
-    vec2 d = (uv - uRayPt) / 32.;
+    vec2 d = (uv - uRayPt) / 24.;
     vec2 q = uv; float dec = 1.; vec3 acc = vec3(0.);
-    for (int i = 0; i < 32; i++) { q -= d; acc += texture(tStreak, q).rgb * dec; dec *= .955; }
-    col += acc / 32. * uRays * uRayTint;
+    for (int i = 0; i < 24; i++) { q -= d; acc += texture(tStreak, q).rgb * dec; dec *= .94; }
+    col += acc / 24. * uRays * uRayTint * 1.08;
   }
   // anamorphic streaks: the brightest lights (candles, fairy lights, the sun) stretch sideways
   // into thin champagne lines, like a cinema lens (squared, so only real highlights streak)
@@ -232,15 +232,11 @@ void main(){
   // soft vignette (oval, gentle)
   col *= mix(1., smoothstep(1.1, .22, length(c * vec2(.92, 1.))), .5);
   col *= 1. - uDim;
-  // a whisper of temporal dither, only enough to keep dark gradients from banding
-  float gr = hash12(uv * uResolution + fract(uTime * 7.3) * 61.) + hash12(uv * uResolution * 1.37 - fract(uTime * 3.1) * 17.) - 1.;
-  col += gr * (.006 + .006 * l);
-  // film stock: blacks lifted to a warm fade, and a living grain that lives in the shadows
-  if (uFilm > .001) {
-    col = mix(col, col * .965 + vec3(.022, .015, .026), uFilm);
-    float fg = hash12(floor(uv * uResolution / 1.6) + fract(uTime * 23.7) * 97.) - .5;
-    col += fg * .045 * pow(1. - l, 2.2) * uFilm;
-  }
+  // film stock: blacks lifted to a soft warm fade (no grain: the image stays clean)
+  if (uFilm > .001) col = mix(col, col * .97 + vec3(.018, .012, .021), uFilm);
+  // an invisible, still dither (under one 8‑bit step) so dark gradients never band; it doesn't
+  // move from frame to frame, so there is no shimmer
+  col += (hash12(floor(gl_FragCoord.xy)) - .5) / 255.;
   // HDR screens: the sun and the flames are allowed to be brighter than paper white
   if (uHdr > .001 && uHasBloom > .5) {
     vec3 hb = texture(tBloom, uv).rgb;

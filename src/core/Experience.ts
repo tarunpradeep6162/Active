@@ -243,16 +243,16 @@ export class Experience {
       y1,
     });
     const requests: ParticleRequest[] = [
-      req('embers', 'embers', 9000, 1, -7, 3.5),
-      req('storm', 'storm', 30000, 2, -6.5, 3),
-      req('glitter', 'glitter', 34000, 3, ANCHOR.workBottom - 6, ANCHOR.workTop + 6),
-      req('blob', 'blob', 12000, 4, ANCHOR.lab - 1, ANCHOR.lab + 1),
-      req('specks', 'specks', 2600, 9, -5, 3),
+      req('embers', 'embers', 6000, 1, -7, 3.5),
+      req('storm', 'storm', 9000, 2, -6.5, 3),
+      req('glitter', 'glitter', 15000, 3, ANCHOR.workBottom - 6, ANCHOR.workTop + 6),
+      req('blob', 'blob', 7000, 4, ANCHOR.lab - 1, ANCHOR.lab + 1),
+      req('specks', 'specks', 1200, 9, -5, 3),
       req('outroSpecks', 'specks', 1200, 10, ANCHOR.outro - 5, ANCHOR.outro + 3),
       req('bubbles', 'dust', 900, 5, ANCHOR.portal - 6, ANCHOR.portal + 3),
-      req('outroStorm', 'storm', 18000, 6, ANCHOR.outro - 6.5, ANCHOR.outro + 3),
-      req('outroEmbers', 'embers', 5000, 7, ANCHOR.outro - 7, ANCHOR.outro + 3.5),
-      req('dust', 'dust', 5000, 8, ANCHOR.outro - 12, 10),
+      req('outroStorm', 'storm', 6000, 6, ANCHOR.outro - 6.5, ANCHOR.outro + 3),
+      req('outroEmbers', 'embers', 3500, 7, ANCHOR.outro - 7, ANCHOR.outro + 3.5),
+      req('dust', 'dust', 3000, 8, ANCHOR.outro - 12, 10),
     ];
 
     // the preloader's own program first, so it appears immediately

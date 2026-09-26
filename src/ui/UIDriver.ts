@@ -28,6 +28,8 @@ export class UIDriver {
     const free = (1 - state.focus) * (1 - state.overlay);
     this.set('--reveal', state.reveal);
     this.set('--v-intro', state.reveal * band('intro', -1, -0.9, 0.03, 0.1) * free);
+    // the opening's title card gives way to the opening credits as she scrolls into the night
+    this.set('--scroll-intro-out', state.section === 'intro' ? smoothstep(0.07, 0.13, state.sectionProgress) : 0);
     this.set('--v-manifesto', band('manifesto', -0.35, 0.08, 0.78, 1.05) * free);
     const mr = rangeOf('manifesto');
     const man = (p - mr.start) / (mr.end - mr.start);

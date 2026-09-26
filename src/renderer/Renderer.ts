@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 import { state, store } from '../core/state';
+import { quiet } from './quiet';
 
 export function createRenderer(canvas: HTMLCanvasElement) {
-  const renderer = new THREE.WebGLRenderer({
+  const renderer = quiet(new THREE.WebGLRenderer({
     canvas,
     antialias: false, // MSAA lives on the scene render target
     alpha: false,
@@ -10,7 +11,7 @@ export function createRenderer(canvas: HTMLCanvasElement) {
     stencil: false,
     powerPreference: 'high-performance',
     preserveDrawingBuffer: false,
-  });
+  }));
   renderer.setClearColor(0x000000, 1);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.NoToneMapping; // tone mapping happens in the composite pass

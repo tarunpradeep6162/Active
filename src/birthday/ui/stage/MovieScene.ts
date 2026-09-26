@@ -79,9 +79,9 @@ export class MovieScene extends Stage {
               vec4 num = texture2D(uLeader, vUv);
               col = mix(col, vec3(.08, .07, .08), num.a);
               // grain, scratches, flicker, vignette
-              col *= .9 + .1 * h(vUv * 400. + floor(uTime * 24.));
+              col *= .97 + .03 * h(vUv * 400. + floor(uTime * 24.));
               col *= 1. - step(.997, h(vec2(floor(vUv.x * 300.), floor(uTime * 12.)))) * .5;
-              col *= .92 + .08 * sin(uTime * 50.);
+              col *= .98 + .02 * sin(uTime * 50.);
               col *= smoothstep(1.05, .35, length((vUv - .5) * vec2(1.6, 1.8)));
               col += uFlash * .6;
               vec3 off = vec3(.03, .025, .035);
