@@ -123,6 +123,53 @@ Without WebGL, the earlier flat versions come back.
   within, above its wish (once photos are added).
 - **The letter is written by hand**: wet ink settles letter by letter as a pen nib moves ahead.
 
+### The premium pass
+
+- **Real depth of field**: focus now follows the true distance of everything in the frame (from
+  the scene's depth), so the cake is sharp while the fairy lights behind it melt into soft discs;
+  each new scene racks focus from near to far.
+- **Film stock**: a warm film look: light bleeds red‑orange around the brightest things
+  (halation), the blacks are lifted to a soft fade, and a fine grain lives in the shadows.
+- **Motion blur**: fast moves smear slightly along the camera's motion, like a real shutter
+  (never across a cut; not on low‑power devices or with reduced motion).
+- **HDR**: on HDR screens, in browsers that support an HDR canvas, the sunrise and the flames
+  glow brighter than paper white. Elsewhere nothing changes.
+- **Real reflections**: once the cake room's lights are up, the rose‑gold cage reflects the actual
+  room: the drape, the fairy lights, the flames.
+- **Soft shadows**: the cake casts a soft shadow on the floor that breathes with the candle
+  flicker, and the bars of the closed cage fan faint shadows out from it.
+- **Lantern paper**: rice‑paper fibres and flecks, and a light that leans as each flame sways.
+- **Water that answers**: every lantern that lifts off, and every touch on the lake, sends rings
+  across the water that bend the reflections.
+- **Crane shots**: at the end of the cake room and of the lantern sky the camera rises up and away
+  before dropping into the next world.
+- **Match cuts**: the film's cuts close an iris onto this shot's subject (with a thin gold rim)
+  and open it on the next one's.
+- **Slow motion**: as the candles go out and as her name completes, time slows to a third for a
+  breath, and the music stretches and muffles with it.
+- **Tilt to look** (phones): *↻ Tilt to look* beside the film buttons; after she allows it,
+  turning the phone looks around the scene.
+- **The letter to the stars**: after reading, *✦ Send it to the stars*: the page glows at its
+  edges and every word lifts off as sparks; *Read it again* brings it back.
+- **Midnight in the world**: at midnight on her birthday (with the surprise), every tulip opens
+  and glows, the lakes ring, a golden pulse runs up the garden and time slows for a breath.
+- **Seasons**: each return visit moves the garden on a season: blossom petals the first time, then
+  autumn leaves, then snow drifting past the lens (preview: `?qa=1&season=autumn`).
+- **Just sit here** (finale): everything on the page goes away, the camera settles on the lake at
+  dawn with the music soft; any tap brings her back.
+- **Spatial sound**: sounds come from where things are (a lantern on the left is heard on the left,
+  the wick crackle from the cake, the lake laps from below; best with headphones).
+- **Her theme**: a short original melody that returns at each world, fuller each time: single
+  music‑box notes at the opening, a harmony in the garden, strings under it at the cake, and all
+  of it with a bass and a chime at the sunrise.
+- **A poster of her night** (after the credits, and in For you): a large image (2400 × 3200) of her
+  name at dawn over the lake, the constellation she drew, the wishes she let go, and your
+  signature.
+- **Her film to keep** (after the credits, and in For you): a ~40‑second film of her night (the
+  opening title, the garden, the cage and the candles, her lanterns, the sunrise with her stars,
+  an end card with your signature), recorded with its music as it plays and saved to her device
+  (MP4 where the browser can, otherwise WebM). Nothing is uploaded.
+
 ## Art direction
 
 - Palette: midnight `#070914 #0B1020 #11162A`, rose `#D98B9D #E8A6B5 #F2C1CB`, champagne

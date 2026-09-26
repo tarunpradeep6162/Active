@@ -65,8 +65,11 @@ export class AudioEngine {
       for (let i = 0; i < 9; i++) window.setTimeout(() => this.sfx('firework'), 2600 + i * 1100 + Math.random() * 500);
     });
     events.on('blowCandles', () => this.sfx('snuff'));
-    events.on('lanternWish', () => this.sfx('lantern'));
+    // a lantern let go on the left is heard on the left
+    events.on('lanternWish', ({ x }) => this.sfx('lantern', (x / Math.max(1, state.viewport.width)) * 2 - 1));
     events.on('sfx', (k) => this.sfx(k));
+    // the film to keep asks for the sound as a stream (see ui/recorder.ts)
+    events.on('audioStream', (cb) => cb(this.stream()));
     // slow motion: the sound stretches with the picture
     events.on('slowmo', () => this.stretch());
     events.on('blowCandles', () => this.stretch());
@@ -169,7 +172,13 @@ export class AudioEngine {
     lapDepth.gain.value = 0.35;
     lap.connect(lapDepth).connect(water.bq.frequency);
     lap.start();
-    water.g.connect(master);
+    // the lake laps from below and a little ahead (with headphones, it really is under her)
+    const below = ctx.createPanner();
+    below.panningModel = 'HRTF';
+    below.positionX.value = 0;
+    below.positionY.value = -1.6;
+    below.positionZ.value = -1;
+    water.g.connect(below).connect(master);
     this.water = water.g;
     // air: a high, faint shimmer under the stars
     const air = loop('bandpass', 6200, 0.6);
@@ -217,6 +226,65 @@ export class AudioEngine {
   }
 
   /** a small chime cluster for a moment (0 lantern · 1 candles · 2 wish) */
+  // ---- her theme: a short original melody that comes back, fuller each time
+  // (beats, D major): heard as single music‑box notes at the opening, with a harmony in the
+  // garden, with strings under it at the cake, and in full at the sunrise.
+  private static THEME: [number, number][] = [
+    [74, 0.5], [78, 0.5], [81, 1], [79, 0.5], [78, 0.5], [76, 1],
+    [74, 0.5], [76, 0.5], [78, 0.5], [81, 0.5], [83, 1], [81, 2],
+  ];
+  private static SCALE = [62, 64, 66, 67, 69, 71, 73, 74, 76, 78, 79, 81, 83, 85, 86];
+  private themePlayed = new Set<number>();
+  /** a diatonic third below (the harmony) */
+  private third(m: number) {
+    const S = AudioEngine.SCALE;
+    const i = S.indexOf(m);
+    return i >= 2 ? S[i - 2] : m - 4;
+  }
+  /** a bowed, sustained chord: soft saws through a warm filter */
+  private strings(midis: number[], t: number, dur: number, vol: number) {
+    const ctx = this.ctx!;
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 1100;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.9);
+    g.gain.setValueAtTime(vol, t + dur - 0.6);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 1.2);
+    lp.connect(g).connect(this.fx!);
+    for (const m of midis)
+      for (const det of [-6, 6]) {
+        const o = ctx.createOscillator();
+        o.type = 'sawtooth';
+        o.frequency.value = 440 * Math.pow(2, (m - 69) / 12);
+        o.detune.value = det;
+        o.connect(lp);
+        o.start(t);
+        o.stop(t + dur + 1.4);
+      }
+  }
+  /** level 0: single notes · 1: + harmony · 2: + strings · 3: all of it, with a bass and a chime */
+  private theme(level: number) {
+    if (!this.on || !this.ctx || this.themePlayed.has(level)) return;
+    this.themePlayed.add(level);
+    const beat = level === 0 ? 0.62 : 0.5;
+    let t = this.ctx.currentTime + 0.4;
+    const start = t;
+    for (const [m, d] of AudioEngine.THEME) {
+      this.tine(m, t, level === 3 ? 0.95 : 0.75);
+      if (level >= 1) this.tine(this.third(m), t + 0.01, 0.4);
+      if (level === 3 && d >= 1) this.tone(t, 440 * Math.pow(2, (m - 24 - 69) / 12), 440 * Math.pow(2, (m - 24 - 69) / 12), d * beat * 1.8, 0.05);
+      t += d * beat;
+    }
+    if (level >= 2) {
+      const half = (t - start) / 2;
+      this.strings([62, 66, 69], start, half, level === 3 ? 0.012 : 0.008);
+      this.strings([59, 62, 67], start + half, half, level === 3 ? 0.012 : 0.008);
+    }
+    if (level === 3) setTimeout(() => this.chime(2), (t - this.ctx.currentTime) * 1000);
+  }
+
   private chime(kind: number) {
     if (!this.on || !this.ctx) return;
     const t = this.ctx.currentTime + 0.02;
@@ -271,7 +339,9 @@ export class AudioEngine {
     // candlelight: a faint crackle of wicks
     while (this.crackle > 0.01 && this.nextCrackle < ctx.currentTime + 0.25) {
       if (this.nextCrackle < ctx.currentTime) this.nextCrackle = ctx.currentTime;
+      this.at = state.cakePan; // the wicks crackle from where the cake is
       this.click(this.nextCrackle, 0.018 * this.crackle * (0.4 + Math.random()));
+      this.at = 0;
       this.nextCrackle += 0.08 + Math.random() * Math.random() * 0.9;
     }
     // the finale's fireworks, once her name has formed
@@ -296,6 +366,17 @@ export class AudioEngine {
     this.air!.gain.setTargetAtTime(m.air * 0.012, t, 2);
   }
 
+  /** where the next sound comes from, left (−1) to right (1) */
+  private at = 0;
+  /** a sound's way out: through a stereo panner when it has a place on screen */
+  private out(dest: AudioNode) {
+    if (Math.abs(this.at) < 0.02) return dest;
+    const p = this.ctx!.createStereoPanner();
+    p.pan.value = Math.max(-1, Math.min(1, this.at));
+    p.connect(dest);
+    return p;
+  }
+
   /** a tiny wick crackle */
   private click(t: number, v: number) {
     const ctx = this.ctx!;
@@ -307,7 +388,7 @@ export class AudioEngine {
     const g = ctx.createGain();
     g.gain.setValueAtTime(v, t);
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.02 + Math.random() * 0.03);
-    s.connect(bq).connect(g).connect(this.master!);
+    s.connect(bq).connect(g).connect(this.out(this.master!));
     s.start(t, Math.random() * 1.5, 0.06);
   }
 
@@ -325,7 +406,7 @@ export class AudioEngine {
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(vol, t + Math.min(0.08, dur * 0.25));
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    s.connect(bq).connect(g).connect(this.fx!);
+    s.connect(bq).connect(g).connect(this.out(this.fx!));
     s.start(t, Math.random() * 1.2, dur + 0.1);
   }
   /** a soft sine thump or glide */
@@ -339,14 +420,15 @@ export class AudioEngine {
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(vol, t + 0.01);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g).connect(this.fx!);
+    o.connect(g).connect(this.out(this.fx!));
     o.start(t);
     o.stop(t + dur + 0.05);
   }
 
   /** the moments' sounds (heard only while the sound is on) */
-  sfx(kind: Sfx) {
+  sfx(kind: Sfx, pan = 0) {
     if (!this.on || !this.ctx) return;
+    this.at = kind === 'firework' ? (Math.random() - 0.5) * 1.3 : pan;
     const t = this.ctx.currentTime + 0.01;
     switch (kind) {
       case 'open': // a chapter unfolding: a soft rising breath of air and a low bloom
@@ -395,6 +477,7 @@ export class AudioEngine {
         break;
       }
     }
+    this.at = 0;
   }
 
   async toggle() {
@@ -423,6 +506,17 @@ export class AudioEngine {
     this.padLp!.frequency.setTargetAtTime(380, t, 0.12);
     this.padLp!.frequency.setTargetAtTime(m.bright, t + 1.7, 0.5);
     setTimeout(() => (this.stretchK = 1), 2200);
+  }
+
+  private streamDest: MediaStreamAudioDestinationNode | null = null;
+  /** everything she hears, as a stream (for recording her film); null while the sound is off */
+  stream(): MediaStream | null {
+    if (!this.ctx || !this.master || !this.on) return null;
+    if (!this.streamDest) {
+      this.streamDest = this.ctx.createMediaStreamDestination();
+      this.master.connect(this.streamDest);
+    }
+    return this.streamDest.stream;
   }
 
   private cueLevel = 1;
@@ -469,6 +563,11 @@ export class AudioEngine {
     // quieter when the tab is hidden is automatic (the context throttles); keep the box going
     this.setSection(state.section);
     this.schedule();
+    // her theme returns at each world, fuller every time
+    if (state.section === 'intro' && state.reveal > 0.9) this.theme(0);
+    else if (state.section === 'work' && state.sectionProgress > 0.05) this.theme(1);
+    else if (state.section === 'lab' && state.cakeReady) this.theme(2);
+    else if (state.section === 'outro' && state.finaleLocal > 0.78) this.theme(3);
     this.analyser.getByteTimeDomainData(this.data);
     let sum = 0;
     for (let i = 0; i < this.data.length; i++) {

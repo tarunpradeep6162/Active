@@ -8,6 +8,8 @@ import { PROJECTS } from '../app/projects';
 import { getJournal, note } from './journal';
 import { store } from '../core/state';
 import { rangeOf } from '../world/journey';
+import { savePoster } from '../birthday/keepsakes';
+import { canRecord } from './recorder';
 
 /**
  * The film's own moments that sit over the world: the paper flower that opens the night.
@@ -221,6 +223,14 @@ export function EndCredits() {
             <button type="button" onClick={() => (setPhase('off'), events.emit('replay', undefined))}>
               ▶ Replay your night
             </button>
+            <button type="button" onClick={() => makePoster(c)}>
+              ⤓ A poster of your night
+            </button>
+            {canRecord() && (
+              <button type="button" onClick={() => (setPhase('off'), events.emit('playFilm', 'trailer'))}>
+                ● Save your film (40 s)
+              </button>
+            )}
             <button type="button" onClick={() => setPhase('off')}>
               Back to the sunrise
             </button>
@@ -501,4 +511,20 @@ export function WindowSeat() {
       ☾ Just sitting here · tap to come back
     </p>
   );
+}
+
+/** Her night as a poster to keep (her stars, her wishes, the date, your signature). */
+export function makePoster(c: ReturnType<typeof useContent>) {
+  const j = getJournal();
+  savePoster(c, { stars: loadSky(), wishes: j.wishes.map((w) => c.lanternWishes[w % Math.max(1, c.lanternWishes.length)]).filter(Boolean) });
+}
+
+/** From anywhere (For you): back to the garden, then record her film. */
+export function recordFilm() {
+  // the sound comes up now, while this is still her tap
+  if (!store.get().audioOn) events.emit('toggleAudio', undefined);
+  if (state.route.name !== 'home' && state.route.name !== 'work') {
+    events.emit('navigate', { name: 'home' });
+    setTimeout(() => events.emit('playFilm', 'trailer'), 1200);
+  } else events.emit('playFilm', 'trailer');
 }

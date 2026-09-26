@@ -210,6 +210,7 @@ export class Director {
     const flick = 0.82 + 0.1 * Math.sin(t * 9.1) * Math.sin(t * 3.7 + 1) + 0.08 * Math.sin(t * 17.3 + 2);
     this.project(this.v.copy(world.lab.center).add(this.d.set(0, 1.0, 0)), camera);
     (u.uCandle.value as THREE.Vector3).set(this.v.x, this.v.y, this.candle * flick * (1 - clamp(state.focus * 2)));
+    state.cakePan = Math.max(-1, Math.min(1, this.v.x * 2 - 1));
     const exposure = sec === 'lab' ? 1 - state.cakeDark * 0.55 + this.candle * (flick - 0.82) * 0.25 : 1;
     u.uExposure.value += (exposure - u.uExposure.value) * dampFactor(8, dt);
 

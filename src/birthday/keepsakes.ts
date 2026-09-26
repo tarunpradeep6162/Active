@@ -238,3 +238,116 @@ function pdfFromJpegs(jpegs: Uint8Array[], pxW: number, pxH: number): ArrayBuffe
   }
   return out.buffer;
 }
+
+/**
+ * A poster of her night (2400 × 3200, PNG): her name in the stars over the lake at dawn, the
+ * constellation she drew, the wishes she let go, the date, and your signature. Made from what
+ * she did, drawn locally.
+ */
+export function savePoster(c: BirthdayContent, mine: { stars: [number, number][][]; wishes: string[] }) {
+  const W = 2400, H = 3200;
+  const cv = document.createElement('canvas');
+  cv.width = W;
+  cv.height = H;
+  const g = cv.getContext('2d')!;
+  // night into dawn, a far shore and the lake
+  const sky = g.createLinearGradient(0, 0, 0, H * 0.68);
+  sky.addColorStop(0, '#05060f');
+  sky.addColorStop(0.55, '#1b1433');
+  sky.addColorStop(0.85, '#6b3550');
+  sky.addColorStop(1, '#e79a6a');
+  g.fillStyle = sky;
+  g.fillRect(0, 0, W, H * 0.68);
+  const lake = g.createLinearGradient(0, H * 0.68, 0, H);
+  lake.addColorStop(0, '#6d3a4c');
+  lake.addColorStop(1, '#0a0812');
+  g.fillStyle = lake;
+  g.fillRect(0, H * 0.68, W, H * 0.32);
+  // the sun just rising, and its path on the water
+  const sun = g.createRadialGradient(W / 2, H * 0.68, 0, W / 2, H * 0.68, 520);
+  sun.addColorStop(0, 'rgba(255, 236, 200, .95)');
+  sun.addColorStop(0.12, 'rgba(255, 190, 120, .55)');
+  sun.addColorStop(1, 'rgba(255, 150, 90, 0)');
+  g.fillStyle = sun;
+  g.fillRect(0, H * 0.4, W, H * 0.5);
+  for (let i = 0; i < 70; i++) {
+    const y = H * 0.69 + i * 13, w = 260 * (1 - i / 80) * (0.6 + Math.random() * 0.6);
+    g.fillStyle = `rgba(255, 200, 140, ${0.35 * (1 - i / 70)})`;
+    g.fillRect(W / 2 - w / 2 + (Math.random() - 0.5) * 40, y, w, 3);
+  }
+  // the shore: soft hills and pines
+  g.fillStyle = '#1a0f1c';
+  g.beginPath();
+  g.moveTo(0, H * 0.68);
+  for (let x = 0; x <= W; x += 24) g.lineTo(x, H * 0.68 - 40 - Math.sin(x / 260) * 24 - Math.sin(x / 90) * 8 - (Math.random() < 0.25 ? 26 : 0));
+  g.lineTo(W, H * 0.68);
+  g.fill();
+  // stars, thinning toward the dawn
+  for (let i = 0; i < 900; i++) {
+    const y = Math.random() ** 1.6 * H * 0.6;
+    g.fillStyle = `rgba(255, 246, 230, ${(0.2 + Math.random() * 0.7) * (1 - y / (H * 0.62))})`;
+    const r = Math.random() < 0.05 ? 3 : 1.6;
+    g.fillRect(Math.random() * W, y, r, r);
+  }
+  // her constellation, drawn where she drew it
+  const glowDot = (x: number, y: number, r: number) => {
+    const d = g.createRadialGradient(x, y, 0, x, y, r * 3);
+    d.addColorStop(0, 'rgba(255, 248, 230, 1)');
+    d.addColorStop(0.3, 'rgba(255, 214, 150, .7)');
+    d.addColorStop(1, 'rgba(255, 190, 120, 0)');
+    g.fillStyle = d;
+    g.beginPath();
+    g.arc(x, y, r * 3, 0, Math.PI * 2);
+    g.fill();
+  };
+  for (const s of mine.stars) {
+    g.strokeStyle = 'rgba(243, 223, 167, .35)';
+    g.lineWidth = 3;
+    g.beginPath();
+    s.forEach(([x, y], i) => (i ? g.lineTo(x * W, y * H * 0.62) : g.moveTo(x * W, y * H * 0.62)));
+    g.stroke();
+    s.forEach(([x, y]) => glowDot(x * W, y * H * 0.62, 9));
+  }
+  // her name, as stars
+  g.textAlign = 'center';
+  g.fillStyle = '#f3dfa7';
+  g.font = `italic 400 120px ${SERIF}`;
+  g.fillText('Happy birthday', W / 2, 980);
+  g.font = `500 300px ${SERIF}`;
+  const name = c.name.toUpperCase().split('').join(' ');
+  g.shadowColor = 'rgba(255, 220, 170, .9)';
+  g.shadowBlur = 60;
+  g.fillStyle = '#fff6e6';
+  g.fillText(name, W / 2, 1320);
+  g.shadowBlur = 0;
+  g.fillStyle = '#e8a6b5';
+  g.font = `44px ${MONO}`;
+  g.fillText(c.date.split('').join(' '), W / 2, 1450);
+  // the wishes she let go, over the water
+  if (mine.wishes.length) {
+    g.fillStyle = 'rgba(243, 223, 167, .8)';
+    g.font = `36px ${MONO}`;
+    g.fillText('T H E   W I S H E S   Y O U   L E T   G O', W / 2, H * 0.76);
+    g.fillStyle = '#f8f1e8';
+    g.font = `italic 400 66px ${SERIF}`;
+    mine.wishes.slice(0, 5).forEach((w, i) => g.fillText(w, W / 2, H * 0.76 + 110 + i * 92));
+  }
+  // your signature
+  const sy = H - 230;
+  if (c.signatureInk) {
+    const ink = c.signatureInk, h = 150, k = h / ink.h;
+    g.save();
+    g.translate(W / 2 - (ink.w * k) / 2, sy - 110);
+    g.scale(k, k);
+    g.strokeStyle = '#f3dfa7';
+    g.lineWidth = 3.2 / k;
+    g.lineCap = g.lineJoin = 'round';
+    for (const d of ink.strokes) g.stroke(new Path2D(d));
+    g.restore();
+  } else {
+    g.fillStyle = '#f3dfa7';
+    g.font = `110px ${HAND}`;
+    g.fillText(c.signature, W / 2, sy);
+  }
+  cv.toBlob((b) => b && download(b, `${c.name.toLowerCase()}-her-night.png`), 'image/png');
+}

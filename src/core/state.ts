@@ -94,6 +94,8 @@ export const state = {
   handheld: 0,
   /** the world's clock speed (slow motion at the big moments) */
   timeScale: 1,
+  /** where the cake is across the screen, −1…1 (its crackle is heard from there) */
+  cakePan: 0,
   /** her phone's tilt, when she has let the site look around with it (−1…1) */
   tilt: { x: 0, y: 0, on: false },
   /** "just sit here": a quiet view with nothing to do */
@@ -188,7 +190,7 @@ type Events = {
   /** midnight on her birthday (or her first visit on the day) */
   birthdayMidnight: void;
   /** play the whole journey as a film */
-  playFilm: 'film' | 'directors';
+  playFilm: 'film' | 'directors' | 'trailer';
   /** roll the end credits (the film's end, or she has stayed at the sunrise) */
   rollCredits: void;
   /** play back her own night as a short film of title cards */
@@ -203,6 +205,8 @@ type Events = {
   slowmo: void;
   /** sit quietly with a view */
   windowSeat: boolean;
+  /** hands back the site's sound as a stream (for recording her film) */
+  audioStream: (s: MediaStream | null) => void;
   /** a hard cut in the film: jump straight to this journey progress behind a blink of black */
   filmCut: number;
   /** a sound for a moment (heard only while the sound is on) */

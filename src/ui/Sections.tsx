@@ -9,6 +9,8 @@ import { Gate } from '../birthday/ui/ChapterView';
 import { saveFutureCard, saveLetterPdf, saveNextDateCard } from '../birthday/keepsakes';
 import { Countdown } from './Birthday';
 import { canTilt, setTilt } from './tilt';
+import { makePoster, recordFilm } from './Cinema';
+import { canRecord } from './recorder';
 import { Signature } from '../birthday/ui/Signature';
 import type { Memory } from '../birthday/types';
 
@@ -624,6 +626,22 @@ export function Contact() {
             Keep this letter
           </button>
         </article>
+        <article className="foryou__card" data-icon="✦">
+          <h3>A poster of your night</h3>
+          <p className="foryou__note">Your name in the stars at dawn, the stars you drew and the wishes you let go, as a large image.</p>
+          <button type="button" onClick={() => makePoster(c)}>
+            Save the poster
+          </button>
+        </article>
+        {canRecord() && (
+          <article className="foryou__card" data-icon="●">
+            <h3>Your film</h3>
+            <p className="foryou__note">A 40‑second film of your night (the cake, your lanterns, the sunrise and your stars), recorded as it plays and saved to this device.</p>
+            <button type="button" onClick={recordFilm}>
+              Record and save
+            </button>
+          </article>
+        )}
       </div>
       <div className="foryou__sign">
         <Signature className="foryou__sig" color="#f3dfa7" delay={0.4} />

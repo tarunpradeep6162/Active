@@ -5,6 +5,7 @@ import { useStore } from './useStore';
 import { useContent } from '../birthday/ui/shared';
 import { mediaUrl } from '../birthday/vault';
 import type { NarrationCue } from '../birthday/types';
+import { FilmRecorder, canRecord } from './recorder';
 
 /**
  * "Play the film": the whole journey, hands‑free, like a short movie (about two and a half
@@ -61,6 +62,23 @@ const DIRECTORS: Shot[] = [
   ...ENDING,
 ];
 
+/** her film to keep (~40 s): the opening, the garden, the cake, her lanterns, the sunrise */
+const TRAILER: Shot[] = [
+  { to: ['intro', 0], travel: 0, hold: 3.5 },
+  { to: ['intro', 0.9], travel: 5 },
+  { to: ['work', 0.3], travel: 0, cut: true, hold: 0.3 },
+  { to: ['work', 0.62], travel: 7 },
+  { to: ['lab', 0.6], travel: 0, cut: true, hold: 0.8, cue: 'rise' },
+  { to: ['lab', 0.6], travel: 0, hold: 1.5, act: 'openCage' },
+  { to: ['lab', 0.6], travel: 0, hold: 2, act: 'blow', cue: 'hush' },
+  { to: ['lab', 0.6], travel: 0, hold: 2.5 },
+  { to: ['portal', 0.45], travel: 0, cut: true, hold: 0.8 },
+  { to: ['portal', 0.45], travel: 0, hold: 2.2, act: 'lantern' },
+  { to: ['portal', 0.45], travel: 0, hold: 2.2, act: 'lantern' },
+  { to: ['outro', 0.85], travel: 0, cut: true, hold: 0.2, cue: 'swell' },
+  { to: ['outro', 0.995], travel: 6, hold: 4.5 },
+];
+
 const at = ([id, local]: [SectionId, number]) => {
   const r = rangeOf(id);
   return r.start + (r.end - r.start) * local;
@@ -72,20 +90,34 @@ export function FilmMode() {
   const route = useStore((s) => s.route);
   const audioOn = useStore((s) => s.audioOn);
   const [mode, setMode] = useState<'off' | 'playing' | 'paused'>('off');
-  const [cut, setCut] = useState<'film' | 'directors'>('film');
+  const [cut, setCut] = useState<'film' | 'directors' | 'trailer'>('film');
+  const recorder = useRef<FilmRecorder | null>(null);
   const [subtitle, setSubtitle] = useState('');
   const clock = useRef({ shot: 0, t: 0, from: 0, acted: false, begun: false, spliced: false, steps: 0, inChapter: false });
-  const script = cut === 'directors' ? DIRECTORS : FILM;
+  const script = cut === 'directors' ? DIRECTORS : cut === 'trailer' ? TRAILER : FILM;
   const voice = useRef<HTMLAudioElement | null>(null);
 
   // start from the opening's buttons (or anywhere that emits playFilm)
   useEffect(() => {
     const off = events.on('playFilm', (which) => {
       clock.current = { shot: 0, t: 0, from: 0, acted: false, begun: false, spliced: false, steps: 0, inChapter: false };
-      setCut(which === 'directors' ? 'directors' : 'film');
+      setCut(which);
       window.scrollTo({ top: 0, behavior: 'instant' });
       // a film has a score: the sound comes up with it (this is her tap, so the browser allows it)
       if (!store.get().audioOn) events.emit('toggleAudio', undefined);
+      // her film to keep: record the trailer as it plays
+      recorder.current?.stop(false);
+      recorder.current = null;
+      if (which === 'trailer' && canRecord()) {
+        let stars: [number, number][][] = [];
+        try {
+          stars = JSON.parse(localStorage.getItem('bday-sky-stars') ?? '[]');
+        } catch {
+          /* none */
+        }
+        recorder.current = new FilmRecorder({ name: c.name, date: c.date, signature: c.signature, stars });
+        recorder.current.start();
+      }
       setMode('playing');
     });
     return () => void off();
@@ -96,6 +128,8 @@ export function FilmMode() {
     state.filmOn = mode === 'playing';
     document.documentElement.classList.toggle('is-film', mode !== 'off');
     if (mode === 'off') {
+      recorder.current?.stop(false);
+      recorder.current = null;
       state.filmBlow = false;
       events.emit('filmCue', 'reset');
       setSubtitle('');
@@ -169,9 +203,14 @@ export function FilmMode() {
       const shot = script[k.shot];
       if (!shot) {
         setMode('off');
-        events.emit('rollCredits', undefined);
+        if (recorder.current) {
+          // the film is saved to her device
+          recorder.current.stop(true);
+          recorder.current = null;
+        } else events.emit('rollCredits', undefined);
         return;
       }
+      if (k.shot === script.length - 1) recorder.current?.ending();
       if (!k.begun) {
         k.begun = true;
         // a match cut: the iris closes on this shot's subject first, then the splice
@@ -258,7 +297,7 @@ export function FilmMode() {
         </p>
       )}
       <div className="film-controls" role="group" aria-label="Film">
-        <span className="film-controls__label">{mode === 'playing' ? `Now playing · ${cut === 'directors' ? 'director’s cut' : 'our film'}` : 'Film paused'}</span>
+        <span className="film-controls__label">{mode === 'playing' ? (cut === 'trailer' ? '● Recording your film' : `Now playing · ${cut === 'directors' ? 'director’s cut' : 'our film'}`) : 'Film paused'}</span>
         <button type="button" onClick={() => setMode(mode === 'playing' ? 'paused' : 'playing')}>
           {mode === 'playing' ? '❚❚ Pause' : '▶ Resume'}
         </button>
