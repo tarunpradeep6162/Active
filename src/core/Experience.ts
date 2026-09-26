@@ -24,7 +24,6 @@ import { DebugOverlay } from '../ui/DebugOverlay';
 import { clamp, easeInOutCubic } from '../utils/math';
 import type { ParticleRequest } from '../workers/particles.worker';
 import { Director } from '../post/Director';
-import { enableHdr } from '../renderer/hdr';
 
 const nextFrame = () => new Promise<void>((r) => requestAnimationFrame(() => r()));
 
@@ -164,8 +163,6 @@ export class Experience {
     this.renderer.setSize(vp.width, vp.height, false);
     const size = this.renderer.getDrawingBufferSize(new THREE.Vector2());
     this.post.setSize(size.x, size.y);
-    // HDR screens: let the brightest lights go past white (high tier only)
-    this.director.hdr = this.settings.chromatic && enableHdr(this.renderer.getContext() as WebGL2RenderingContext, size.x, size.y);
     state.viewport.dpr = this.settings.dpr;
     globalUniforms.uResolution.value.set(vp.width, vp.height);
     globalUniforms.uDPR.value = this.settings.dpr;

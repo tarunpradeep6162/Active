@@ -50,8 +50,6 @@ export class Director {
   private prevVp = new THREE.Matrix4();
   private lastPos = new THREE.Vector3();
   private hasPrev = false;
-  /** the display can show highlights brighter than white (see renderer/hdr.ts) */
-  hdr = false;
 
   constructor(private post: THREE.ShaderMaterial, private lens: boolean) {
     // a hard cut in the film: a blink of black, then the new shot
@@ -133,7 +131,6 @@ export class Director {
     // (phones skip it: eight extra texture reads per pixel, for little gain on a small screen)
     u.uMotion.value = reduced || !this.lens || state.viewport.mobile ? 0 : 0.5;
     u.uFilm.value = this.lens ? 1 : 0.5;
-    u.uHdr.value = this.hdr ? 1 : 0;
     const k = dampFactor(5, dt);
     f.x += (fx - f.x) * k;
     f.y += (fy - f.y) * k;

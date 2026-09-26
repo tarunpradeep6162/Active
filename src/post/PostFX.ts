@@ -80,9 +80,9 @@ uniform vec3 uGlowA; uniform vec3 uGlowB; uniform float uReveal; uniform float u
 uniform vec2 uFocusPt; uniform float uFocusR; uniform float uFocusAmt; uniform float uLens; uniform float uBlink;
 uniform vec2 uRayPt; uniform float uRays; uniform vec3 uRayTint; uniform vec3 uTint; uniform float uTintAmt;
 uniform vec3 uCandle; uniform float uRain; uniform float uMist;
-// real depth: focus by distance, camera motion blur, film emulation, HDR highlights
+// real depth: focus by distance, camera motion blur, film emulation
 uniform sampler2D tDepth; uniform float uHasDepth; uniform float uNear; uniform float uFar; uniform float uFocusDist; uniform float uAperture;
-uniform mat4 uInvViewProj; uniform mat4 uPrevViewProj; uniform float uMotion; uniform float uFilm; uniform float uHdr;
+uniform mat4 uInvViewProj; uniform mat4 uPrevViewProj; uniform float uMotion; uniform float uFilm;
 uniform vec4 uIris;
 uniform vec2 uSeason;
 float viewDist(vec2 p){ float z = texture(tDepth, p).r; float ndc = z * 2. - 1.; return (2. * uNear * uFar) / (uFar + uNear - ndc * (uFar - uNear)); }
@@ -237,11 +237,6 @@ void main(){
   // an invisible, still dither (under one 8‑bit step) so dark gradients never band; it doesn't
   // move from frame to frame, so there is no shimmer
   col += (hash12(floor(gl_FragCoord.xy)) - .5) / 255.;
-  // HDR screens: the sun and the flames are allowed to be brighter than paper white
-  if (uHdr > .001 && uHasBloom > .5) {
-    vec3 hb = texture(tBloom, uv).rgb;
-    col += max(hb - .6, 0.) * uHdr * 1.6;
-  }
   // match cut iris: the frame closes to a point on the subject (a gold rim at its edge)
   if (uIris.w > .5) {
     float id = length((uv - uIris.xy) * vec2(aspect, 1.));
@@ -320,7 +315,6 @@ export class PostFX {
     uPrevViewProj: { value: new THREE.Matrix4() },
     uMotion: { value: 0 },
     uFilm: { value: 1 },
-    uHdr: { value: 0 },
     uIris: { value: new THREE.Vector4(0.5, 0.5, 2, 0) },
     uSeason: { value: new THREE.Vector2(0, 0) },
     uGlowA: { value: new THREE.Color('#1e6f6a') },

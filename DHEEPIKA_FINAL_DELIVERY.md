@@ -132,8 +132,6 @@ Without WebGL, the earlier flat versions come back.
   (halation), the blacks are lifted to a soft fade, and a fine grain lives in the shadows.
 - **Motion blur**: fast moves smear slightly along the camera's motion, like a real shutter
   (never across a cut; not on low‑power devices or with reduced motion).
-- **HDR**: on HDR screens, in browsers that support an HDR canvas, the sunrise and the flames
-  glow brighter than paper white. Elsewhere nothing changes.
 - **Real reflections**: once the cake room's lights are up, the rose‑gold cage reflects the actual
   room: the drape, the fairy lights, the flames.
 - **Soft shadows**: the cake casts a soft shadow on the floor that breathes with the candle
