@@ -140,15 +140,16 @@ export class CameraRig {
     this.updateOverlay();
   }
 
-  /** 0…1 how far up the crane is: a hump across the end of the cake room and of the lantern sky */
+  /** 0…1 how far up the crane is: a hump across the end of the lantern sky */
   private crane(progress: number) {
     const hump = (a: number, b: number) => {
       const x = (progress - a) / (b - a);
       return x <= 0 || x >= 1 ? 0 : Math.sin(Math.PI * x) ** 2;
     };
-    const lab = rangeOf('lab'), portal = rangeOf('portal'), outro = rangeOf('outro');
+    const portal = rangeOf('portal'), outro = rangeOf('outro');
     const w = (r: { start: number; end: number }) => (r.end - r.start) * 0.14;
-    return hump(lab.end - w(lab), lab.end + w(portal) * 0.5) + hump(portal.end - w(portal), portal.end + (outro.end - outro.start) * 0.05);
+    // (not at the end of the cake room: that exit already dives through the floor into the lake sky)
+    return hump(portal.end - w(portal), portal.end + (outro.end - outro.start) * 0.05);
   }
 
   private updateOverlay() {

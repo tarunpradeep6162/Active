@@ -112,7 +112,7 @@ const petalVert = /* glsl */ `
     float th = mix(-.2, open, b) + sin(uTime * .8 + aInfo.y * 1.7 + aInfo.z * 6.) * .025 * b;
     p.yz = rot(-th) * p.yz; n.yz = rot(-th) * n.yz;
     p.z += .05 + .04 * b; // hinge ring
-    p *= mix(.92, 1.06, b) * mix(1., .88, aInfo.x) * mix(.04, 1., g * g * (3. - 2. * g));
+    p *= mix(.92, 1.06, b) * mix(1., .88, aInfo.x) * mix(.45, 1., g * g * (3. - 2. * g)); // a closed bud at least, never a bare stem
     vec4 wp = modelMatrix * instanceMatrix * vec4(p, 1.);
     vWorldPos = wp.xyz;
     vN = normalize(mat3(modelMatrix) * mat3(instanceMatrix) * n);
@@ -780,9 +780,9 @@ export class TulipGarden {
    */
   grow(camY: number, dt: number, all = false) {
     // an open chapter or the finale's pull-back sees the whole garden: everything comes up
-    const target = all ? Math.min(camY - 4.5, this.axisBottom - 4) : camY - 4.5;
+    const target = all ? Math.min(camY - 9, this.axisBottom - 4) : camY - 9;
     if (U.uGrowY.value > 1e4) U.uGrowY.value = target + 6;
-    if (target < U.uGrowY.value) U.uGrowY.value += (target - U.uGrowY.value) * Math.min(1, dt * (all ? 3 : 1.4));
+    if (target < U.uGrowY.value) U.uGrowY.value += (target - U.uGrowY.value) * Math.min(1, dt * (all ? 3 : 2.5));
   }
   /** Exit dissolve 0…1. */
   setCrumble(c: number) {

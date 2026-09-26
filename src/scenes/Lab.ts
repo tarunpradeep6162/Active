@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { iridescentMaterial, darkLitMaterial, roseGoldMaterial, type EnvUniforms } from './materials';
+import { darkLitMaterial, roseGoldMaterial, type EnvUniforms } from './materials';
 import { createWaterFloor } from '../fluid/Water';
 import { ANCHOR } from '../world/journey';
 import { rng, clamp, smoothstep } from '../utils/math';
@@ -110,7 +110,8 @@ export class Lab {
     this.pickables.push(rods, lowerRings);
 
     // the padlock, hanging from the middle ring on the side the camera sees
-    const lockGold = iridescentMaterial({ base: '#5a3a10', envTop: '#ffe2a8', envBottom: '#3a1c06', film: 0.2, glow: 0.8 });
+    // the same rose gold as the cage (the old thin-film finish flashed magenta on one side)
+    const lockGold = roseGoldMaterial('#f0c28e', 0.18);
     this.materials.push(lockGold);
     const lockShape = new THREE.Shape();
     lockShape.moveTo(-0.16, -0.14); lockShape.lineTo(0.16, -0.14); lockShape.quadraticCurveTo(0.2, -0.14, 0.2, -0.1);
