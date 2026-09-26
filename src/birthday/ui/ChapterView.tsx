@@ -67,7 +67,7 @@ export function ChapterView() {
   const next = PROJECTS[(idx + 1) % PROJECTS.length];
   const Chapter = CHAPTERS[p.slug];
   return (
-    <section className={`bd-chapter ${open ? 'is-open' : ''}`} aria-hidden={!open} aria-label={`Chapter ${idx + 1}: ${p.title}`}>
+    <section className={`bd-chapter ${open ? 'is-open' : ''}`} aria-hidden={!open} inert={!open} aria-label={`Chapter ${idx + 1}: ${p.title}`}>
       {/* the frame: letterbox bars and a soft vignette, like a film */}
       <div className="bd-frame" aria-hidden="true" />
       {/* a title card, replayed on every chapter */}

@@ -64,7 +64,7 @@ export function IntroHint() {
     window.scrollTo({ top: r.start * state.scroll.max + 2, behavior: state.reducedMotion ? 'auto' : 'smooth' });
   };
   return (
-    <section className="opening" aria-label="Opening" data-hidden={hidden} aria-hidden={hidden}>
+    <section className="opening" aria-label="Opening" data-hidden={hidden} aria-hidden={hidden} inert={hidden}>
       <p className="opening__date">{c.date}</p>
       <Countdown />
       {c.opening.lines.map((l, i) => (
@@ -144,7 +144,7 @@ export function WorkPanel() {
   const [results, setResults] = useState<Project[]>([]);
   const hidden = (section !== 'work' && section !== 'manifesto') || route.name === 'project' || route.name === 'contact';
   return (
-    <aside className="work-panel" data-hidden={hidden} aria-label="Browse work" aria-hidden={hidden}>
+    <aside className="work-panel" data-hidden={hidden} aria-label="Browse work" aria-hidden={hidden} inert={hidden}>
       <h2 className="work-panel__q">Where shall we go?</h2>
       <ul className="work-panel__list">
         {CATEGORIES.map((c) => (
@@ -306,7 +306,7 @@ export function LabLabel() {
   return (
     <>
       <div className="cake-veil" ref={veil} aria-hidden="true" />
-      <section className="lab-label" aria-labelledby="lab-title" data-hidden={hidden} data-stage={stage} aria-hidden={hidden}>
+      <section className="lab-label" aria-labelledby="lab-title" data-hidden={hidden} data-stage={stage} aria-hidden={hidden} inert={hidden}>
         <h2 className="lab-label__title" id="lab-title">
           {stage === 'locked' ? 'Something sweet,' : stage === 'wished' ? 'Your wish' : 'Blow out'}
           <br />
@@ -397,7 +397,7 @@ export function LanternSkyLabel() {
   }, [hidden]);
   return (
     <>
-      <section className="sky-label" aria-labelledby="sky-title" data-hidden={hidden} aria-hidden={hidden}>
+      <section className="sky-label" aria-labelledby="sky-title" data-hidden={hidden} aria-hidden={hidden} inert={hidden}>
         <h2 className="sky-label__title" id="sky-title">
           A sky of wishes
         </h2>
@@ -452,7 +452,7 @@ export function FinaleSky() {
   return (
     <>
       <div className="sunrise" aria-hidden="true" />
-      <section className="finale-sky" data-hidden={hidden} aria-hidden={hidden} aria-label="Happy birthday">
+      <section className="finale-sky" data-hidden={hidden} aria-hidden={hidden} inert={hidden} aria-label="Happy birthday">
         <p className="finale-sky__happy">Happy birthday</p>
         <h2 className="sr-only">{c.name}</h2>
         <p className="finale-sky__date">
@@ -572,7 +572,7 @@ export function Contact() {
   }, [open]);
   const picks = c.thisOrThat.map((pair, k) => (prog.thisOrThat[k] !== undefined ? pair[prog.thisOrThat[k]] : null)).filter(Boolean) as string[];
   return (
-    <section className={`contact foryou ${mounted ? 'is-open' : ''}`} aria-hidden={!open} aria-label="For you" role="dialog" aria-modal={open}>
+    <section className={`contact foryou ${mounted ? 'is-open' : ''}`} aria-hidden={!open} inert={!open} aria-label="For you" role="dialog" aria-modal={open}>
       <div className="foryou__sky" aria-hidden="true" />
       <p className="foryou__kicker">
         <span>25 · 11</span>

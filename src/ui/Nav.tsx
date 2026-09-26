@@ -76,7 +76,7 @@ export function Nav() {
         </svg>
         <NavLink label="FOR YOU" to="contact" current={route.name === 'contact'} />
       </div>
-      <div className={`ticker ${onWork ? 'is-visible' : ''}`} aria-hidden={!onWork}>
+      <div className={`ticker ${onWork ? 'is-visible' : ''}`} aria-hidden={!onWork} inert={!onWork}>
         <button type="button" aria-label={audioOn ? 'Turn the music off' : 'Play soft music'} onClick={() => events.emit('toggleAudio', undefined)} tabIndex={onWork ? 0 : -1}>
           {audioOn ? '■' : '▶'}
         </button>
