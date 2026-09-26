@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { iridescentMaterial, darkLitMaterial, roseGoldMaterial } from './materials';
+import { iridescentMaterial, darkLitMaterial, roseGoldMaterial, type EnvUniforms } from './materials';
 import { createWaterFloor } from '../fluid/Water';
 import { ANCHOR } from '../world/journey';
 import { rng, clamp, smoothstep } from '../utils/math';
@@ -45,10 +45,37 @@ export class Lab {
   private cakeHome = new THREE.Vector3();
   private rose = new THREE.Vector3();
 
+  /** the room as the rose gold sees it (captured once the stage lights are up) */
+  readonly env: EnvUniforms = { tEnv: { value: null }, uEnvAmt: { value: 0 } };
+  private envRT: THREE.WebGLCubeRenderTarget | null = null;
+  private envCaptured = false;
+
+  /**
+   * Real reflections: once the cage is open and the stage is lit, a cube camera at the cake
+   * captures the room (drape, fairy lights, flames) and the rose gold reflects it.
+   */
+  captureReflections(renderer: THREE.WebGLRenderer, scene: THREE.Scene) {
+    if (this.envCaptured) {
+      this.env.uEnvAmt.value = Math.min(1, this.env.uEnvAmt.value + 0.02);
+      return;
+    }
+    this.envCaptured = true;
+    this.envRT = new THREE.WebGLCubeRenderTarget(128, { type: THREE.HalfFloatType, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter });
+    const cam = new THREE.CubeCamera(0.2, 60, this.envRT);
+    cam.position.copy(this.center).add(new THREE.Vector3(0, 1.4, 0));
+    // the metal doesn't see itself
+    const hidden = [this.bars, ...this.group.children.filter((o) => (o as THREE.Mesh).material === this.materials[0])];
+    const was = hidden.map((o) => o.visible);
+    hidden.forEach((o) => (o.visible = false));
+    cam.update(renderer, scene);
+    hidden.forEach((o, i) => (o.visible = was[i]));
+    this.env.tEnv.value = this.envRT.texture;
+  }
+
   constructor() {
     const c = this.center;
     // rose gold, catching the candle light (was a harsh magenta chrome)
-    const chrome = roseGoldMaterial();
+    const chrome = roseGoldMaterial(undefined, 0, this.env);
     this.materials.push(chrome);
 
     // ring platforms: the top pair stays with the housing, the lower pair lifts with the bars
@@ -237,7 +264,7 @@ export class Lab {
     }
     const blow = this.blownAt >= 0 ? 0 : this.blow;
     // the stage light comes up as the cage opens; the camera eases in on the cake
-    this.room.setStage(ease(0.6, 3.2, t), this.dark, dpr);
+    this.room.setStage(ease(0.6, 3.2, t), this.dark, dpr, this.candlesReady ? 1 : 0);
     this.dolly = ease(1.6, 5.5, t);
     this.cake.syncLights(this.rose);
     this.cake.update(time, lit, burst, dpr, blow, b);

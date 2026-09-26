@@ -57,12 +57,15 @@ export class NightLake {
     uAmt: { value: 0 },
     uSun: { value: 0 },
     uRain: { value: 0 },
+    /** rings on the water: (x, z, start time, strength) — a lantern lifting off, her touch */
+    uRipples: { value: Array.from({ length: 6 }, () => new THREE.Vector4(0, 0, -100, 0)) },
     uCamWorld: { value: new THREE.Matrix4() },
     uProjInv: { value: new THREE.Matrix4() },
     uWaterY: { value: 0 },
   };
 
   constructor(waterY: number, zNear: number) {
+    this.waterY = waterY;
     this.uniforms.uWaterY.value = waterY;
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, -1, 0, 3, -1, 0, -1, 3, 0]), 3));
@@ -115,7 +118,7 @@ export class NightLake {
         fragmentShader: /* glsl */ `
           ${math}
           ${noise}
-          uniform float uAmt, uRain;
+          uniform float uAmt, uRain; uniform vec4 uRipples[6];
           varying vec3 vW;
           ${SKY}
           void main(){
@@ -139,6 +142,17 @@ export class NightLake {
                 n += dv / (d + 1e-3) * ring * .35 * uRain / (1. + dist * .03);
               }
             }
+            // rings spreading from where a lantern lifted off, or where she touched the water
+            for (int k = 0; k < 6; k++) {
+              vec4 rp = uRipples[k];
+              float age = uTime - rp.z;
+              if (age < 0. || age > 7. || rp.w <= 0.) continue;
+              vec2 dv = q - rp.xy;
+              float d = length(dv);
+              float front = d - age * 1.6;
+              float ring = sin(front * 9.) * exp(-front * front * 1.6) * exp(-age * .55) * rp.w;
+              n += dv / (d + 1e-3) * ring * .22;
+            }
             vec3 N = normalize(vec3(n.x, 1., n.y));
             vec3 R = reflect(-V, N);
             R.y = abs(R.y);
@@ -151,6 +165,13 @@ export class NightLake {
     this.water.position.set(0, waterY, zNear - 200);
     this.water.renderOrder = -997;
   }
+
+  private nextRipple = 0;
+  /** a ring spreading on the water at world (x, z) */
+  ripple(x: number, z: number, strength = 1) {
+    this.uniforms.uRipples.value[this.nextRipple++ % 6].set(x, z, this.uniforms.uTime.value, strength);
+  }
+  readonly waterY: number;
 
   /** amt: how present the lake is (0…1) · sun: the sunrise (0…1) · rain: rings on the water (0…1) */
   update(camera: THREE.PerspectiveCamera, amt: number, sun: number, rain = 0) {

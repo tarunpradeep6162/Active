@@ -24,6 +24,7 @@ import { DebugOverlay } from '../ui/DebugOverlay';
 import { clamp, easeInOutCubic } from '../utils/math';
 import type { ParticleRequest } from '../workers/particles.worker';
 import { Director } from '../post/Director';
+import { enableHdr } from '../renderer/hdr';
 
 const nextFrame = () => new Promise<void>((r) => requestAnimationFrame(() => r()));
 
@@ -156,6 +157,8 @@ export class Experience {
     this.renderer.setSize(vp.width, vp.height, false);
     const size = this.renderer.getDrawingBufferSize(new THREE.Vector2());
     this.post.setSize(size.x, size.y);
+    // HDR screens: let the brightest lights go past white (high tier only)
+    this.director.hdr = this.settings.chromatic && enableHdr(this.renderer.getContext() as WebGL2RenderingContext, size.x, size.y);
     state.viewport.dpr = this.settings.dpr;
     globalUniforms.uResolution.value.set(vp.width, vp.height);
     globalUniforms.uDPR.value = this.settings.dpr;
@@ -213,6 +216,8 @@ export class Experience {
     if (!this.world || state.route.name === 'project' || state.route.name === 'contact' || state.transition.phase !== 'IDLE') return;
     if (this.world.pickCage(e.clientX, e.clientY, this.rig.camera)) return this.world.lab.open();
     if (this.world.releaseLantern(this.world.pickLantern(e.clientX, e.clientY, this.rig.camera), this.rig.camera)) return;
+    // a touch on the lake sends a ring across it
+    if (this.world.touchWater(e.clientX, e.clientY, this.rig.camera)) return;
     const slug = this.world.hovered ?? this.world.pick(e.clientX, e.clientY, this.rig.camera);
     if (slug) events.emit('navigate', { name: 'project', slug });
   }
@@ -360,7 +365,9 @@ export class Experience {
     this.updateGardenMoments(dt);
     this.rig.update(dt);
     const cam = this.rig.camera;
-    if (this.world) this.director.update(dt, this.world, cam);
+    if (this.world) this.director.update(dt, this.world, cam, this.rig.debugTarget);
+    // real reflections in the rose gold, once the cake room's lights are up (not on low tier)
+    if (this.world && this.settings.chromatic && state.section === 'lab' && state.cageOpen && state.cakeReady) this.world.lab.captureReflections(this.renderer, this.world.scene);
     if (this.trails && this.world) {
       this.trails.update(dt, cam);
       this.world.update(dt, cam, this.trails.pointerWorld, this.post.composite);

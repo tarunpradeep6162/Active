@@ -38,6 +38,14 @@ export class Director {
   private rays = { x: 0.5, y: 0.8, amt: 0 };
   private rayTint = new THREE.Color();
   private candle = 0;
+  private fdist = 10;
+  private v2 = new THREE.Vector3();
+  private vp = new THREE.Matrix4();
+  private prevVp = new THREE.Matrix4();
+  private lastPos = new THREE.Vector3();
+  private hasPrev = false;
+  /** the display can show highlights brighter than white (see renderer/hdr.ts) */
+  hdr = false;
 
   constructor(private post: THREE.ShaderMaterial, private lens: boolean) {
     // a hard cut in the film: a blink of black, then the new shot
@@ -48,7 +56,7 @@ export class Director {
     this.lens = on;
   }
 
-  update(dt: number, world: World, camera: THREE.PerspectiveCamera) {
+  update(dt: number, world: World, camera: THREE.PerspectiveCamera, lookAt?: THREE.Vector3) {
     const u = this.post.uniforms;
     const reduced = state.reducedMotion;
     const sec = state.section;
@@ -70,11 +78,34 @@ export class Director {
       (fx = this.v.x), (fy = this.v.y), (fr = state.cageOpen ? 0.2 : 0.3), (fa = state.cageOpen ? 0.55 : 0.28);
     } else if (sec === 'portal') (fy = 0.4), (fr = 0.42), (fa = 0.22);
     else if (sec === 'outro') (fy = 0.6), (fr = 0.62), (fa = 0.25 * clamp((state.finaleLocal - 0.3) / 0.3));
+    else if (sec === 'work') fa = 0.3;
     // an open chapter already softens the world; don't double it
     fa *= 1 - clamp(state.focus * 2);
     const pullEase = this.pull * this.pull * (3 - 2 * this.pull);
-    fa = Math.min(1, fa + pullEase * 0.75);
+    fa = Math.min(1, fa + pullEase * 0.45);
     fr = fr * (1 - pullEase * 0.85);
+    // focus by distance: the plane sits on what the camera looks at (the cake, the lanterns),
+    // and a new scene racks it from near to far, like a focus puller finding her mark
+    let dist = lookAt ? camera.position.distanceTo(lookAt) : 10;
+    if (sec === 'lab') dist = camera.position.distanceTo(this.v2.copy(world.lab.center).add(this.d.set(0, 0.6, 0)));
+    else if (sec === 'portal') dist = 22;
+    dist *= 1 - 0.7 * pullEase;
+    this.fdist += (dist - this.fdist) * dampFactor(6, dt);
+    u.uFocusDist.value = this.fdist;
+    u.uNear.value = camera.near;
+    u.uFar.value = camera.far;
+    // motion blur: the camera's own movement since the last frame (never across a cut)
+    camera.updateMatrixWorld();
+    this.vp.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+    const jumped = this.blink > 0 || this.lastPos.distanceTo(camera.position) > 3;
+    (u.uPrevViewProj.value as THREE.Matrix4).copy(jumped || !this.hasPrev ? this.vp : this.prevVp);
+    (u.uInvViewProj.value as THREE.Matrix4).copy(this.vp).invert();
+    this.prevVp.copy(this.vp);
+    this.lastPos.copy(camera.position);
+    this.hasPrev = true;
+    u.uMotion.value = reduced || !this.lens ? 0 : 0.5;
+    u.uFilm.value = this.lens ? 1 : 0.5;
+    u.uHdr.value = this.hdr ? 1 : 0;
     const k = dampFactor(5, dt);
     f.x += (fx - f.x) * k;
     f.y += (fy - f.y) * k;

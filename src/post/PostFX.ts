@@ -80,6 +80,10 @@ uniform vec3 uGlowA; uniform vec3 uGlowB; uniform float uReveal; uniform float u
 uniform vec2 uFocusPt; uniform float uFocusR; uniform float uFocusAmt; uniform float uLens; uniform float uBlink;
 uniform vec2 uRayPt; uniform float uRays; uniform vec3 uRayTint; uniform vec3 uTint; uniform float uTintAmt;
 uniform vec3 uCandle; uniform float uRain; uniform float uMist;
+// real depth: focus by distance, camera motion blur, film emulation, HDR highlights
+uniform sampler2D tDepth; uniform float uHasDepth; uniform float uNear; uniform float uFar; uniform float uFocusDist; uniform float uAperture;
+uniform mat4 uInvViewProj; uniform mat4 uPrevViewProj; uniform float uMotion; uniform float uFilm; uniform float uHdr;
+float viewDist(vec2 p){ float z = texture(tDepth, p).r; float ndc = z * 2. - 1.; return (2. * uNear * uFar) / (uFar + uNear - ndc * (uFar - uNear)); }
 ${math}
 ${noise}
 vec3 aces(vec3 x){ const float a = 2.51, b = .03, c = 2.43, d = .59, e = .14; return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0., 1.); }
@@ -100,15 +104,42 @@ void main(){
   col.r = texture(tScene, uv + c * ca).r;
   col.g = texture(tScene, uv).g;
   col.b = texture(tScene, uv - c * ca).b;
+  // camera motion blur: where this pixel was a frame ago, smeared along the way (a real shutter)
+  if (uHasDepth > .5 && uMotion > .001) {
+    float z = texture(tDepth, uv).r;
+    vec4 wp = uInvViewProj * vec4(uv * 2. - 1., z * 2. - 1., 1.);
+    wp /= wp.w;
+    vec4 pp = uPrevViewProj * wp;
+    vec2 prev = pp.xy / pp.w * .5 + .5;
+    vec2 vel = (uv - prev) * uMotion;
+    float vl = length(vel);
+    if (vl > .0015) {
+      vel *= min(1., .045 / vl);
+      vec3 acc = col;
+      for (int i = 1; i < 8; i++) acc += texture(tScene, uv - vel * (float(i) / 7. - .5)).rgb;
+      col = acc / 8.;
+    }
+  }
   // depth of field: a focus pull toward one point on screen, and the lens softening its edges
-  float dof = uFocusAmt * smoothstep(uFocusR, uFocusR + .38, length((uv - uFocusPt) * vec2(aspect, 1.)));
+  float dof;
+  if (uHasDepth > .5) {
+    // real depth of field: how far this point is from the focal plane, through the aperture
+    float d = viewDist(uv);
+    float coc = abs(d - uFocusDist) / max(d, .001) * uAperture;
+    dof = uFocusAmt * smoothstep(.04, .9, coc);
+  } else dof = uFocusAmt * smoothstep(uFocusR, uFocusR + .38, length((uv - uFocusPt) * vec2(aspect, 1.)));
   dof = max(dof, uLens * smoothstep(.16, .5, r2) * .35);
   if (dof > .001) {
     // a touch of lateral colour where the lens is soft
     vec3 bl = vec3(texture(tBlur, uv + c * .003 * uLens).r, texture(tBlur, uv).g, texture(tBlur, uv - c * .003 * uLens).b);
     col = mix(col, bl * 1.05, clamp(dof, 0., 1.));
   }
-  if (uHasBloom > .5) col += texture(tBloom, uv).rgb * uBloomStrength;
+  if (uHasBloom > .5) {
+    vec3 bl = texture(tBloom, uv).rgb;
+    col += bl * uBloomStrength;
+    // film halation: light bleeding red‑orange into the emulsion around the brightest things
+    col += bl * vec3(1., .32, .12) * .22 * uFilm;
+  }
   // light shafts: the brightest light (the moon, the sun, the spotlight, the lanterns) pours
   // through whatever stands in front of it
   if (uHasBloom > .5 && uRays > .001) {
@@ -178,6 +209,17 @@ void main(){
   // a whisper of temporal dither, only enough to keep dark gradients from banding
   float gr = hash12(uv * uResolution + fract(uTime * 7.3) * 61.) + hash12(uv * uResolution * 1.37 - fract(uTime * 3.1) * 17.) - 1.;
   col += gr * (.006 + .006 * l);
+  // film stock: blacks lifted to a warm fade, and a living grain that lives in the shadows
+  if (uFilm > .001) {
+    col = mix(col, col * .965 + vec3(.022, .015, .026), uFilm);
+    float fg = hash12(floor(uv * uResolution / 1.6) + fract(uTime * 23.7) * 97.) - .5;
+    col += fg * .045 * pow(1. - l, 2.2) * uFilm;
+  }
+  // HDR screens: the sun and the flames are allowed to be brighter than paper white
+  if (uHdr > .001 && uHasBloom > .5) {
+    vec3 hb = texture(tBloom, uv).rgb;
+    col += max(hb - .6, 0.) * uHdr * 1.6;
+  }
   // letterbox for the big moments
   float bar = uLetterbox * .075;
   col *= smoothstep(bar, bar + .004, uv.y) * smoothstep(bar, bar + .004, 1. - uv.y);
@@ -240,6 +282,17 @@ export class PostFX {
     uCandle: { value: new THREE.Vector3(0.5, 0.5, 0) },
     uRain: { value: 0 },
     uMist: { value: 0 },
+    tDepth: { value: null },
+    uHasDepth: { value: 0 },
+    uNear: { value: 0.1 },
+    uFar: { value: 400 },
+    uFocusDist: { value: 10 },
+    uAperture: { value: 1.2 },
+    uInvViewProj: { value: new THREE.Matrix4() },
+    uPrevViewProj: { value: new THREE.Matrix4() },
+    uMotion: { value: 0 },
+    uFilm: { value: 1 },
+    uHdr: { value: 0 },
     uGlowA: { value: new THREE.Color('#1e6f6a') },
     uGlowB: { value: new THREE.Color('#123a44') },
   });
@@ -252,8 +305,15 @@ export class PostFX {
     this.quad = new THREE.Mesh(fsTriangle(), this.composite);
     this.quad.frustumCulled = false;
     this.scene.add(this.quad);
-    this.sceneRT = this.makeRT(1, 1, settings.msaa);
+    this.sceneRT = this.makeSceneRT(1, 1, settings.msaa);
     this.blurRT = this.makeRT(1, 1, 0);
+  }
+
+  /** the scene target also keeps its depth, for focus by distance and motion blur */
+  private makeSceneRT(w: number, h: number, samples: number) {
+    const rt = this.makeRT(w, h, samples);
+    rt.depthTexture = new THREE.DepthTexture(w, h, THREE.UnsignedIntType);
+    return rt;
   }
 
   private makeRT(w: number, h: number, samples: number) {
@@ -271,7 +331,7 @@ export class PostFX {
   applySettings(settings: TierSettings) {
     this.settings = settings;
     this.sceneRT.dispose();
-    this.sceneRT = this.makeRT(this.w, this.h, settings.msaa);
+    this.sceneRT = this.makeSceneRT(this.w, this.h, settings.msaa);
     this.composite.uniforms.uChromatic.value = settings.chromatic ? 1 : 0;
     this.setSize(this.w, this.h);
   }
@@ -282,7 +342,7 @@ export class PostFX {
    * objects that no longer belong to the current context).
    */
   rebuildAfterContextLoss() {
-    this.sceneRT = this.makeRT(this.w, this.h, this.settings.msaa);
+    this.sceneRT = this.makeSceneRT(this.w, this.h, this.settings.msaa);
     this.blurRT = this.makeRT(Math.max(1, this.w >> 2), Math.max(1, this.h >> 2), 0);
     this.levels = [];
     this.ups = [];
@@ -382,6 +442,8 @@ export class PostFX {
       this.draw(this.blur, this.blurRT);
     }
     this.composite.uniforms.tScene.value = this.sceneRT.texture;
+    this.composite.uniforms.tDepth.value = this.sceneRT.depthTexture;
+    this.composite.uniforms.uHasDepth.value = this.sceneRT.depthTexture ? 1 : 0;
     this.composite.uniforms.tBloom.value = bloom ? this.ups[0].texture : null;
     this.composite.uniforms.tStreak.value = bloom ? this.levels[Math.min(1, this.levels.length - 1)].texture : null;
     this.composite.uniforms.uHasBloom.value = bloom ? 1 : 0;

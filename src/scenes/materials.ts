@@ -132,12 +132,14 @@ export function darkLitMaterial(color = '#0d1216', light = '#ff2d55', lightPos =
 }
 
 /** Polished rose gold: a warm studio reflection, candle highlights, and a slow glint sweeping across. */
-export function roseGoldMaterial(tone = '#e8b48c', glow = 0) {
+export type EnvUniforms = { tEnv: { value: THREE.Texture | null }; uEnvAmt: { value: number } };
+export function roseGoldMaterial(tone = '#e8b48c', glow = 0, env?: EnvUniforms) {
   return new THREE.ShaderMaterial({
     vertexShader: standardVert,
     fragmentShader: /* glsl */ `
       ${fog}
-      uniform vec3 uTone; uniform float uTime, uGlow;
+      uniform vec3 uTone; uniform float uTime, uGlow, uEnvAmt;
+      uniform samplerCube tEnv;
       varying vec3 vN; varying vec3 vWorldPos; varying float vDepth; varying vec2 vUv; varying vec3 vLocal;
       void main(){
         vec3 N = normalize(vN); if (!gl_FrontFacing) N = -N;
@@ -147,12 +149,14 @@ export function roseGoldMaterial(tone = '#e8b48c', glow = 0) {
         // a soft warm room reflected in the metal: bright above, velvet‑dark below
         vec3 env = mix(vec3(.12, .03, .05), vec3(1., .82, .66), smoothstep(-.2, .8, R.y));
         env += vec3(1., .75, .5) * pow(max(R.y, 0.), 12.) * 1.5;
+        // the real room, when it has been captured: the drape, the fairy lights, the flames
+        if (uEnvAmt > .001) env = mix(env, min(textureCube(tEnv, R, 2.).rgb, vec3(1.4)) * .75 + vec3(.05, .02, .02), uEnvAmt * .85);
         float fres = .35 + .65 * pow(1. - ndv, 3.);
         vec3 col = uTone * env * fres;
         float sweep = smoothstep(.985, 1., sin(dot(vWorldPos, vec3(.9, .6, .2)) * 1.3 - uTime * .7) * .5 + .5);
         col += uTone * sweep * .8 + uTone * uGlow * (.4 + .6 * pow(1. - ndv, 2.));
         gl_FragColor = vec4(applyFog(col, vDepth), 1.);
       }`,
-    uniforms: { uTone: { value: new THREE.Color(tone) }, uGlow: { value: glow }, uOpacity: { value: 1 }, uTime: globalUniforms.uTime, uFogColor: globalUniforms.uFogColor, uFogDensity: globalUniforms.uFogDensity },
+    uniforms: { uTone: { value: new THREE.Color(tone) }, uGlow: { value: glow }, uOpacity: { value: 1 }, uTime: globalUniforms.uTime, uFogColor: globalUniforms.uFogColor, uFogDensity: globalUniforms.uFogDensity, ...(env ?? { tEnv: { value: null }, uEnvAmt: { value: 0 } }) },
   });
 }

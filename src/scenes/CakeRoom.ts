@@ -18,6 +18,8 @@ export class CakeRoom {
     uTime: globalUniforms.uTime,
     uOn: { value: 0 },
     uDark: { value: 0 },
+    /** 0…1 the candles are burning (their flicker moves the shadows) */
+    uLit: { value: 0 },
     uPx: { value: 60 },
     uCake: { value: new THREE.Vector3() },
     uFogColor: globalUniforms.uFogColor,
@@ -168,6 +170,31 @@ export class CakeRoom {
     this.materials.push(pool.material as THREE.ShaderMaterial);
     pool.position.set(c.x, floor + 0.03, c.z);
     this.group.add(pool);
+    // soft shadows on the floor: the cake's own, breathing with the candle flicker, and the
+    // bars of the closed cage fanning out from it (they lift away with the cage)
+    const shadow = new THREE.Mesh(
+      new THREE.CircleGeometry(3.4, 64).rotateX(-Math.PI / 2),
+      new THREE.ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        vertexShader: `varying vec2 vP; void main(){ vP = position.xz; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }`,
+        fragmentShader: /* glsl */ `
+          uniform float uOn, uDark, uLit, uTime; varying vec2 vP;
+          void main(){
+            float r = length(vP);
+            float flick = uLit * (.06 * sin(uTime * 9.1) * sin(uTime * 3.7 + 1.) + .04 * sin(uTime * 17.3 + 2.));
+            float contact = exp(-pow(r / (1.25 + flick), 2.) * 2.2) * (.55 + .2 * uOn);
+            float bars = smoothstep(.2, .9, cos(atan(vP.y, vP.x) * 18.) * .5 + .5) * smoothstep(1.2, 1.6, r) * smoothstep(3.3, 2., r) * .35 * (1. - uOn);
+            float a = clamp(contact + bars, 0., .8) * (1. - uDark * .6);
+            gl_FragColor = vec4(vec3(.02, .005, .01), a);
+          }`,
+        uniforms: this.u,
+      }),
+    );
+    this.materials.push(shadow.material as THREE.ShaderMaterial);
+    shadow.position.set(c.x, floor + 0.025, c.z);
+    shadow.renderOrder = -1;
+    this.group.add(shadow);
     // dust turning slowly in the beam
     const n = lowTier ? 110 : 220;
     const dp = new Float32Array(n * 3), ds = new Float32Array(n);
@@ -201,7 +228,8 @@ export class CakeRoom {
     this.group.add(dust);
   }
 
-  setStage(on: number, dark: number, dpr: number) {
+  setStage(on: number, dark: number, dpr: number, lit = 0) {
+    this.u.uLit.value += (lit - this.u.uLit.value) * 0.1;
     this.u.uOn.value = on;
     this.u.uDark.value = dark;
     this.u.uPx.value = 60 * dpr * (window.innerHeight / 800) * 1.4;

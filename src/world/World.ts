@@ -352,6 +352,20 @@ export class World {
     return true;
   }
 
+  private waterPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  /** A touch on the lake (lantern sky or finale): a ring spreads from it. */
+  touchWater(clientX: number, clientY: number, camera: THREE.Camera) {
+    const lake = state.section === 'portal' ? this.portal.lake : state.section === 'outro' ? this.finaleSky.lake : null;
+    if (!lake) return false;
+    this.ndc.set((clientX / state.viewport.width) * 2 - 1, -(clientY / state.viewport.height) * 2 + 1);
+    this.raycaster.setFromCamera(this.ndc, camera);
+    this.waterPlane.constant = -lake.waterY;
+    const hit = this.raycaster.ray.intersectPlane(this.waterPlane, this.tmpHead);
+    if (!hit || hit.distanceTo(camera.position) > 80) return false;
+    lake.ripple(hit.x, hit.z, 1.2);
+    return true;
+  }
+
   /** Tap / click picking (touch has no hover). */
   pick(clientX: number, clientY: number, camera: THREE.Camera): string | null {
     if (state.section !== 'work') return null;

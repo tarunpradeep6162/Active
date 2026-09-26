@@ -16,7 +16,10 @@ for (const item of list) {
     scrollTo(0, y); const s = __state.scroll; s.position = s.target = y; s.velocity = 0; __exp.scroll.update(0); __exp.rig.snap();
   }, [sec, +l]);
   if (act === 'open') await page.evaluate(() => __events.emit('openCage'));
-  await page.waitForTimeout(act === 'open' ? 9000 : 3500);
+  // advance the world's own clock (the software renderer is far slower than real time), so
+  // focus pulls, fades and the cage have really finished
+  await page.evaluate((ms) => { __exp.qaStep(ms, 50); __exp.qaResume(); }, act === 'open' ? 7000 : 2500);
+  await page.waitForTimeout(800);
   const f = `qa/out/shots/${tag}-${W}-${sec}-${Math.round(+l * 100)}${act ? '-' + act : ''}.png`;
   await page.screenshot({ path: f });
   files.push(f);

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { ANCHOR } from '../world/journey';
 import { globalUniforms } from '../world/uniforms';
-import { fog } from '../shaders/chunks';
+import { fog, noise } from '../shaders/chunks';
 import { rng, clamp, smoothstep } from '../utils/math';
 import { NightLake, reflectionChunk } from './NightLake';
 
@@ -73,16 +73,25 @@ export class LanternSky {
       float driftFade(vec4 s, float t){ float k = fract(s.y + t * (.006 + s.z * .006)); return smoothstep(0., .08, k) * (1. - smoothstep(.82, 1., k)); }
     `;
     const paperFrag = /* glsl */ `
+      ${noise}
       ${fog}
       uniform float uTime;
       varying vec3 vLocal; varying float vDepth; varying float vGlow; varying float vHue; varying float vFade;
       void main(){
         // warm light from the flame in the mouth: brightest low inside, fading up the paper
         float h = clamp(vLocal.y + .4, 0., .83) / .83;
-        float ribs = smoothstep(.93, 1., abs(sin(atan(vLocal.z, vLocal.x) * 3.5)));
+        float az = atan(vLocal.z, vLocal.x);
+        float ribs = smoothstep(.93, 1., abs(sin(az * 3.5)));
         vec3 paper = mix(vec3(1., .62, .3), vec3(.98, .55, .5), vHue);
         float flick = .9 + .1 * sin(uTime * 7. + vHue * 40.);
-        vec3 col = paper * (1.5 - h * 1.05) * flick * vGlow;
+        // the flame sways, so the light inside leans: one side of the paper glows brighter
+        float lean = sin(uTime * 1.7 + vHue * 13.) * .8;
+        float side = .85 + .3 * cos(az - lean) * (1. - h);
+        // rice paper: long fibres and a few thicker flecks catch the light from behind
+        float fib = hash12(vec2(floor(az * 60.), floor(h * 9.))) * .5 + hash12(vec2(floor(az * 160.), floor(h * 40.))) * .5;
+        float fleck = step(.985, hash12(floor(vec2(az * 40., h * 30.))));
+        vec3 col = paper * (1.5 - h * 1.05) * flick * vGlow * side * (.88 + .18 * fib);
+        col -= paper * fleck * .25;
         col *= 1. - ribs * .35;
         col += vec3(1., .85, .6) * pow(1. - h, 6.) * 1.2 * vGlow;
         gl_FragColor = vec4(applyFog(col * vFade, vDepth * .6), 1.);
@@ -284,6 +293,9 @@ export class LanternSky {
   release(i: number) {
     if (i < 0 || i >= WISH_LANTERNS || this.done[i] || !Number.isNaN(this.released[i])) return false;
     this.released[i] = this.time;
+    // the water answers as it lifts away
+    const p = this.wishPosition(i, new THREE.Vector3());
+    this.lake.ripple(p.x, p.z, 1);
     return true;
   }
 
