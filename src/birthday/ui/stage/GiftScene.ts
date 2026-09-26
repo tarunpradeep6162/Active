@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { SceneClock } from './clock';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
@@ -35,7 +36,7 @@ export class GiftScene {
   private renderer: THREE.WebGLRenderer;
   private scene = new THREE.Scene();
   private camera = new THREE.PerspectiveCamera(34, 16 / 9, 0.1, 100);
-  private clock = new THREE.Clock();
+  private clock = new SceneClock();
   private boxes: Box[] = [];
   private raf = 0;
   private running = false;
@@ -69,7 +70,7 @@ export class GiftScene {
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.build();
     if (opened !== null && opened >= 0) {
       // already opened on an earlier visit: show it open, no replay

@@ -26,7 +26,7 @@ export class LetterScene extends Stage {
     super(canvas, { dpr: 1.5 });
     this.renderer.toneMappingExposure = 0.82;
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     const pmrem = new THREE.PMREMGenerator(this.renderer);
     const room = new RoomEnvironment();
     this.scene.environment = this.track(pmrem.fromScene(room, 0.04).texture);

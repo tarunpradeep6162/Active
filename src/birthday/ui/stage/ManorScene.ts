@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { SceneClock } from './clock';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
@@ -30,7 +31,7 @@ export class ManorScene {
   private composer!: EffectComposer;
   private scene = new THREE.Scene();
   private camera = new THREE.PerspectiveCamera(32, 16 / 9, 0.1, 600);
-  private clock = new THREE.Clock();
+  private clock = new SceneClock();
   private raf = 0;
   private running = false;
   private ready = false;
@@ -66,7 +67,7 @@ export class ManorScene {
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.08;
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.io = new IntersectionObserver(([e]) => {
       this.visible = e.isIntersecting;
       this.visible ? this.start() : this.stop();

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { SceneClock } from './clock';
 import { SERIF } from '../../../utils/fonts';
 import { freezeOnLeave } from './freeze';
 
@@ -11,7 +12,7 @@ export abstract class Stage {
   protected renderer: THREE.WebGLRenderer;
   protected scene = new THREE.Scene();
   protected camera = new THREE.PerspectiveCamera(40, 1, 0.1, 400);
-  protected clock = new THREE.Clock();
+  protected clock = new SceneClock();
   protected readonly still: boolean;
   protected low: boolean;
   private raf = 0;
