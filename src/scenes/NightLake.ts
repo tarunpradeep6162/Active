@@ -34,8 +34,10 @@ const SKY = /* glsl */ `
     float dust = fbm2(vec2(atan(d.x, -d.z) * 3., e * 5.) + 3.);
     col += vec3(.55, .5, .75) * band * (.07 + .2 * dust) * smoothstep(.0, .12, e) * (1. - s);
     col -= vec3(.03, .03, .05) * band * smoothstep(.55, .75, dust) * (1. - s);
+    // (soft round points, not hard cells: square stars crawl and flicker as the camera moves)
     vec3 sc = floor(d * 300.);
-    float st = step(.9965 - band * .006, hash12(sc.xy + sc.z * 17.31));
+    vec3 sf = fract(d * 300.) - .5;
+    float st = step(.9965 - band * .006, hash12(sc.xy + sc.z * 17.31)) * smoothstep(.36, .04, length(sf.xy + sf.z * .3));
     col += st * (.5 + .5 * sin(uTime * (1. + hash12(sc.yz) * 3.) + sc.x)) * smoothstep(.03, .2, e) * (1. - s) * .9;
     // the sun, rising behind the hills straight ahead
     vec3 sd = normalize(vec3(0., mix(-.05, .06, s), -1.));

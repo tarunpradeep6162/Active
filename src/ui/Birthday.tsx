@@ -136,7 +136,7 @@ function Fireworks() {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const cv = ref.current!;
     const g = cv.getContext('2d')!;
-    const dpr = Math.min(2, devicePixelRatio || 1);
+    const dpr = Math.min(3, devicePixelRatio || 1);
     const size = () => {
       cv.width = innerWidth * dpr;
       cv.height = innerHeight * dpr;

@@ -153,8 +153,10 @@ const petalFrag = /* glsl */ `
     // warm glow from inside the opening flower
     c += inside ? base * vBloom * (.18 + .3 * (1. - v)) * mix(.45, 1., uWarm) : vec3(0.);
     // dew: tiny sparkling droplets that catch the light
-    vec2 cell = floor(vUv * vec2(16., 22.) + vSeed * 13.);
-    float dew = step(.965, hash12(cell)) * pow(max(dot(reflect(-L, N), V), 0.), 24.) * 2.4;
+    vec2 dg = vUv * vec2(16., 22.) + vSeed * 13.;
+    vec2 cell = floor(dg);
+    // a round droplet inside its cell (a hard‑edged cell glitters like noise as the petal turns)
+    float dew = step(.965, hash12(cell)) * smoothstep(.32, .08, length(fract(dg) - .5)) * pow(max(dot(reflect(-L, N), V), 0.), 24.) * 2.4;
     c += dew * light;
     c += pulse(vWorldPos) * vec3(1., .78, .4) * 1.4 + uReveal * col * .25;
     c *= 1. - uFocus * .55;
@@ -475,7 +477,9 @@ export class TulipGarden {
           float fres = pow(1. - abs(dot(N, V)), 2.);
           float edge = smoothstep(0., .18, vUv.y) * smoothstep(1., .82, vUv.y);
           float sheen = .5 + .5 * sin(vUv.x * 160. - uTime * 1.4 + vUv.y * 3.);
-          float motes = step(.992, hash12(floor(vec2(vUv.x * 900. - uTime * 6., vUv.y * 6.)))) * 2.;
+          vec2 mg = vec2(vUv.x * 900. - uTime * 6., vUv.y * 6.);
+          // soft motes drifting along the silk (hard cells shimmered)
+          float motes = step(.992, hash12(floor(mg))) * smoothstep(.5, .1, abs(fract(mg.x) - .5)) * smoothstep(.5, .2, abs(fract(mg.y) - .5)) * 2.;
           vec3 col = mix(vec3(1., .82, .74), vec3(1., .9, .7), vUv.y) * mix(.6, 1.1, uWarm);
           float a = edge * (.1 + fres * .45 + sheen * .08) + motes * edge;
           a += pulse(vWorldPos) * .6;

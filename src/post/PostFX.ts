@@ -74,14 +74,16 @@ void main(){
 const fxFrag = /* glsl */ `
 precision highp float;
 in vec2 vUv; out vec4 o;
-uniform sampler2D tStreak; uniform vec2 uRayPt; uniform float uRays; uniform vec3 uRayTint; uniform float uStreak;
+uniform sampler2D tStreak; uniform sampler2D tRaySrc; uniform float uRaySrcGain; uniform vec2 uRayPt; uniform float uRays; uniform vec3 uRayTint; uniform float uStreak;
 void main(){
   vec3 col = vec3(0.);
   if (uRays > .001) {
     vec2 d = (vUv - uRayPt) / 24.;
     vec2 q = vUv; float dec = 1.; vec3 acc = vec3(0.);
-    for (int i = 0; i < 24; i++) { q -= d; acc += texture(tStreak, q).rgb * dec; dec *= .94; }
-    col += acc / 24. * uRays * uRayTint * 1.08;
+    // marched through the blurred glow, not the raw highlights: with only 24 steps a sharp source
+    // repeats each bright spot along the shaft as faint blocks
+    for (int i = 0; i < 24; i++) { q -= d; acc += texture(tRaySrc, q).rgb * dec; dec *= .94; }
+    col += acc / 24. * uRays * uRayTint * 1.08 * uRaySrcGain;
   }
   if (uStreak > .001) {
     vec3 s = vec3(0.);
@@ -304,6 +306,9 @@ export class PostFX {
   });
   private fx = pass(fxFrag, {
     tStreak: { value: null },
+    tRaySrc: { value: null },
+    // the blurred glow carries ~3× the mean light of the raw highlights (measured): match the old strength
+    uRaySrcGain: { value: 0.36 },
     uRayPt: this.composite.uniforms.uRayPt,
     uRays: this.composite.uniforms.uRays,
     uRayTint: this.composite.uniforms.uRayTint,
@@ -467,7 +472,9 @@ export class PostFX {
     this.composite.uniforms.tBloom.value = bloom ? this.ups[0].texture : null;
     const fxOn = bloom && ((cu.uRays.value as number) > 0.001 || (cu.uStreak.value as number) > 0.001);
     if (fxOn) {
-      this.fx.uniforms.tStreak.value = this.levels[this.settings.cheapPost ? 0 : Math.min(1, this.levels.length - 1)].texture;
+      const k = this.settings.cheapPost ? 0 : Math.min(1, this.levels.length - 1);
+      this.fx.uniforms.tStreak.value = this.levels[k].texture;
+      this.fx.uniforms.tRaySrc.value = this.ups[k].texture;
       this.draw(this.fx, this.fxRT);
     }
     cu.uFxOn.value = fxOn ? 1 : 0;

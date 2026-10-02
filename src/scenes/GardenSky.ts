@@ -85,8 +85,10 @@ export class GardenSky {
             col = mix(col, moon, disc);
             col += mix(vec3(.55, .6, .95), vec3(1., .6, .32), w) * (exp(-(1. - ca) * mix(420., 260., w)) * .5 + exp(-(1. - ca) * 18.) * mix(.08, .3, w));
             // stars, fading as the light warms and near the horizon
+            // (soft round points, not hard cells: square stars crawl and flicker as the camera moves)
             vec3 sc = floor(d * 260.);
-            float st = step(.9975, hash12(sc.xy + sc.z * 17.31));
+            vec3 sf = fract(d * 260.) - .5;
+            float st = step(.9975, hash12(sc.xy + sc.z * 17.31)) * smoothstep(.36, .04, length(sf.xy + sf.z * .3));
             col += st * (.5 + .5 * sin(uTime * (1. + hash12(sc.yz) * 3.) + sc.x)) * (1. - w) * smoothstep(.05, .3, e) * vec3(.9, .9, 1.);
             // thin clouds, lit from underneath by the moon or the sun
             vec2 cp = d.xz / (max(e, .02) + .12) * .9;

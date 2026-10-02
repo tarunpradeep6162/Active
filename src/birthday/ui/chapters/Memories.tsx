@@ -286,7 +286,7 @@ function Scratch({ children, onRevealed }: { children: React.ReactNode; onReveal
   useEffect(() => {
     const cv = ref.current!;
     const g = cv.getContext('2d')!;
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const dpr = Math.min(3, window.devicePixelRatio || 1);
     cv.width = Math.max(1, Math.round(cv.clientWidth * dpr));
     cv.height = Math.max(1, Math.round(cv.clientHeight * dpr));
     const grad = g.createLinearGradient(0, 0, cv.width, cv.height);

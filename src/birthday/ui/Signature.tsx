@@ -78,7 +78,7 @@ export function SignPad() {
   useEffect(() => {
     const cv = ref.current!;
     const g = cv.getContext('2d')!;
-    const dpr = Math.min(2, devicePixelRatio || 1);
+    const dpr = Math.min(3, devicePixelRatio || 1);
     const fit = () => {
       cv.width = cv.clientWidth * dpr;
       cv.height = cv.clientHeight * dpr;

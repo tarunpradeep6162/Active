@@ -18,6 +18,8 @@ export interface TierSettings {
 /** a phone GPU from the current top class (OnePlus 11R's Adreno 730 and up) vs the mid class
  *  (vivo V70's Adreno 722 and the like): the mid class starts at a slightly lower resolution */
 let strongPhoneGpu = false;
+/** true once detectTier has seen a top‑class phone GPU (Adreno 730+, Immortalis, Apple…) */
+export const isStrongPhoneGpu = () => strongPhoneGpu;
 
 const isMobileDevice = () =>
   matchMedia('(pointer: coarse)').matches || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
@@ -60,20 +62,23 @@ export function tierSettings(tier: PerformanceTier): TierSettings {
     };
   if (tier === 'medium')
     return {
-      // phones: a 3× screen is drawn at 1.75× (top class) or 1.5× (mid class): sharp, with the
-      // glow passes at quarter resolution so the extra pixels stay affordable. The governor trims
-      // it (never below 85%) only if frames start to slip.
-      dpr: mobile ? Math.min(dpr, strongPhoneGpu ? 1.75 : 1.5) : Math.min(dpr, 1.25),
+      // phones: drawn at the screen's own resolution (3× on the OnePlus 11R class) or 2.5× on the
+      // mid class, with the glow passes at quarter resolution so the pixels stay affordable. The
+      // governor trims it (never below 85%) only if frames start to slip.
+      dpr: mobile ? Math.min(dpr, strongPhoneGpu ? 3 : 2.5) : Math.min(dpr, 1.25),
       particleScale: 0.6,
       bloom: true,
       bloomLevels: 4,
       // phones: 4× MSAA (nearly free on their tile‑based GPUs) keeps petal and stem edges clean
       // once the frame is scaled up to the 3× screen
-      msaa: mobile ? 4 : 0,
+      // (at 2.5× and up the pixels are already tiny: 2 samples finish the edges)
+      msaa: mobile ? (Math.min(dpr, strongPhoneGpu ? 3 : 2.5) >= 2.5 ? 2 : 4) : 0,
       trailStrands: 2,
       chromatic: true,
       hexCount: 0.7,
-      cheapPost: mobile,
+      // (half‑resolution glow passes even on phones: drawn at the screen's own 3×, a quarter‑res
+      // light shaft shows as soft blocks)
+      cheapPost: false,
     };
   return {
     // phones keep a readable sharpness even on the lowest tier (their screens are ~3×)

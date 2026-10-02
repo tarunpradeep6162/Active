@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { freezeOnLeave } from './freeze';
-import { frameGate } from '../../../core/pace';
+import { frameGate, stageDpr } from '../../../core/pace';
 
 const BASE = '/manor/';
 type Model = { geo: THREE.BufferGeometry; mat: THREE.MeshStandardMaterial; height: number };
@@ -64,7 +64,8 @@ export class ManorScene {
     const dbg = gl.getExtension('WEBGL_debug_renderer_info');
     if (dbg && /swiftshader|llvmpipe|software|basic render/i.test(String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)))) this.low = true;
     // full‑screen backdrop behind the chapter: a modest pixel ratio is plenty
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.low ? 1 : 1.25));
+    const software = !!dbg && /swiftshader|llvmpipe|software|basic render/i.test(String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)));
+    this.renderer.setPixelRatio(software ? 1 : stageDpr(2, 1.6, 1.25));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.08;
@@ -621,8 +622,8 @@ export class ManorScene {
     this.samples = [];
     if (med > 40 && this.aoPass?.enabled) {
       this.aoPass.enabled = false; // the ambient occlusion is the most expensive pass
-    } else if (med > 40 && this.renderer.getPixelRatio() > 1) {
-      this.renderer.setPixelRatio(1);
+    } else if (med > 40 && this.renderer.getPixelRatio() > 1.25) {
+      this.renderer.setPixelRatio(Math.max(1.25, this.renderer.getPixelRatio() - 0.4));
       this.resize();
     } else if (med > 70 && this.every < 3) {
       this.every++; // still slow: redraw every other (then every third) frame

@@ -1,3 +1,4 @@
+import { isStrongPhoneGpu } from './Performance';
 /**
  * Phones: their screens refresh at 90 or 120 Hz, but a WebGL scene that tries to keep up wobbles
  * between frame rates and heats the GPU until it throttles. Every render loop on a phone draws at
@@ -17,4 +18,14 @@ export function frameGate() {
     last = now;
     return true;
   };
+}
+
+/**
+ * Pixel ratio for a chapter's own 3D stage. Phones get real sharpness (they used to draw these
+ * at 1×, soft on a 3× screen): `top` on a top‑class GPU, `mid` otherwise, never above the screen.
+ */
+export function stageDpr(top: number, mid: number, desktop: number) {
+  const dpr = window.devicePixelRatio || 1;
+  if (!isPhone) return Math.min(dpr, desktop);
+  return Math.min(dpr, isStrongPhoneGpu() ? top : mid);
 }

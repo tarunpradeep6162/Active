@@ -3,7 +3,7 @@ import { SceneClock } from './clock';
 import { quiet } from '../../../renderer/quiet';
 import { SERIF } from '../../../utils/fonts';
 import { freezeOnLeave } from './freeze';
-import { frameGate } from '../../../core/pace';
+import { frameGate, stageDpr } from '../../../core/pace';
 
 /**
  * Shared base for the cinematic chapter stages (each renders into its own canvas).
@@ -38,7 +38,8 @@ export abstract class Stage {
     const gl = this.renderer.getContext();
     const dbg = gl.getExtension('WEBGL_debug_renderer_info');
     if (dbg && /swiftshader|llvmpipe|software|basic render/i.test(String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)))) this.low = true;
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.low ? 1 : opts.dpr ?? 1.5));
+    const software = !!dbg && /swiftshader|llvmpipe|software|basic render/i.test(String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)));
+    this.renderer.setPixelRatio(software ? 1 : stageDpr(2.5, 2, opts.dpr ?? 1.5));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     if (opts.alpha) this.renderer.setClearColor(0x000000, 0);
@@ -106,8 +107,9 @@ export abstract class Stage {
     if (this.samples.length < 30) return;
     const med = [...this.samples].sort((a, b) => a - b)[15];
     this.samples = [];
-    if (med > 40 && this.renderer.getPixelRatio() > 1) {
-      this.renderer.setPixelRatio(1);
+    if (med > 40 && this.renderer.getPixelRatio() > 1.25) {
+      // step down gently (a phone stays sharp), never straight to 1×
+      this.renderer.setPixelRatio(Math.max(1.25, this.renderer.getPixelRatio() - 0.5));
       this.resize();
     } else if (med > 70 && this.every < 2) this.every = 2;
   }

@@ -56,7 +56,7 @@ export function CatchGame({ slug, onDone }: ChapterProps) {
     if (state !== 'play') return;
     const cv = ref.current!;
     const g = cv.getContext('2d')!;
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const dpr = Math.min(3, window.devicePixelRatio || 1);
     const W = (cv.width = Math.max(1, Math.round(cv.clientWidth * dpr))), H = (cv.height = Math.max(1, Math.round(cv.clientHeight * dpr)));
     let px = W / 2, target = W / 2, caught = 0, stun = 0, raf = 0, last = performance.now(), spawn = 0;
     type Item = { x: number; y: number; v: number; kind: 'heart' | 'star' | 'cloud'; r: number };

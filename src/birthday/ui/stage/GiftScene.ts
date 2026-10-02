@@ -6,7 +6,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { SERIF } from '../../../utils/fonts';
 import { freezeOnLeave } from './freeze';
-import { frameGate } from '../../../core/pace';
+import { frameGate, stageDpr } from '../../../core/pace';
 
 
 /** satin wrap, ribbon and inner‑glow colours for each of the three boxes */
@@ -67,7 +67,7 @@ export class GiftScene {
     const coarse = matchMedia('(pointer: coarse)').matches;
     this.renderer = quiet(new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, premultipliedAlpha: true, powerPreference: 'high-performance' }));
     this.renderer.setClearColor(0x000000, 0);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, coarse ? 1.25 : 1.75));
+    this.renderer.setPixelRatio(coarse ? stageDpr(2.25, 1.75, 1.75) : Math.min(window.devicePixelRatio || 1, 1.75));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;

@@ -66,8 +66,10 @@ function stableHeight(width: number, phone: boolean) {
 
 export function readViewport() {
   const vv = window.visualViewport;
-  const width = Math.round(vv ? vv.width : window.innerWidth) || window.innerWidth;
   const coarse = matchMedia('(pointer: coarse)').matches || /Android|iPhone|iPad/i.test(navigator.userAgent);
+  // phones: the layout width (a pinch‑zoom shrinks the visual viewport, not the page the canvas
+  // fills; the zoom raises the drawing resolution instead, see Experience.applyResolution)
+  const width = (coarse ? document.documentElement.clientWidth : Math.round(vv ? vv.width : window.innerWidth)) || window.innerWidth;
   const height = stableHeight(width, coarse);
   state.viewport.width = width;
   state.viewport.height = height;

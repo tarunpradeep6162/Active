@@ -279,7 +279,7 @@ export function FinaleTools() {
     const g = el.getContext('2d')!;
     let raf = 0, idle = false;
     const draw = (now: number) => {
-      const dpr = Math.min(2, devicePixelRatio || 1);
+      const dpr = Math.min(3, devicePixelRatio || 1);
       if (el.width !== innerWidth * dpr) (el.width = innerWidth * dpr), (el.height = innerHeight * dpr);
       g.setTransform(dpr, 0, 0, dpr, 0, 0);
       // nothing drawn yet: clear once and idle (no full-screen redraw every frame)

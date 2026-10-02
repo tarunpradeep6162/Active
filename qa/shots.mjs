@@ -8,6 +8,8 @@ fs.mkdirSync('qa/out/shots', { recursive: true });
 const { browser, page, logs } = await openSite('recreation', { width: W, height: H, mobile: W < 600, dpr: +process.env.DPR || 1, query: `qa=1&tier=${process.env.TIER || 'medium'}` });
 page.on('pageerror', (e) => logs.push(`pageerror: ${e.message}`));
 const files = [];
+// EVAL: code run in the page before the shots (e.g. to switch an effect off while hunting an artefact)
+if (process.env.EVAL) await page.evaluate(process.env.EVAL);
 for (const item of list) {
   const [sec, l, act] = item.split(':');
   await page.evaluate(([sec, l]) => {

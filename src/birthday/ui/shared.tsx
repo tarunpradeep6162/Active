@@ -78,7 +78,7 @@ export function ParticleText({ text, phase, className = '', color = '#fff1c9' }:
     const cv = ref.current;
     if (!cv) return;
     const g = cv.getContext('2d')!;
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const dpr = Math.min(3, window.devicePixelRatio || 1);
     const W = (cv.width = Math.max(1, Math.round(cv.clientWidth * dpr))), H = (cv.height = Math.max(1, Math.round(cv.clientHeight * dpr)));
     // sample the text into target points
     const off = document.createElement('canvas');

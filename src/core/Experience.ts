@@ -12,7 +12,7 @@ import { TrailSystem } from '../trails/TrailSystem';
 import { TransitionController } from '../transitions/TransitionController';
 import { AudioEngine } from '../audio/AudioEngine';
 import { AssetManager } from './AssetManager';
-import { detectTier, tierSettings, FpsGovernor, type TierSettings } from './Performance';
+import { detectTier, tierSettings, FpsGovernor, isStrongPhoneGpu, type TierSettings } from './Performance';
 import { World } from '../world/World';
 import { PreloaderPortal } from '../scenes/PreloaderPortal';
 import { titleTexture } from '../scenes/ProjectCards';
@@ -161,7 +161,7 @@ export class Experience {
   /** the drawing buffer and every post target, at the tier's pixel ratio × the phone's trim */
   private applyResolution() {
     const vp = state.viewport;
-    const dpr = this.settings.dpr * (this.governor?.resScale ?? 1);
+    const dpr = Math.min(this.settings.dpr * (this.governor?.resScale ?? 1) * this.zoom(), this.maxDpr());
     this.renderer.setPixelRatio(dpr);
     this.renderer.setSize(vp.width, vp.height, false);
     const size = this.renderer.getDrawingBufferSize(new THREE.Vector2());
@@ -171,11 +171,22 @@ export class Experience {
     globalUniforms.uDPR.value = dpr;
   }
 
+  /** phones: how far she has pinched in; the frame is drawn that much finer, so zooming in on
+   *  the garden shows more detail instead of bigger pixels */
+  private zoom() {
+    const vv = window.visualViewport;
+    return isPhone && vv ? Math.max(1, Math.min(vv.scale, 3)) : 1;
+  }
+  /** the finest a phone draws while zoomed (top class 4×, mid class 3.25×) */
+  private maxDpr() {
+    return isPhone ? (isStrongPhoneGpu() ? 4 : 3.25) : this.settings.dpr;
+  }
+
   private sized = '';
   private resize() {
     const vp = readViewport();
     // nothing the scene sees has changed (a phone toolbar sliding): leave every target alone
-    const key = `${vp.width}x${vp.height}@${this.settings.dpr}`;
+    const key = `${vp.width}x${vp.height}@${this.settings.dpr}z${this.zoom().toFixed(2)}`;
     if (key === this.sized) return;
     this.sized = key;
     this.applyResolution();

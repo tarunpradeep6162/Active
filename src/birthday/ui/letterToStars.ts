@@ -5,7 +5,7 @@
  */
 export function letterToStars(paper: HTMLElement): Promise<void> {
   return new Promise((resolve) => {
-    const dpr = Math.min(2, devicePixelRatio || 1);
+    const dpr = Math.min(3, devicePixelRatio || 1);
     const cv = document.createElement('canvas');
     cv.className = 'bd-sparks';
     cv.width = innerWidth * dpr;
