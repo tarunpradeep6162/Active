@@ -27,8 +27,8 @@ console.log('toolbar', JSON.stringify({ a, b, c }));
 const gov = await page.evaluate(() => {
   const g = __exp.governor; g.enabled = true;
   const trace = [];
-  for (let i = 0; i < 240; i++) { g.sample(25); if (i % 40 === 39) trace.push(`slow ${((i + 1) / 40)}s: res ${g.resScale} tier ${__state.performanceTier} dpr ${__state.viewport.dpr.toFixed(2)}`); }
-  for (let i = 0; i < 1200; i++) { g.sample(16.7); if (i % 120 === 119) trace.push(`smooth ${((i + 1) / 60).toFixed(0)}s: res ${g.resScale} tier ${__state.performanceTier}`); }
+  for (let i = 0; i < 1200; i++) { g.sample(25); if (i % 240 === 239) trace.push(`slow ${((i + 1) / 40)}s: res ${g.resScale} tier ${__state.performanceTier} dpr ${__state.viewport.dpr.toFixed(2)}`); }
+  for (let i = 0; i < 2400; i++) { g.sample(16.7); if (i % 300 === 299) trace.push(`smooth ${((i + 1) / 60).toFixed(0)}s: res ${g.resScale} tier ${__state.performanceTier}`); }
   return { trace, history: g.history };
 });
 console.log(gov.trace.join('\n'));
