@@ -37,7 +37,10 @@ export class ScrollEngine {
 
   layout() {
     // Use a stable height on mobile so the toolbar showing/hiding doesn't rescale the journey.
-    const vh = state.viewport.mobile ? Math.max(window.innerHeight, screen.height * 0.8) / 100 : window.innerHeight / 100;
+    // phones: the stable (toolbar hidden) height, so the toolbar never rescales the journey or
+    // moves its end under her finger
+    const winH = state.viewport.mobile ? Math.max(window.innerHeight, state.viewport.height) : window.innerHeight;
+    const vh = state.viewport.mobile ? Math.max(winH, screen.height * 0.8) / 100 : window.innerHeight / 100;
     const phone = this.phone();
     const deviceChanged = setWorkDevice(phone);
     if (computeRanges(phone) || deviceChanged) rebuildCameraPath();
@@ -46,7 +49,7 @@ export class ScrollEngine {
     const total = Math.round(totalVh(phone) * vh);
     this.spacer.style.height = `${total}px`;
     const prev = state.scroll.max;
-    state.scroll.max = Math.max(1, total - window.innerHeight);
+    state.scroll.max = Math.max(1, total - winH);
     // keep progress stable across resize / orientation change
     if (prev > 1 && prev !== state.scroll.max) {
       const y = state.scroll.targetProgress * state.scroll.max;

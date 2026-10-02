@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { WORK_ORIGIN } from '../work/WorkLayout';
 import { state, store, events, type Route } from './state';
 import { createRenderer, readViewport } from '../renderer/Renderer';
+import { isPhone, PHONE_MIN_FRAME_MS } from './pace';
 import { PostFX } from '../post/PostFX';
 import { CameraRig } from '../camera/CameraRig';
 import { ScrollEngine } from '../scroll/ScrollEngine';
@@ -88,7 +89,7 @@ export class Experience {
     this.post = new PostFX(this.renderer, this.settings);
     this.director = new Director(this.post.composite, this.settings.chromatic);
     this.scroll = new ScrollEngine();
-    this.governor = new FpsGovernor(() => this.applyTier());
+    this.governor = new FpsGovernor(() => this.applyTier(), () => this.applyResolution());
     const dbg = new URLSearchParams(location.search).get('debug');
     if (dbg === '1' || dbg === '') this.debug = new DebugOverlay(this.renderer, this.rig.camera, this.rig.debugTarget, this.governor);
 
@@ -157,15 +158,27 @@ export class Experience {
     this.resizeTimer = window.setTimeout(() => this.resize(), 120);
   }
 
-  private resize() {
-    const vp = readViewport();
-    this.renderer.setPixelRatio(this.settings.dpr);
+  /** the drawing buffer and every post target, at the tier's pixel ratio × the phone's trim */
+  private applyResolution() {
+    const vp = state.viewport;
+    const dpr = this.settings.dpr * (this.governor?.resScale ?? 1);
+    this.renderer.setPixelRatio(dpr);
     this.renderer.setSize(vp.width, vp.height, false);
     const size = this.renderer.getDrawingBufferSize(new THREE.Vector2());
     this.post.setSize(size.x, size.y);
-    state.viewport.dpr = this.settings.dpr;
+    state.viewport.dpr = dpr;
     globalUniforms.uResolution.value.set(vp.width, vp.height);
-    globalUniforms.uDPR.value = this.settings.dpr;
+    globalUniforms.uDPR.value = dpr;
+  }
+
+  private sized = '';
+  private resize() {
+    const vp = readViewport();
+    // nothing the scene sees has changed (a phone toolbar sliding): leave every target alone
+    const key = `${vp.width}x${vp.height}@${this.settings.dpr}`;
+    if (key === this.sized) return;
+    this.sized = key;
+    this.applyResolution();
     this.rig.camera.aspect = vp.aspect;
     this.rig.camera.updateProjectionMatrix();
     this.scroll.layout();
@@ -176,6 +189,7 @@ export class Experience {
     this.settings = tierSettings(state.performanceTier);
     this.post.applySettings(this.settings);
     this.director.setLens(this.settings.chromatic);
+    this.sized = '';
     this.resize();
     this.world?.setParticleScale(this.settings.particleScale / this.initialParticleScale);
     this.trails?.setStrands(this.settings.trailStrands);
@@ -184,6 +198,7 @@ export class Experience {
   /** three.js re‑creates its GL state on restore and lazily re‑uploads every resource; we only re‑size targets. */
   private recoverContext() {
     this.post.rebuildAfterContextLoss();
+    this.sized = '';
     this.resize();
   }
 
@@ -326,6 +341,10 @@ export class Experience {
   /* ------------------------------------------------------------ frame */
   private frame() {
     const now = performance.now();
+    // phones with 90/120 Hz screens: draw at a steady 60 (every other refresh at 120 Hz). Even
+    // pacing reads smoother than a frame rate wobbling between 60 and 120, and the GPU stays cool
+    // enough not to throttle part‑way through the film.
+    if (this.fixedMs === null && isPhone && now - this.last < PHONE_MIN_FRAME_MS) return;
     const rawMs = this.fixedMs ?? now - this.last;
     const dt = Math.min(0.05, rawMs / 1000);
     this.last = now;
@@ -372,8 +391,9 @@ export class Experience {
     this.rig.update(dt);
     const cam = this.rig.camera;
     if (this.world) this.director.update(dt, this.world, cam, this.rig.debugTarget);
-    // real reflections in the rose gold, once the cake room's lights are up (not on low tier)
-    if (this.world && this.settings.chromatic && state.section === 'lab' && state.cageOpen && state.cakeReady) this.world.lab.captureReflections(this.renderer, this.world.scene);
+    // real reflections in the rose gold, once the cake room's lights are up (not on the low tier,
+    // nor on phones: the six-face capture would land as a hitch right as the cage opens)
+    if (this.world && this.settings.chromatic && !isPhone && state.section === 'lab' && state.cageOpen && state.cakeReady) this.world.lab.captureReflections(this.renderer, this.world.scene);
     if (this.trails && this.world) {
       this.trails.update(sdt, cam);
       this.world.update(sdt, cam, this.trails.pointerWorld, this.post.composite);
@@ -405,6 +425,10 @@ export class Experience {
 
     this.ui.update();
     if (this.revealStart >= 0) this.governor.sample(rawMs);
+    // phones: behind a fully open chapter the world is blurred and dimmed, so it only needs to
+    // move, not to keep up: redraw it on every third frame and give the chapter the GPU
+    const covered = Math.max(state.focus, state.overlay) > 0.999 && state.veilThin < 0.001;
+    if (isPhone && this.fixedMs === null && covered && state.frame % 3 !== 0) return;
     this.renderer.info.reset();
     const world = this.world && this.world.root.visible ? this.world : null;
     const edge = world ? this.rig.overlayEdge : null;

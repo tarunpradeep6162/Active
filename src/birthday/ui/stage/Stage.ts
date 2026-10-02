@@ -3,6 +3,7 @@ import { SceneClock } from './clock';
 import { quiet } from '../../../renderer/quiet';
 import { SERIF } from '../../../utils/fonts';
 import { freezeOnLeave } from './freeze';
+import { frameGate } from '../../../core/pace';
 
 /**
  * Shared base for the cinematic chapter stages (each renders into its own canvas).
@@ -85,9 +86,10 @@ export abstract class Stage {
   private start() {
     if (this.running || this.frozen) return;
     this.running = true;
+    const draw = frameGate();
     const loop = () => {
       if (!this.running) return;
-      if (++this.tick % this.every === 0) this.frame();
+      if (draw() && ++this.tick % this.every === 0) this.frame();
       this.raf = requestAnimationFrame(loop);
     };
     loop();

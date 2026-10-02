@@ -106,35 +106,6 @@ void main(){
   col.r = texture(tScene, uv + c * ca).r;
   col.g = texture(tScene, uv).g;
   col.b = texture(tScene, uv - c * ca).b;
-  // camera motion blur: where this pixel was a frame ago, smeared along the way (a real shutter)
-  if (uHasDepth > .5 && uMotion > .001) {
-    float z = texture(tDepth, uv).r;
-    vec4 wp = uInvViewProj * vec4(uv * 2. - 1., z * 2. - 1., 1.);
-    wp /= wp.w;
-    vec4 pp = uPrevViewProj * wp;
-    vec2 prev = pp.xy / pp.w * .5 + .5;
-    vec2 vel = (uv - prev) * uMotion;
-    float vl = length(vel);
-    if (vl > .0015) {
-      vel *= min(1., .045 / vl);
-      vec3 acc = col;
-      for (int i = 1; i < 8; i++) acc += texture(tScene, uv - vel * (float(i) / 7. - .5)).rgb;
-      col = acc / 8.;
-    }
-  }
-  // depth of field: a focus pull toward one point on screen, and the lens softening its edges
-  float dof;
-  if (uHasDepth > .5) {
-    // real depth of field: how far this point is from the focal plane, through the aperture
-    float d = viewDist(uv);
-    float coc = abs(d - uFocusDist) / max(d, .001) * uAperture;
-    dof = uFocusAmt * smoothstep(.04, .9, coc);
-  } else dof = uFocusAmt * smoothstep(uFocusR, uFocusR + .38, length((uv - uFocusPt) * vec2(aspect, 1.)));
-  if (dof > .001) {
-    // a touch of lateral colour where the lens is soft
-    vec3 bl = texture(tBlur, uv).rgb;
-    col = mix(col, bl * 1.05, clamp(dof, 0., 1.));
-  }
   if (uHasBloom > .5) {
     vec3 bl = texture(tBloom, uv).rgb;
     col += bl * uBloomStrength;
@@ -144,18 +115,21 @@ void main(){
   // light shafts: the brightest light (the moon, the sun, the spotlight, the lanterns) pours
   // through whatever stands in front of it
   if (uHasBloom > .5 && uRays > .001) {
-    vec2 d = (uv - uRayPt) / 24.;
+    // (phones march half the steps, each twice as long, decaying to the same reach)
+    vec2 d = (uv - uRayPt) / float(RAY_TAPS);
     vec2 q = uv; float dec = 1.; vec3 acc = vec3(0.);
-    for (int i = 0; i < 24; i++) { q -= d; acc += texture(tStreak, q).rgb * dec; dec *= .94; }
-    col += acc / 24. * uRays * uRayTint * 1.08;
+    float fall = pow(.94, 24. / float(RAY_TAPS));
+    for (int i = 0; i < RAY_TAPS; i++) { q -= d; acc += texture(tStreak, q).rgb * dec; dec *= fall; }
+    col += acc / float(RAY_TAPS) * uRays * uRayTint * 1.08;
   }
   // anamorphic streaks: the brightest lights (candles, fairy lights, the sun) stretch sideways
   // into thin champagne lines, like a cinema lens (squared, so only real highlights streak)
   if (uHasBloom > .5 && uStreak > .001) {
     vec3 s = vec3(0.);
-    for (int k = 1; k <= 14; k++) {
-      float o = float(k) * .0065;
-      float w = exp(-float(k) * .2);
+    float st = 14. / float(STREAK_TAPS);
+    for (int k = 1; k <= STREAK_TAPS; k++) {
+      float o = float(k) * .0065 * st;
+      float w = exp(-float(k) * .2 * st) * st;
       vec3 a = texture(tStreak, uv + vec2(o, 0.)).rgb, b = texture(tStreak, uv - vec2(o, 0.)).rgb;
       s += (a * a + b * b) * w;
     }
@@ -330,6 +304,16 @@ export class PostFX {
     this.scene.add(this.quad);
     this.sceneRT = this.makeSceneRT(1, 1, settings.msaa);
     this.blurRT = this.makeRT(1, 1, 0);
+    this.setTaps(settings.cheapPost);
+  }
+
+  /** phones and the low tier march fewer samples for the light shafts and lens streaks */
+  private setTaps(cheap: boolean) {
+    const d = { RAY_TAPS: cheap ? 12 : 24, STREAK_TAPS: cheap ? 7 : 14 };
+    const cur = this.composite.defines as Record<string, number> | undefined;
+    if (cur && cur.RAY_TAPS === d.RAY_TAPS && cur.STREAK_TAPS === d.STREAK_TAPS) return;
+    this.composite.defines = d;
+    this.composite.needsUpdate = true;
   }
 
   /** the scene target also keeps its depth, for focus by distance and motion blur */
@@ -355,6 +339,7 @@ export class PostFX {
     this.sceneRT.dispose();
     this.sceneRT = this.makeSceneRT(this.w, this.h, settings.msaa);
     this.composite.uniforms.uChromatic.value = settings.chromatic ? 1 : 0;
+    this.setTaps(settings.cheapPost);
     this.setSize(this.w, this.h);
   }
 

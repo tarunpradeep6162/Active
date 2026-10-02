@@ -829,9 +829,18 @@ export class TulipGarden {
       const n = this.labelEdge.set(0, 0, 1).transformDirection(label.matrixWorld);
       const toCam = this.labelPt.setFromMatrixPosition(label.matrixWorld).sub(camera.position).normalize().negate();
       target = smoothstep(0.25, 0.45, Math.abs(n.dot(toCam)));
-      if (rect && label.parent && target > 0) {
+      if (label.parent && target > 0) {
         const c = this.labelPt.setFromMatrixPosition(label.matrixWorld).project(camera);
         // half the label's width on screen, from its right edge (the plane is 2.3 wide)
+        const e = this.labelEdge.set(1.15, 0, 0).applyMatrix4(label.matrixWorld).project(camera);
+        const x = (c.x * 0.5 + 0.5) * vw;
+        const hw = Math.abs((e.x - c.x) * 0.5 * vw);
+        // cut off by the screen's side (phones especially): a half title reads as a glitch
+        const clip = Math.max(0, hw * 0.55 - x, x + hw * 0.55 - vw);
+        if (c.z < 1) target *= 1 - smoothstep(8, 40, clip);
+      }
+      if (rect && label.parent && target > 0) {
+        const c = this.labelPt.setFromMatrixPosition(label.matrixWorld).project(camera);
         const e = this.labelEdge.set(1.15, 0, 0).applyMatrix4(label.matrixWorld).project(camera);
         const x = (c.x * 0.5 + 0.5) * vw, y = (-c.y * 0.5 + 0.5) * vh;
         const hw = Math.abs((e.x - c.x) * 0.5 * vw), hh = hw * 0.4;

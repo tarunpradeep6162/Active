@@ -11,6 +11,7 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { freezeOnLeave } from './freeze';
+import { frameGate } from '../../../core/pace';
 
 const BASE = '/manor/';
 type Model = { geo: THREE.BufferGeometry; mat: THREE.MeshStandardMaterial; height: number };
@@ -596,9 +597,10 @@ export class ManorScene {
     if (this.frozen) return;
     if (this.running || !this.ready) return;
     this.running = true;
+    const draw = frameGate();
     const loop = () => {
       if (!this.running) return;
-      this.frame();
+      if (draw()) this.frame();
       this.raf = requestAnimationFrame(loop);
     };
     loop();

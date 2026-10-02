@@ -665,3 +665,14 @@ html.is-seat #interface > :not(.seat-hint):not(.skydraw), html.is-seat .nav, htm
 .seat-hint { position: fixed; left: 50%; bottom: calc(9vh + 18px); translate: -50% 0; z-index: 30; margin: 0; pointer-events: none; font: italic 15px var(--serif); color: rgba(248, 241, 232, .75); text-shadow: 0 0 10px #000;
   animation: seat-hint 6s ease forwards; }
 @keyframes seat-hint { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
+
+/* phones: a backdrop blur over a live WebGL canvas re-reads and blurs the whole frame every
+   refresh. The surfaces that used one get a slightly deeper tint instead. */
+@media (pointer: coarse) {
+  .lastthing, .foryou__card, .film-controls, .endcredits__actions button, .finale-tools button, .replay__close, .bd-future .bd-orb {
+    -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  }
+  .film-controls { background: rgba(7, 6, 12, .72); }
+  .endcredits__actions button, .finale-tools button, .replay__close { background: rgba(7, 9, 20, .62); }
+  .foryou__card { background: linear-gradient(160deg, rgba(30, 24, 34, .72), rgba(14, 12, 22, .66)); }
+}

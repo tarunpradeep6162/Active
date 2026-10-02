@@ -36,15 +36,43 @@ export function createRenderer(canvas: HTMLCanvasElement) {
   return renderer;
 }
 
+/**
+ * Phones: the browser toolbar slides in and out as she scrolls, changing the window height by
+ * ~50–60 px each time. The scene keeps one stable height per width (the tallest seen, i.e. with the
+ * toolbar hidden; the canvas is sized to 100lvh to match), so the toolbar never re‑sizes the render
+ * targets or shifts the journey under her finger. A rotation (new width) starts over.
+ */
+const stable = { w: 0, h: 0 };
+let probe: HTMLDivElement | null = null;
+/** the large viewport (toolbar hidden) in CSS px, known even while the toolbar shows */
+function largeViewportHeight() {
+  if (typeof CSS === 'undefined' || !CSS.supports('height', '100lvh')) return 0;
+  if (!probe) {
+    probe = document.createElement('div');
+    probe.style.cssText = 'position:fixed;left:0;top:0;width:0;height:100lvh;visibility:hidden;pointer-events:none';
+    document.body.appendChild(probe);
+  }
+  return probe.offsetHeight;
+}
+function stableHeight(width: number, phone: boolean) {
+  const h = Math.max(window.innerHeight, phone ? largeViewportHeight() : 0);
+  if (!phone) return h;
+  if (width !== stable.w) {
+    stable.w = width;
+    stable.h = h;
+  } else stable.h = Math.max(stable.h, h);
+  return stable.h;
+}
+
 export function readViewport() {
   const vv = window.visualViewport;
   const width = Math.round(vv ? vv.width : window.innerWidth) || window.innerWidth;
-  const height = window.innerHeight;
+  const coarse = matchMedia('(pointer: coarse)').matches || /Android|iPhone|iPad/i.test(navigator.userAgent);
+  const height = stableHeight(width, coarse);
   state.viewport.width = width;
   state.viewport.height = height;
   state.viewport.aspect = width / height;
   state.viewport.portrait = height > width;
-  state.viewport.mobile =
-    matchMedia('(pointer: coarse)').matches || Math.min(width, height) < 600 || /Android|iPhone|iPad/i.test(navigator.userAgent);
+  state.viewport.mobile = coarse || Math.min(width, height) < 600;
   return state.viewport;
 }

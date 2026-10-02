@@ -11,7 +11,13 @@ export interface TierSettings {
   trailStrands: number;
   chromatic: boolean;
   hexCount: number;
+  /** fewer samples for the light shafts and lens streaks (phones, low tier) */
+  cheapPost: boolean;
 }
+
+/** a phone GPU from the current top class (OnePlus 11R's Adreno 730 and up) vs the mid class
+ *  (vivo V70's Adreno 722 and the like): the mid class starts at a slightly lower resolution */
+let strongPhoneGpu = false;
 
 const isMobileDevice = () =>
   matchMedia('(pointer: coarse)').matches || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
@@ -29,6 +35,7 @@ export function detectTier(gl: WebGL2RenderingContext | null): PerformanceTier {
   if (software) return 'low';
   if (isMobileDevice()) {
     const modern = /apple gpu|adreno \(tm\) (7|8)\d\d|mali-g(7|6)\d|xclipse/i.test(renderer);
+    strongPhoneGpu = /apple gpu|adreno \(tm\) (7[3-9]\d|8\d\d)|immortalis|mali-g7[1-9]\d|xclipse/i.test(renderer);
     return modern && mem >= 4 ? 'medium' : 'low';
   }
   if (cores <= 4 || mem <= 4 || /intel.*(hd|uhd) graphics [2-5]/i.test(renderer)) return 'medium';
@@ -41,7 +48,7 @@ export function tierSettings(tier: PerformanceTier): TierSettings {
   // Reference renders at 1.5× on DPR‑1 desktop and 1.25× on DPR‑1 mobile.
   if (tier === 'high')
     return {
-      dpr: mobile ? Math.min(Math.max(dpr, 1.25), 1.5) : Math.min(Math.max(dpr, 1.25), 1.5),
+      dpr: Math.min(Math.max(dpr, 1.25), 1.5),
       particleScale: 1,
       bloom: true,
       bloomLevels: 5,
@@ -49,10 +56,13 @@ export function tierSettings(tier: PerformanceTier): TierSettings {
       trailStrands: 3,
       chromatic: true,
       hexCount: 1,
+      cheapPost: mobile,
     };
   if (tier === 'medium')
     return {
-      dpr: mobile ? Math.min(dpr, 1.25) : Math.min(dpr, 1.25),
+      // phones: a 3× screen is drawn at 1.3× (top class) or 1.15× (mid class) and scaled up;
+      // the governor trims it further, a little at a time, if frames start to slip
+      dpr: mobile ? Math.min(dpr, strongPhoneGpu ? 1.3 : 1.15) : Math.min(dpr, 1.25),
       particleScale: 0.6,
       bloom: true,
       bloomLevels: 4,
@@ -60,6 +70,7 @@ export function tierSettings(tier: PerformanceTier): TierSettings {
       trailStrands: 2,
       chromatic: true,
       hexCount: 0.7,
+      cheapPost: mobile,
     };
   return {
     dpr: 1,
@@ -70,6 +81,7 @@ export function tierSettings(tier: PerformanceTier): TierSettings {
     trailStrands: 1,
     chromatic: false,
     hexCount: 0.45,
+    cheapPost: true,
   };
 }
 
@@ -99,14 +111,52 @@ export class FpsGovernor {
   benchmarkMs = 0;
   enabled = true;
 
-  constructor(private onChange: (tier: PerformanceTier) => void) {
+  /** phones: the share of the tier's resolution being drawn (eased down before any tier drop) */
+  resScale = 1;
+  private resCooldown = 0;
+  private resGood = 0;
+
+  constructor(private onChange: (tier: PerformanceTier) => void, private onScale: (scale: number) => void = () => {}) {
     this.startTier = state.performanceTier;
     // a forced ?tier= disables automatic changes
     this.enabled = !new URLSearchParams(location.search).get('tier');
   }
 
   private budget() {
-    return state.viewport.mobile ? 1000 / 30 : 1000 / 60;
+    // phones too: the aim is a steady 60 (the loop caps 90/120 Hz screens at 60)
+    return 1000 / 60;
+  }
+
+  /**
+   * Phones: before ever dropping a tier, trim the drawing resolution in small steps when frames
+   * slip under ~52 fps, and give a little back after several smooth seconds. Returns true when it
+   * acted (the tier logic then waits).
+   */
+  private adaptScale(mean: number) {
+    if (!state.viewport.mobile) return false;
+    if (this.resCooldown > 0) {
+      this.resCooldown--;
+      return false;
+    }
+    const MIN = 0.72;
+    if (mean > 19.2 && this.resScale > MIN) {
+      this.resScale = Math.max(MIN, +(this.resScale - 0.1).toFixed(2));
+      this.resGood = 0;
+      this.resCooldown = 2;
+      this.history.push(`res ${this.resScale} (${mean.toFixed(1)} ms)`);
+      this.onScale(this.resScale);
+      return true;
+    }
+    this.resGood = mean < 17.6 ? this.resGood + 1 : 0;
+    if (this.resGood >= 6 && this.resScale < 1) {
+      this.resScale = Math.min(1, +(this.resScale + 0.05).toFixed(2));
+      this.resGood = 0;
+      this.resCooldown = 4;
+      this.history.push(`res ${this.resScale} (recovered)`);
+      this.onScale(this.resScale);
+      return true;
+    }
+    return false;
   }
 
   private set(tier: PerformanceTier, why: string) {
@@ -146,8 +196,14 @@ export class FpsGovernor {
       this.cooldown--;
       return;
     }
+    if (this.adaptScale(mean)) {
+      this.slow = 0;
+      return;
+    }
     const budget = this.budget();
-    this.slow = mean > budget * 1.45 ? this.slow + 1 : 0;
+    // phones only drop a tier once the resolution has nowhere left to go
+    const canTrim = state.viewport.mobile && this.resScale > 0.72;
+    this.slow = mean > budget * 1.45 && !canTrim ? this.slow + 1 : 0;
     this.fast = mean < budget * 0.55 ? this.fast + 1 : 0;
     if (this.slow >= 3 && state.performanceTier !== 'low') {
       this.set(state.performanceTier === 'high' ? 'medium' : 'low', `sustained ${mean.toFixed(1)} ms`);
