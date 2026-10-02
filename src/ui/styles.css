@@ -33,8 +33,6 @@
   --v-end: 0;
   --focus: 0;
   --overlay: 0;
-  --scroll-vel: 0;
-  --manifesto-local: 0;
   --headline-shift: 0;
   --v-manifesto-copy: 1;
   color-scheme: dark;
@@ -445,7 +443,9 @@ html.no-webgl #interface { position: static; pointer-events: auto; }
 
 /* ── navigation, as titles in a film ─────────────────────────────────────────────────── */
 /* the journey line: a thread of gold across the top of the frame, as far as she has come */
-.journey-line { position: fixed; left: 0; top: 0; z-index: 60; height: 2px; width: calc(var(--progress, 0) * 100%); pointer-events: none;
+.journey-line { position: fixed; left: 0; top: 0; z-index: 60; height: 2px; width: 100%; pointer-events: none;
+  /* slides in from the left (a transform: no layout or page‑wide style work as she scrolls) */
+  transform: translate3d(calc((var(--progress, 0) - 1) * 100%), 0, 0); will-change: transform;
   background: linear-gradient(90deg, rgba(232, 166, 181, 0), rgba(232, 166, 181, .6) 40%, rgba(243, 223, 167, .95)); box-shadow: 0 0 10px rgba(243, 223, 167, .55); opacity: calc(var(--reveal, 1) * .9); }
 .journey-line::after { content: ''; position: absolute; right: -3px; top: -2px; width: 6px; height: 6px; border-radius: 50%; background: #fff4d6; box-shadow: 0 0 10px 3px rgba(243, 223, 167, .8); }
 /* the garden menu: each way in appears in turn, with a line of light drawn under it */

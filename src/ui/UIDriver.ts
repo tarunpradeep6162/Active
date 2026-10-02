@@ -6,16 +6,60 @@ import { rangeOf } from '../world/journey';
 /**
  * Per‑frame bridge from runtime state to DOM: writes CSS custom properties
  * (never React state) so overlays fade/shift in lockstep with the camera.
+ *
+ * A custom property set on the root is inherited by every element, so each change makes the
+ * browser restyle the whole page (on a phone, ~10 ms a time). The root only carries values that
+ * change at a scene's edges; the two that move continuously with the scroll are written on the
+ * one element that uses each.
  */
 export class UIDriver {
   private root = document.documentElement;
-  private last = new Map<string, number>();
+  private last = new Map<string, number | string>();
+  private els = new Map<string, HTMLElement | null>();
 
-  private set(name: string, v: number) {
-    const prev = this.last.get(name);
+  /** where each value is used: written there, not on the root, so only that element restyles */
+  private static readonly SCOPE: Record<string, string> = {
+    '--v-intro': '.intro-hint',
+    '--v-manifesto': '.manifesto',
+    '--headline-shift': '.manifesto',
+    '--v-manifesto-copy': '.manifesto__copy',
+    '--v-work': '.work-panel',
+    '--v-lab': '.lab-label',
+    '--v-sky': '.sky-label',
+    '--v-sunrise': '.sunrise',
+    '--v-happy': '.finale-sky',
+    '--v-end': '.endcap',
+    '--scroll-intro-out': '.opening',
+    '--progress': '.journey-line',
+  };
+
+  private set(name: string, v: number, on?: HTMLElement | null, key?: string) {
+    const scope = UIDriver.SCOPE[name];
+    if (on === undefined) on = scope ? this.el(scope) : this.root;
+    key ??= scope ? scope + name : name;
+    if (!on) return;
+    const prev = this.last.get(key) as number | undefined;
     if (prev !== undefined && Math.abs(prev - v) < 0.002) return;
-    this.last.set(name, v);
-    this.root.style.setProperty(name, v.toFixed(4));
+    this.last.set(key, v);
+    on.style.setProperty(name, v.toFixed(4));
+  }
+  private setStr(name: string, v: string, on: HTMLElement | null = this.root) {
+    if (!on) return;
+    const key = on === this.root ? name : '.finale-sky' + name;
+    if (this.last.get(key) === v) return;
+    this.last.set(key, v);
+    on.style.setProperty(name, v);
+  }
+  /** the element for a selector (looked up again if React replaced it) */
+  private el(sel: string) {
+    let e = this.els.get(sel);
+    if (!e || !e.isConnected) {
+      e = document.querySelector<HTMLElement>(sel);
+      this.els.set(sel, e);
+      // a new element starts without our values: write them all again
+      if (e) for (const k of [...this.last.keys()]) if (k.startsWith(sel + '--')) this.last.delete(k);
+    }
+    return e;
   }
 
   update() {
@@ -32,8 +76,8 @@ export class UIDriver {
     this.set('--scroll-intro-out', state.section === 'intro' ? smoothstep(0.07, 0.13, state.sectionProgress) : 0);
     this.set('--v-manifesto', band('manifesto', -0.35, 0.08, 0.78, 1.05) * free);
     const mr = rangeOf('manifesto');
-    const man = (p - mr.start) / (mr.end - mr.start);
-    this.set('--manifesto-local', man);
+    // (held still once the headline is well out of view, so it stops being restyled)
+    const man = Math.max(-1.2, Math.min(3.5, (p - mr.start) / (mr.end - mr.start)));
     const phone = Math.min(state.viewport.width, state.viewport.height) < 600;
     this.set('--headline-shift', headlineShift(man, phone));
     // phone: the body copy leaves early and the project list arrives by work p −0.07 (measured)
@@ -46,15 +90,13 @@ export class UIDriver {
     // the finale sky: HAPPY BIRTHDAY once her name has formed in stars, then the sunrise
     const fl = state.section === 'outro' ? state.finaleLocal : 0;
     this.set('--v-happy', smoothstep(0.68, 0.76, fl) * free);
-    if (fl > 0) this.root.style.setProperty('--name-half', `${Math.round(state.nameHalfPx)}px`);
+    if (fl > 0) this.setStr('--name-half', `${Math.round(state.nameHalfPx)}px`, this.el('.finale-sky'));
     this.set('--v-sunrise', smoothstep(0.74, 0.97, fl) * (1 - state.overlay));
     this.set('--v-end', band('outro', 0.82, 0.97, 2, 3) * free);
-    this.set('--focus', state.focus);
     this.set('--veil-thin', state.veilThin);
-    this.root.style.setProperty('--bloom-x', `${Math.round(state.bloomX)}px`);
-    this.root.style.setProperty('--bloom-y', `${Math.round(state.bloomY)}px`);
+    this.setStr('--bloom-x', `${Math.round(state.bloomX)}px`);
+    this.setStr('--bloom-y', `${Math.round(state.bloomY)}px`);
     this.set('--overlay', state.overlay);
-    this.set('--scroll-vel', Math.max(-4, Math.min(4, state.scroll.velocity)));
     this.set('--progress', p);
     const atEnd = p > 0.985;
     if (store.get().atEnd !== atEnd) store.set({ atEnd });
