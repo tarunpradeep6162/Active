@@ -18,7 +18,10 @@ for (const item of list) {
   if (act === 'open') await page.evaluate(() => __events.emit('openCage'));
   // advance the world's own clock (the software renderer is far slower than real time), so
   // focus pulls, fades and the cage have really finished
-  await page.evaluate((ms) => { __exp.qaStep(ms, 50); __exp.qaResume(); }, act === 'open' ? 7000 : 2500);
+  await page.evaluate((ms) => __exp.qaStep(ms, 50), act === 'open' ? 7000 : 2500);
+  // let the interface catch up (React commits between tasks), then a few more stepped frames
+  await page.waitForTimeout(300);
+  await page.evaluate(() => { __exp.qaStep(800, 50); __exp.qaResume(); });
   await page.waitForTimeout(800);
   const f = `qa/out/shots/${tag}-${W}-${sec}-${Math.round(+l * 100)}${act ? '-' + act : ''}.png`;
   await page.screenshot({ path: f });

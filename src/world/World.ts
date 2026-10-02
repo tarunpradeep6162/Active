@@ -390,6 +390,12 @@ export class World {
     for (const p of this.pieces) p.obj.visible = cy < p.yTop + 22 && cy > p.yBottom - 22;
     // below the lab floor the rig is out of the story; keep its props from peeking into the sky
     if (cy < ANCHOR.lab - 4.5) this.lab.group.visible = false;
+    // the garden cuts straight into the cake room: from above, the room's drape and housing would
+    // only show as dark shapes under the flowers, so it stays hidden until the cut
+    if (cy > ANCHOR.lab + 8) this.lab.group.visible = false;
+    // the lanterns rise high above their lake, up through the cake room and the foot of the
+    // garden: keep them (and their sky) out of view until the camera is below the room's floor
+    if (cy > ANCHOR.lab - 2.1) this.portal.group.visible = false;
     // the garden draws nothing before it starts to grow or once it has fully dissolved into the
     // lab (unless a chapter or the finale reveal needs it): skip its ~50k triangles there
     {
@@ -502,7 +508,25 @@ export class World {
     this.garden.fireflyPx.value = 60 * state.viewport.dpr;
     // at midnight every flower opens and glows, then the garden settles back
     const bloomAll = Math.max(this.gardenReveal, smoothstep(0, 0.15, this.midnight) * 0.75);
+    this.garden.hideLabelsBehind(camera, this.menuRect(), state.viewport.width, state.viewport.height, dt);
     this.garden.update(t, wt, (i) => workTimeline.cardCentre(i), state.focus > 0.5 ? active : -1, this.visited, bloomAll);
+  }
+
+  private menuEl: HTMLElement | null = null;
+  private menuBox: DOMRect | null = null;
+  private menuAt = 0;
+  /** The chapter menu's box on screen while it shows (re-measured every 10 frames), else null. */
+  private menuRect() {
+    if (typeof document === 'undefined') return null;
+    if (!this.menuEl || !this.menuEl.isConnected) this.menuEl = document.querySelector<HTMLElement>('.work-panel');
+    const el = this.menuEl;
+    if (!el || el.dataset.hidden === 'true') return null;
+    if (this.menuAt-- <= 0) {
+      this.menuAt = 10;
+      const r = el.getBoundingClientRect();
+      this.menuBox = r.width > 0 && r.height > 0 && +getComputedStyle(el).opacity > 0.05 ? r : null;
+    }
+    return this.menuBox;
   }
 
   private setStorm(id: 'storm' | 'outroStorm', streak: number, amount: number) {

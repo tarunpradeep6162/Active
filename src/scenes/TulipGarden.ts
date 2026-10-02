@@ -231,6 +231,10 @@ export class TulipGarden {
   private cores: THREE.InstancedMesh;
   private coreAttr: THREE.InstancedBufferAttribute;
   private labels: THREE.Mesh[] = [];
+  /** Per chapter label: 0 while it sits behind an on-screen panel (see hideLabelsBehind). */
+  private labelFade: number[] = [];
+  private labelPt = new THREE.Vector3();
+  private labelEdge = new THREE.Vector3();
   private tmpM = new THREE.Matrix4();
   private tmpQ = new THREE.Quaternion();
   private tmpV = new THREE.Vector3();
@@ -812,6 +816,36 @@ export class TulipGarden {
    * p: work progress · chapterOpen[i]: 1 while that chapter is open · visited[i]: chapter done
    * reveal: 0…1 final pull‑back (every flower in full bloom, softly glowing)
    */
+  /**
+   * Fades out any chapter label that would sit behind a screen rectangle (the chapter menu), so the
+   * two never print over each other, or that the camera sees almost edge-on. rect is in CSS pixels; null clears the mask.
+   */
+  hideLabelsBehind(camera: THREE.PerspectiveCamera, rect: { left: number; top: number; right: number; bottom: number } | null, vw: number, vh: number, dt: number) {
+    const k = Math.min(1, dt * 8);
+    this.labels.forEach((label, i) => {
+      let target = 1;
+      label.updateMatrixWorld();
+      // seen nearly side-on, a label squashes into an unreadable sliver: let it go
+      const n = this.labelEdge.set(0, 0, 1).transformDirection(label.matrixWorld);
+      const toCam = this.labelPt.setFromMatrixPosition(label.matrixWorld).sub(camera.position).normalize().negate();
+      target = smoothstep(0.25, 0.45, Math.abs(n.dot(toCam)));
+      if (rect && label.parent && target > 0) {
+        const c = this.labelPt.setFromMatrixPosition(label.matrixWorld).project(camera);
+        // half the label's width on screen, from its right edge (the plane is 2.3 wide)
+        const e = this.labelEdge.set(1.15, 0, 0).applyMatrix4(label.matrixWorld).project(camera);
+        const x = (c.x * 0.5 + 0.5) * vw, y = (-c.y * 0.5 + 0.5) * vh;
+        const hw = Math.abs((e.x - c.x) * 0.5 * vw), hh = hw * 0.4;
+        const pad = 16;
+        // how far the label's box reaches into the panel (px); fades over ~40 px
+        const ox = Math.min(x + hw, rect.right + pad) - Math.max(x - hw, rect.left - pad);
+        const oy = Math.min(y + hh, rect.bottom + pad) - Math.max(y - hh, rect.top - pad);
+        if (c.z < 1 && ox > 0 && oy > 0) target *= 1 - smoothstep(0, 40, Math.min(ox, oy));
+      }
+      const f = this.labelFade[i] ?? 1;
+      this.labelFade[i] = f + (target - f) * k;
+    });
+  }
+
   update(time: number, p: number, cardCentres: (i: number) => number, activeChapter: number, visited: boolean[], reveal: number) {
     U.uWarm.value = clamp(0.1 + p * 0.95) * (1 - reveal) + reveal;
     U.uReveal.value = reveal;
@@ -833,7 +867,7 @@ export class TulipGarden {
         if (activeChapter === b.chapter) open = 1;
         glow = open * 0.55 + (activeChapter === b.chapter ? 0.6 + this.hold * 1.6 : 0) + (visited[b.chapter] ? 0.25 : 0);
         const label = this.labels[b.chapter];
-        if (label) (label.material as THREE.ShaderMaterial).uniforms.uAlpha.value = (0.25 + 0.75 * open) * (1 - reveal) * (activeChapter >= 0 ? 0 : 1);
+        if (label) (label.material as THREE.ShaderMaterial).uniforms.uAlpha.value = (0.25 + 0.75 * open) * (1 - reveal) * (activeChapter >= 0 ? 0 : 1) * (this.labelFade[b.chapter] ?? 1);
       } else {
         open = smoothstep(b.openAt - 0.08, b.openAt, p);
         glow = open * 0.4;

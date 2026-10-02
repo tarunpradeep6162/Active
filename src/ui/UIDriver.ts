@@ -40,8 +40,8 @@ export class UIDriver {
     this.set('--v-manifesto-copy', phone ? 1 - smoothstep(0.56, 0.64, man) : 1);
     const wb = phone ? band('work', -0.08, -0.065, 0.86, 0.88) : band('work', -0.045, -0.02, 0.93, 0.965);
     this.set('--v-work', wb * (1 - state.overlay) * (1 - state.focus));
-    // from the moment the cake is framed in its cage until the lanterns take the sky
-    this.set('--v-lab', band('lab', 0.3, 0.48, 1.05, 1.2) * free);
+    // from the moment the cake is framed in its cage until the camera leaves the room
+    this.set('--v-lab', band('lab', 0.3, 0.48, 0.9, 0.98) * free);
     this.set('--v-sky', band('portal', 0.12, 0.3, 0.86, 0.98) * free);
     // the finale sky: HAPPY BIRTHDAY once her name has formed in stars, then the sunrise
     const fl = state.section === 'outro' ? state.finaleLocal : 0;
