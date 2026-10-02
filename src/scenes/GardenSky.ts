@@ -78,7 +78,9 @@ export class GardenSky {
             float disc = smoothstep(cos(r * 1.08), cos(r), ca);
             vec3 tang = normalize(cross(sd, vec3(0., 1., 0.)));
             vec2 lp = vec2(dot(d - sd, tang), dot(d - sd, cross(tang, sd))) / r;
-            float maria = fbm2(lp * 1.6 + 3.) * (1. - w);
+            // (the noise below is only worked out where it can show: a phone draws this sky over
+            // every pixel, every frame)
+            float maria = disc > 0. && w < 1. ? fbm2(lp * 1.6 + 3.) * (1. - w) : 0.;
             vec3 moon = mix(vec3(.95, .93, 1.) * (.85 - maria * .35), vec3(1.3, .82, .45), w);
             col = mix(col, moon, disc);
             col += mix(vec3(.55, .6, .95), vec3(1., .6, .32), w) * (exp(-(1. - ca) * mix(420., 260., w)) * .5 + exp(-(1. - ca) * 18.) * mix(.08, .3, w));
@@ -88,22 +90,27 @@ export class GardenSky {
             col += st * (.5 + .5 * sin(uTime * (1. + hash12(sc.yz) * 3.) + sc.x)) * (1. - w) * smoothstep(.05, .3, e) * vec3(.9, .9, 1.);
             // thin clouds, lit from underneath by the moon or the sun
             vec2 cp = d.xz / (max(e, .02) + .12) * .9;
-            float cl = smoothstep(.55, .85, fbm2(cp * .55 + vec2(uTime * .004, 0.))) * smoothstep(.0, .06, e) * smoothstep(.45, .1, e);
-            col = mix(col, mix(vec3(.16, .12, .24), vec3(1., .55, .42), w) * (.6 + .6 * exp(-(1. - ca) * 6.)), cl * .55);
+            if (e > 0. && e < .45) {
+              float cl = smoothstep(.55, .85, fbm2(cp * .55 + vec2(uTime * .004, 0.))) * smoothstep(.0, .06, e) * smoothstep(.45, .1, e);
+              col = mix(col, mix(vec3(.16, .12, .24), vec3(1., .55, .42), w) * (.6 + .6 * exp(-(1. - ca) * 6.)), cl * .55);
+            }
             // hills in the haze: a far range and a nearer, darker one, with mist between
             // (sampled around a circle, so the ranges join up seamlessly all the way round)
-            vec2 ring = vec2(cos(az), sin(az));
-            float h1 = .02 + .055 * fbm2(ring * 2.1 + 1.3);
-            float h2 = -.005 + .06 * fbm2(ring * 3.7 + vec2(4., 7.1)) + .02 * sin(az * 5. + 1.);
-            vec3 far = mix(hor * .55, hor * .75, w) + vec3(.02, .01, .03);
-            vec3 near = mix(vec3(.03, .02, .05), vec3(.12, .05, .06), w);
-            col = mix(col, far, smoothstep(h1 + .002, h1 - .004, e));
-            col += hor * exp(-abs(e - h2 - .012) * 60.) * .18;
-            col = mix(col, near, smoothstep(h2 + .002, h2 - .004, e));
-            // tiny warm lights of distant tulip farms scattered over the near hills
-            vec2 fc = vec2(az * 90., e * 260.);
-            float lamp = step(.985, hash12(floor(fc))) * smoothstep(.45, .1, length(fract(fc) - .5)) * step(e, h2 - .01) * step(-.06, e);
-            col += lamp * vec3(1., .72, .4) * (.4 + .6 * w) * (.6 + .4 * sin(uTime * 2. + floor(fc.x)));
+            // (the ranges never rise above e ≈ .1; the mist line fades out by .2)
+            if (e < .2) {
+              vec2 ring = vec2(cos(az), sin(az));
+              float h1 = .02 + .055 * fbm2(ring * 2.1 + 1.3);
+              float h2 = -.005 + .06 * fbm2(ring * 3.7 + vec2(4., 7.1)) + .02 * sin(az * 5. + 1.);
+              vec3 far = mix(hor * .55, hor * .75, w) + vec3(.02, .01, .03);
+              vec3 near = mix(vec3(.03, .02, .05), vec3(.12, .05, .06), w);
+              col = mix(col, far, smoothstep(h1 + .002, h1 - .004, e));
+              col += hor * exp(-abs(e - h2 - .012) * 60.) * .18;
+              col = mix(col, near, smoothstep(h2 + .002, h2 - .004, e));
+              // tiny warm lights of distant tulip farms scattered over the near hills
+              vec2 fc = vec2(az * 90., e * 260.);
+              float lamp = step(.985, hash12(floor(fc))) * smoothstep(.45, .1, length(fract(fc) - .5)) * step(e, h2 - .01) * step(-.06, e);
+              col += lamp * vec3(1., .72, .4) * (.4 + .6 * w) * (.6 + .4 * sin(uTime * 2. + floor(fc.x)));
+            }
             gl_FragColor = vec4(col, uAmt);
           }`,
       }),

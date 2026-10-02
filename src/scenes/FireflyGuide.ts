@@ -48,6 +48,8 @@ export class FireflyGuide {
             float d = length(gl_PointCoord - .5) * 2.;
             float core = exp(-d * d * 12.), halo = exp(-d * d * 2.5) * .5;
             float a = vI < .5 ? core + halo * (.8 + .2 * sin(uTime * 5.)) : core * .5 * (1. - vI / ${TAIL + 1}.);
+            // the halo must reach zero inside the sprite, or its square edge shows
+            a *= smoothstep(1., .72, d);
             gl_FragColor = vec4(vec3(1., .86, .5) * a * uAmt, 1.);
           }`,
       }),

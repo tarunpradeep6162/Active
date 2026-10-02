@@ -68,10 +68,38 @@ void main(){
   o = vec4(s / 12. + prev, 1.);
 }`;
 
+// Light shafts (the brightest light pouring through whatever stands in front of it) and
+// anamorphic streaks (the brightest lights stretching sideways into thin champagne lines, squared
+// so only real highlights streak). Drawn at half (desktop) or quarter (phones) resolution.
+const fxFrag = /* glsl */ `
+precision highp float;
+in vec2 vUv; out vec4 o;
+uniform sampler2D tStreak; uniform vec2 uRayPt; uniform float uRays; uniform vec3 uRayTint; uniform float uStreak;
+void main(){
+  vec3 col = vec3(0.);
+  if (uRays > .001) {
+    vec2 d = (vUv - uRayPt) / 24.;
+    vec2 q = vUv; float dec = 1.; vec3 acc = vec3(0.);
+    for (int i = 0; i < 24; i++) { q -= d; acc += texture(tStreak, q).rgb * dec; dec *= .94; }
+    col += acc / 24. * uRays * uRayTint * 1.08;
+  }
+  if (uStreak > .001) {
+    vec3 s = vec3(0.);
+    for (int k = 1; k <= 14; k++) {
+      float off = float(k) * .0065;
+      float w = exp(-float(k) * .2);
+      vec3 a = texture(tStreak, vUv + vec2(off, 0.)).rgb, b = texture(tStreak, vUv - vec2(off, 0.)).rgb;
+      s += (a * a + b * b) * w;
+    }
+    col += s * vec3(1., .8, .7) * uStreak;
+  }
+  o = vec4(col, 1.);
+}`;
+
 const compositeFrag = /* glsl */ `
 precision highp float;
 in vec2 vUv; out vec4 o;
-uniform sampler2D tScene; uniform sampler2D tBloom; uniform sampler2D tBlur; uniform sampler2D tStreak;
+uniform sampler2D tScene; uniform sampler2D tBloom; uniform sampler2D tBlur; uniform sampler2D tFx; uniform float uFxOn;
 uniform float uBloomStrength; uniform float uHasBloom;
 uniform float uTime; uniform vec2 uResolution; uniform float uScrollVelocity;
 uniform float uChromatic; uniform float uBlur; uniform float uDim; uniform float uExposure;
@@ -112,29 +140,9 @@ void main(){
     // film halation: light bleeding red‑orange into the emulsion around the brightest things
     col += bl * vec3(1., .32, .12) * .22 * uFilm;
   }
-  // light shafts: the brightest light (the moon, the sun, the spotlight, the lanterns) pours
-  // through whatever stands in front of it
-  if (uHasBloom > .5 && uRays > .001) {
-    // (phones march half the steps, each twice as long, decaying to the same reach)
-    vec2 d = (uv - uRayPt) / float(RAY_TAPS);
-    vec2 q = uv; float dec = 1.; vec3 acc = vec3(0.);
-    float fall = pow(.94, 24. / float(RAY_TAPS));
-    for (int i = 0; i < RAY_TAPS; i++) { q -= d; acc += texture(tStreak, q).rgb * dec; dec *= fall; }
-    col += acc / float(RAY_TAPS) * uRays * uRayTint * 1.08;
-  }
-  // anamorphic streaks: the brightest lights (candles, fairy lights, the sun) stretch sideways
-  // into thin champagne lines, like a cinema lens (squared, so only real highlights streak)
-  if (uHasBloom > .5 && uStreak > .001) {
-    vec3 s = vec3(0.);
-    float st = 14. / float(STREAK_TAPS);
-    for (int k = 1; k <= STREAK_TAPS; k++) {
-      float o = float(k) * .0065 * st;
-      float w = exp(-float(k) * .2 * st) * st;
-      vec3 a = texture(tStreak, uv + vec2(o, 0.)).rgb, b = texture(tStreak, uv - vec2(o, 0.)).rgb;
-      s += (a * a + b * b) * w;
-    }
-    col += s * vec3(1., .8, .7) * uStreak;
-  }
+  // light shafts and anamorphic streaks, marched at low resolution in their own pass (fxFrag):
+  // both are soft, so one filtered sample here looks the same at a fraction of the cost
+  if (uHasBloom > .5 && uFxOn > .5) col += texture(tFx, uv).rgb;
   // candlelight: the flames warm everything around them, breathing as they flicker
   if (uCandle.z > .001) {
     float cd = length((uv - uCandle.xy) * vec2(aspect, 1.));
@@ -252,7 +260,8 @@ export class PostFX {
     tScene: { value: null },
     tBloom: { value: null },
     tBlur: { value: null },
-    tStreak: { value: null },
+    tFx: { value: null },
+    uFxOn: { value: 0 },
     uBloomStrength: { value: 0.9 },
     uHasBloom: { value: 1 },
     uTime: globalUniforms.uTime,
@@ -293,6 +302,14 @@ export class PostFX {
     uGlowA: { value: new THREE.Color('#1e6f6a') },
     uGlowB: { value: new THREE.Color('#123a44') },
   });
+  private fx = pass(fxFrag, {
+    tStreak: { value: null },
+    uRayPt: this.composite.uniforms.uRayPt,
+    uRays: this.composite.uniforms.uRays,
+    uRayTint: this.composite.uniforms.uRayTint,
+    uStreak: this.composite.uniforms.uStreak,
+  });
+  private fxRT: THREE.WebGLRenderTarget = this.makeRT(1, 1, 0);
   private settings: TierSettings;
   private w = 1;
   private h = 1;
@@ -304,22 +321,15 @@ export class PostFX {
     this.scene.add(this.quad);
     this.sceneRT = this.makeSceneRT(1, 1, settings.msaa);
     this.blurRT = this.makeRT(1, 1, 0);
-    this.setTaps(settings.cheapPost);
   }
 
-  /** phones and the low tier march fewer samples for the light shafts and lens streaks */
-  private setTaps(cheap: boolean) {
-    const d = { RAY_TAPS: cheap ? 12 : 24, STREAK_TAPS: cheap ? 7 : 14 };
-    const cur = this.composite.defines as Record<string, number> | undefined;
-    if (cur && cur.RAY_TAPS === d.RAY_TAPS && cur.STREAK_TAPS === d.STREAK_TAPS) return;
-    this.composite.defines = d;
-    this.composite.needsUpdate = true;
-  }
 
   /** the scene target also keeps its depth, for focus by distance and motion blur */
   private makeSceneRT(w: number, h: number, samples: number) {
     // (depth of field and motion blur are off, so the scene's depth isn't kept as a texture)
-    return this.makeRT(w, h, samples);
+    // a multisampled half‑float target needs float colour buffers; without them, no MSAA
+    const ok = this.renderer.capabilities.isWebGL2 && this.renderer.extensions.has('EXT_color_buffer_float');
+    return this.makeRT(w, h, ok ? Math.min(samples, this.renderer.capabilities.maxSamples) : 0);
   }
 
   private makeRT(w: number, h: number, samples: number) {
@@ -339,7 +349,6 @@ export class PostFX {
     this.sceneRT.dispose();
     this.sceneRT = this.makeSceneRT(this.w, this.h, settings.msaa);
     this.composite.uniforms.uChromatic.value = settings.chromatic ? 1 : 0;
-    this.setTaps(settings.cheapPost);
     this.setSize(this.w, this.h);
   }
 
@@ -351,6 +360,7 @@ export class PostFX {
   rebuildAfterContextLoss() {
     this.sceneRT = this.makeSceneRT(this.w, this.h, this.settings.msaa);
     this.blurRT = this.makeRT(Math.max(1, this.w >> 2), Math.max(1, this.h >> 2), 0);
+    this.fxRT = this.makeRT(1, 1, 0);
     this.levels = [];
     this.ups = [];
     this.setSize(this.w, this.h);
@@ -364,7 +374,9 @@ export class PostFX {
     this.ups.forEach((l) => l.dispose());
     this.levels = [];
     this.ups = [];
-    let lw = Math.max(1, w >> 1), lh = Math.max(1, h >> 1);
+    // phones start the bloom chain at quarter resolution (a soft glow loses nothing)
+    const start = this.settings.cheapPost ? 2 : 1;
+    let lw = Math.max(1, w >> start), lh = Math.max(1, h >> start);
     for (let i = 0; i < this.settings.bloomLevels; i++) {
       const rt = this.makeRT(lw, lh, 0);
       rt.depthBuffer = false;
@@ -374,6 +386,7 @@ export class PostFX {
       lh = Math.max(1, lh >> 1);
     }
     this.blurRT.setSize(Math.max(1, w >> 2), Math.max(1, h >> 2));
+    this.fxRT.setSize(Math.max(1, w >> start), Math.max(1, h >> start));
   }
 
   private draw(mat: THREE.Material, target: THREE.WebGLRenderTarget | null) {
@@ -452,7 +465,13 @@ export class PostFX {
     this.composite.uniforms.tDepth.value = this.sceneRT.depthTexture;
     this.composite.uniforms.uHasDepth.value = this.sceneRT.depthTexture ? 1 : 0;
     this.composite.uniforms.tBloom.value = bloom ? this.ups[0].texture : null;
-    this.composite.uniforms.tStreak.value = bloom ? this.levels[Math.min(1, this.levels.length - 1)].texture : null;
+    const fxOn = bloom && ((cu.uRays.value as number) > 0.001 || (cu.uStreak.value as number) > 0.001);
+    if (fxOn) {
+      this.fx.uniforms.tStreak.value = this.levels[this.settings.cheapPost ? 0 : Math.min(1, this.levels.length - 1)].texture;
+      this.draw(this.fx, this.fxRT);
+    }
+    cu.uFxOn.value = fxOn ? 1 : 0;
+    cu.tFx.value = this.fxRT.texture;
     this.composite.uniforms.uHasBloom.value = bloom ? 1 : 0;
     this.composite.uniforms.tBlur.value = this.blurRT.texture;
     this.draw(this.composite, null);
@@ -460,7 +479,7 @@ export class PostFX {
 
   /** Materials used by the post chain, for shader pre‑compilation. */
   materials() {
-    return [this.threshold, this.down, this.up, this.blur, this.composite];
+    return [this.threshold, this.down, this.up, this.blur, this.fx, this.composite];
   }
   warmup() {
     // One render of each pass into a scratch target so programs are linked before reveal.

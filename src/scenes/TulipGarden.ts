@@ -54,6 +54,10 @@ const commonGlsl = /* glsl */ `
   uniform float uRevealY, uCrumble, uWarm, uPulseY, uPulseAmt, uReveal, uTime, uFocus;
   // entry: grows bottom‑up behind a ragged front · exit: dissolves into motes
   float gardenMask(vec3 wp){
+    // far from the growing front and not dissolving (almost always): no noise to work out. The
+    // noise is ±1, so the edge can't reach a point more than .35 inside the front, and the
+    // crumble can't cut in while uCrumble < .25. Saves two 3D noises on every garden pixel.
+    if (uRevealY - wp.y > .4 && uCrumble < .24) return 1.;
     float edge = uRevealY - wp.y + snoise(wp * 2.3) * .35;
     float crumble = snoise(wp * 1.7) * .35 + .7 - uCrumble * 1.4;
     return min(edge, crumble);
@@ -130,7 +134,7 @@ const petalFrag = /* glsl */ `
   void main(){
     // the final tulip stays while everything around it dissolves at the end of the garden
     if (vKeep < .5 && gardenMask(vWorldPos) < 0.) discard;
-    if (vKeep > .5 && uRevealY - vWorldPos.y + snoise(vWorldPos * 2.3) * .35 < 0.) discard;
+    if (vKeep > .5 && uRevealY - vWorldPos.y < .4 && uRevealY - vWorldPos.y + snoise(vWorldPos * 2.3) * .35 < 0.) discard;
     vec3 N = normalize(vN);
     bool inside = !gl_FrontFacing; if (inside) N = -N;
     vec3 V = normalize(cameraPosition - vWorldPos);

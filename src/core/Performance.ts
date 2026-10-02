@@ -60,21 +60,25 @@ export function tierSettings(tier: PerformanceTier): TierSettings {
     };
   if (tier === 'medium')
     return {
-      // phones: a 3× screen is drawn at 1.3× (top class) or 1.15× (mid class) and scaled up;
-      // the governor trims it further, a little at a time, if frames start to slip
-      dpr: mobile ? Math.min(dpr, strongPhoneGpu ? 1.3 : 1.15) : Math.min(dpr, 1.25),
+      // phones: a 3× screen is drawn at 1.75× (top class) or 1.5× (mid class): sharp, with the
+      // glow passes at quarter resolution so the extra pixels stay affordable. The governor trims
+      // it (never below 85%) only if frames start to slip.
+      dpr: mobile ? Math.min(dpr, strongPhoneGpu ? 1.75 : 1.5) : Math.min(dpr, 1.25),
       particleScale: 0.6,
       bloom: true,
       bloomLevels: 4,
-      msaa: 0,
+      // phones: 4× MSAA (nearly free on their tile‑based GPUs) keeps petal and stem edges clean
+      // once the frame is scaled up to the 3× screen
+      msaa: mobile ? 4 : 0,
       trailStrands: 2,
       chromatic: true,
       hexCount: 0.7,
       cheapPost: mobile,
     };
   return {
-    dpr: 1,
-    particleScale: 0.3,
+    // phones keep a readable sharpness even on the lowest tier (their screens are ~3×)
+    dpr: mobile ? Math.min(dpr, 1.25) : 1,
+    particleScale: mobile ? 0.4 : 0.3,
     bloom: true,
     bloomLevels: 3,
     msaa: 0,
@@ -97,6 +101,7 @@ export function tierSettings(tier: PerformanceTier): TierSettings {
  */
 export class FpsGovernor {
   private samples: number[] = [];
+  private seen = 0;
   private benchmarkDone = false;
   private acc = 0;
   private frames = 0;
@@ -128,30 +133,33 @@ export class FpsGovernor {
   }
 
   /**
-   * Phones: before ever dropping a tier, trim the drawing resolution in small steps when frames
-   * slip under ~52 fps, and give a little back after several smooth seconds. Returns true when it
-   * acted (the tier logic then waits).
+   * Phones: before ever dropping a tier, trim the drawing resolution in 5% steps (never below 85%)
+   * once frames have stayed under ~50 fps for three seconds running, and give 5% back only after
+   * fifteen smooth seconds. Every change rebuilds the render targets (a one-frame hitch), so it
+   * acts rarely and never flip-flops. Returns true when it acted (the tier logic then waits).
    */
+  private resSlow = 0;
   private adaptScale(mean: number) {
     if (!state.viewport.mobile) return false;
     if (this.resCooldown > 0) {
       this.resCooldown--;
       return false;
     }
-    const MIN = 0.72;
-    if (mean > 19.2 && this.resScale > MIN) {
-      this.resScale = Math.max(MIN, +(this.resScale - 0.1).toFixed(2));
-      this.resGood = 0;
-      this.resCooldown = 2;
+    const MIN = 0.85;
+    this.resSlow = mean > 20 ? this.resSlow + 1 : 0;
+    this.resGood = mean < 17.6 ? this.resGood + 1 : 0;
+    if (this.resSlow >= 3 && this.resScale > MIN) {
+      this.resScale = Math.max(MIN, +(this.resScale - 0.05).toFixed(2));
+      this.resSlow = this.resGood = 0;
+      this.resCooldown = 3;
       this.history.push(`res ${this.resScale} (${mean.toFixed(1)} ms)`);
       this.onScale(this.resScale);
       return true;
     }
-    this.resGood = mean < 17.6 ? this.resGood + 1 : 0;
-    if (this.resGood >= 6 && this.resScale < 1) {
+    if (this.resGood >= 15 && this.resScale < 1) {
       this.resScale = Math.min(1, +(this.resScale + 0.05).toFixed(2));
-      this.resGood = 0;
-      this.resCooldown = 4;
+      this.resSlow = this.resGood = 0;
+      this.resCooldown = 5;
       this.history.push(`res ${this.resScale} (recovered)`);
       this.onScale(this.resScale);
       return true;
@@ -174,13 +182,16 @@ export class FpsGovernor {
     if (document.hidden || ms > 250) return; // ignore tab switches / stalls
     this.acc += ms;
     this.frames++;
+    // the first two seconds after the reveal are uploads and the intro settling: not a verdict
+    if (++this.seen <= 120) return;
     if (!this.benchmarkDone) {
       this.samples.push(ms);
       if (this.samples.length >= 90) {
         this.benchmarkDone = true;
         const sorted = this.samples.slice().sort((a, b) => a - b);
         this.benchmarkMs = sorted[sorted.length >> 1];
-        if (this.enabled && this.benchmarkMs > this.budget() * 1.8 && state.performanceTier !== 'low') {
+        // (phones never drop a tier on the benchmark: the resolution trim handles them gently)
+        if (this.enabled && !state.viewport.mobile && this.benchmarkMs > this.budget() * 1.8 && state.performanceTier !== 'low') {
           this.droppedByBenchmark = true;
           this.set(state.performanceTier === 'high' ? 'medium' : 'low', `benchmark median ${this.benchmarkMs.toFixed(1)} ms`);
         }
@@ -201,11 +212,13 @@ export class FpsGovernor {
       return;
     }
     const budget = this.budget();
-    // phones only drop a tier once the resolution has nowhere left to go
-    const canTrim = state.viewport.mobile && this.resScale > 0.72;
-    this.slow = mean > budget * 1.45 && !canTrim ? this.slow + 1 : 0;
+    // phones only drop a tier once the resolution has nowhere left to go, and only when frames
+    // have stayed under ~35 fps for five seconds running
+    const phone = state.viewport.mobile;
+    const canTrim = phone && this.resScale > 0.85;
+    this.slow = mean > budget * (phone ? 1.7 : 1.45) && !canTrim ? this.slow + 1 : 0;
     this.fast = mean < budget * 0.55 ? this.fast + 1 : 0;
-    if (this.slow >= 3 && state.performanceTier !== 'low') {
+    if (this.slow >= (phone ? 5 : 3) && state.performanceTier !== 'low') {
       this.set(state.performanceTier === 'high' ? 'medium' : 'low', `sustained ${mean.toFixed(1)} ms`);
     } else if (this.fast >= 10 && this.droppedByBenchmark && !this.upgradedOnce && state.performanceTier !== this.startTier) {
       this.upgradedOnce = true;
