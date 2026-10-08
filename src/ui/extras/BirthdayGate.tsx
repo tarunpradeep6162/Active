@@ -29,15 +29,17 @@ export function BirthdayGate() {
   );
   const [hold, setHold] = useState(0);
   const holdRef = useRef<{ raf: number; t0: number } | null>(null);
+  // the world pauses only while the gate is shut: as the doors swing open the garden is
+  // already moving behind them
   useEffect(() => {
-    if (phase === 'gone') return;
+    if (phase !== 'closed') return;
     state.hold++;
     const id = setInterval(() => setT(now()), 1000);
     return () => {
       state.hold--;
       clearInterval(id);
     };
-  }, [phase === 'gone']);
+  }, [phase === 'closed']);
   const { start, today } = nextBirthday(c.date, t);
   // midnight arrived while she was waiting: the gates open by themselves
   useEffect(() => {
