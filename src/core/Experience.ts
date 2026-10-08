@@ -4,6 +4,7 @@ import { WORK_ORIGIN } from '../work/WorkLayout';
 import { state, store, events, type Route } from './state';
 import { createRenderer, readViewport } from '../renderer/Renderer';
 import { isPhone, PHONE_MIN_FRAME_MS } from './pace';
+import { introDone } from '../ui/extras/introGate';
 import { PostFX } from '../post/PostFX';
 import { CameraRig } from '../camera/CameraRig';
 import { ScrollEngine } from '../scroll/ScrollEngine';
@@ -346,6 +347,8 @@ export class Experience {
     this.transition = new TransitionController(this.scroll, this.rig, world);
     state.loaded = true;
     store.set({ loaded: true, loadProgress: 1 });
+    // the first‑visit intro may still be playing over the loading: the garden waits for it
+    await introDone;
     this.preloaderOut = state.time;
   }
 
@@ -356,6 +359,11 @@ export class Experience {
     // pacing reads smoother than a frame rate wobbling between 60 and 120, and the GPU stays cool
     // enough not to throttle part‑way through the film.
     if (this.fixedMs === null && isPhone && now - this.last < PHONE_MIN_FRAME_MS) return;
+    // an opaque screen covers the world: draw nothing at all (the phone stays cool)
+    if (this.fixedMs === null && state.hold > 0 && this.revealStart >= 0) {
+      this.last = now;
+      return;
+    }
     const rawMs = this.fixedMs ?? now - this.last;
     const dt = Math.min(0.05, rawMs / 1000);
     this.last = now;

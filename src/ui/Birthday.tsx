@@ -1,36 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { events } from '../core/state';
 import { useContent } from '../birthday/ui/shared';
+import { now, nextBirthday } from '../core/clock';
 
 /**
- * Her birthday, on her own clock (the device's local time). Before the day, the opening counts
- * down to it; on the day it says so; and at midnight, or the first time she opens the site on
- * the day, a surprise plays over whatever she is looking at: the screen goes dark, a title card
- * wishes her happy birthday, and rose and champagne fireworks fill the sky.
- *
- * For testing only: `?qa=1&now=2026-11-24T23:59:50` (or `&debug=1`) pretends the clock reads
- * that time, and keeps running from there.
+ * Her birthday, on her own clock (the device's local time, see core/clock). Before the day, the
+ * opening counts down to it; on the day it says so; and at midnight, or the first time she opens
+ * the site on the day, a surprise plays over whatever she is looking at: the screen goes dark, a
+ * title card wishes her happy birthday, and rose and champagne fireworks fill the sky.
  */
-
-const q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams();
-const fake = (q.has('qa') || q.has('debug')) && q.get('now') ? Date.parse(q.get('now')!) : NaN;
-const offset = Number.isNaN(fake) ? 0 : fake - Date.now();
-const now = () => new Date(Date.now() + offset);
-
-/** the day and month from the site's date ("25 · 11"), or 25 November */
-function birthday(date: string) {
-  const [d, m] = (date.match(/\d+/g) ?? []).map(Number);
-  return { day: d >= 1 && d <= 31 ? d : 25, month: m >= 1 && m <= 12 ? m : 11 };
-}
-/** local midnight at the start of her next (or current) birthday */
-function nextBirthday(date: string, from: Date) {
-  const { day, month } = birthday(date);
-  const y = from.getFullYear();
-  const start = new Date(y, month - 1, day);
-  const end = new Date(y, month - 1, day + 1);
-  if (from >= end) return { start: new Date(y + 1, month - 1, day), today: false };
-  return { start, today: from >= start };
-}
 
 const SEEN = 'bday-midnight-seen';
 const seenThisYear = (y: number) => {

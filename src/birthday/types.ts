@@ -74,6 +74,16 @@ export interface SignatureInk {
 /** the moments in the film where your voice can come in */
 export type NarrationCue = 'opening' | 'garden' | 'cake' | 'lanterns' | 'sunrise';
 
+/** a place you've been together, for the Map of Us (latitude / longitude in degrees) */
+export interface Place {
+  name: string;
+  lat: number;
+  lng: number;
+  date?: string;
+  text?: string;
+  media?: MediaRef;
+}
+
 export interface BirthdayContent {
   /** true while the content is the shipped placeholder set */
   placeholder: boolean;
@@ -125,6 +135,24 @@ export interface BirthdayContent {
   credits?: { opening: [string, string][]; closing: string };
   /** your voice for the film (optional): short recordings played as narration at these moments */
   narration?: { at: NarrationCue; media: MediaRef; text?: string }[];
+  /** before her birthday: a sealed gate with a countdown (she can still press and hold to peek) */
+  gate: { enabled: boolean; title: string; line: string };
+  /** on the day itself: the garden in full bloom and a banner */
+  morning: { title: string; line: string };
+  /** one tulip in the garden that plays your voice */
+  voiceTulip: { media?: MediaRef; line: string };
+  /** sealed letters for later: "Open when…" */
+  openWhen: { when: string; text: string }[];
+  /** our year in numbers: `since` (YYYY-MM-DD) gives "days together"; items with a null value are hidden */
+  numbers: { since: string; items: { label: string; value: number | null; suffix?: string }[] };
+  /** your two initials as stars she joins with her finger ("you" empty → a heart) */
+  us: { her: string; you: string; line: string };
+  /** the places you've been together (and they stay private in the vault) */
+  places: Place[];
+  /** the printable birthday card */
+  card: { cover: string; inside: string };
+  /** the memory film: your photos, a title and (optionally) a song you have the right to use */
+  reel: { title: string; line: string; music?: MediaRef };
   finale: {
     voice?: MediaRef;
     headline: string;

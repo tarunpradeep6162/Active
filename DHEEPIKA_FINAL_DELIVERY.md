@@ -163,6 +163,49 @@ Without WebGL, the earlier flat versions come back.
   an end card with your signature), recorded with its music as it plays and saved to her device
   (MP4 where the browser can, otherwise WebM). Nothing is uploaded.
 
+## Round 4: an app on her phone, birthday magic, and keepsakes
+
+**It feels like an app**
+- **Home screen**: installs with its own icon (a rose heart holding a golden D) and opens
+  full‑screen. "For you → On your home screen" shows the right steps for her phone.
+- **Offline and instant**: a service worker keeps every file she has loaded, so the second visit
+  starts in about a second and the whole journey plays without a connection. The page itself is
+  fetched fresh whenever she is online, so updates still arrive.
+- **First‑visit intro**: ten seconds, like a studio logo before a film (a gold line, a tulip that
+  draws itself, "for", her name in gold), played while the garden loads. Once only; a tap skips it.
+- **Gentle haptics**: soft taps when a lantern lets go, a flutter as the candles go out, a click as
+  the cage unlocks, a heartbeat for each hidden heart. Off switch in For you.
+
+**Birthday magic**
+- **The gate**: before 25 · 11 a sealed gate with a live countdown covers the garden (the 3D world
+  pauses behind it). At midnight it opens by itself and the midnight fireworks play. She can still
+  press and hold the wax seal to peek, for that visit. `gate.enabled: false` switches it off.
+- **Day and night**: the garden's light follows her real local time: warmer at dawn, golden in the
+  morning and afternoon, rose in the evening, moonlit at night. The garden's title card greets her
+  by the hour.
+- **Birthday morning**: on the day every tulip stays fully open, and a banner greets her.
+- **Sealed wish**: after she blows out the candles she can write her wish; it is sealed on her
+  phone and given back to her on her next birthday ("A year ago, you wished…").
+- **Shake for petals**: shaking the phone sends petals falling across the screen.
+
+**Personal and keepsakes** (in For you; each opens in its own panel, loaded only when opened)
+- **Voice tulip**: a humming tulip in the garden plays your voice message (from the vault).
+- **Letters for later**: sealed "Open when…" envelopes; the letter writes itself as she reads.
+- **Our year in numbers**: animated counters, savable as a card.
+- **Two stars**: her initial and yours as constellations she joins with her finger.
+- **Map of us**: your places as glowing points on a night map (no map service, nothing fetched).
+- **Your tulip**: she plants one; it grows a stage with each day she comes back.
+- **The wish jar**: wishes fold into paper stars that fill a glass jar.
+- **A birthday card**: a print‑ready PDF (A4, folds to A5): night‑sky cover, your words and
+  signature inside.
+- **Photo booth**: a selfie in a golden birthday frame; the camera starts only on her tap, and the
+  photo is made and saved on her phone.
+- **Our little film**: her memories as a film (photos with slow push‑ins, captions, your song or
+  the garden's music), recorded on her phone and saved as a video.
+
+Testing any date: `?qa=1&now=2026-11-25T08:30:00` (birthday morning), `?qa=1&gate=1&now=…` (gate).
+`qa/round4.mjs` checks every panel, the card PDF, the gate and the birthday morning.
+
 ## Art direction
 
 - Palette: midnight `#070914 #0B1020 #11162A`, rose `#D98B9D #E8A6B5 #F2C1CB`, champagne

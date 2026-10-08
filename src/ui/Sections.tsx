@@ -8,6 +8,8 @@ import { useContent, useProgress, useVaultState, Media } from '../birthday/ui/sh
 import { Gate } from '../birthday/ui/ChapterView';
 import { saveFutureCard, saveLetterPdf, saveNextDateCard } from '../birthday/keepsakes';
 import { Countdown } from './Birthday';
+import { localMood } from '../core/clock';
+import { ForYouExtras } from './extras/ForYouExtras';
 import { canTilt, setTilt } from './tilt';
 import { makePoster, recordFilm } from './Cinema';
 import { canRecord } from './recorder';
@@ -508,6 +510,9 @@ function LastThing({ onClose }: { onClose: () => void }) {
   );
 }
 
+/** the garden greets her by her own hour */
+const GREETING = { dawn: 'at first light', morning: 'good morning', day: 'in the afternoon sun', evening: 'as the sun goes down', night: 'under the moon' } as const;
+
 const ACTS: Partial<Record<string, [string, string]>> = {
   work: ['I', 'Our Garden'],
   lab: ['II', 'Something Sweet'],
@@ -535,6 +540,7 @@ export function ActCard() {
     <div className="actcard" key={card.key} aria-hidden="true">
       <span className="actcard__num">{card.act[0]}</span>
       <span className="actcard__title">{card.act[1]}</span>
+      {card.act[0] === 'I' && <span className="actcard__hour">{GREETING[localMood().part]}</span>}
     </div>
   );
 }
@@ -636,6 +642,7 @@ export function Contact() {
             or as a PDF to print
           </button>
         </article>
+        <ForYouExtras />
         {canRecord() && (
           <article className="foryou__card" data-icon="●">
             <h3>Your film</h3>

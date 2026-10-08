@@ -136,3 +136,26 @@ The old column (`WorkSpine.ts`) remains in git history if you ever need to roll 
   HAPPY BIRTHDAY. Then the camera pulls back to show the whole garden in bloom.
 - **Phones and low-end devices:** the garden uses lighter petals, stems, leaves and ribbon
   (fewer triangles, same shape) and fewer drifting petals.
+
+## Round 4: the new keepsakes and birthday moments
+
+All of these read from the same content file (`birthday-private/content.json`, encrypted into the
+vault with `npm run vault`). Anything you leave out falls back to the shipped wording.
+
+| Field | What it does |
+| --- | --- |
+| `gate` | Before her birthday, a sealed gate with a live countdown. She can still press and hold the seal to peek. Set `"enabled": false` to switch it off. |
+| `morning` | On the day itself every tulip stays fully open and this banner greets her in the garden. |
+| `voiceTulip.media` | Your recorded voice (an audio file in `media/`). It plays from the humming tulip in the garden. |
+| `openWhen` | "Open when…" letters: `when` finishes the sentence, `text` is the letter. |
+| `numbers.since` | The day your story began (`YYYY-MM-DD`), for "days since our story began". `items` are your own numbers; an item with `"value": null` is hidden unless it has a `suffix` (such as `∞`). |
+| `us` | The two initials for the Two Stars constellation. With `you` empty, your star is a heart. |
+| `places` | The Map of Us: `name`, `lat`, `lng` (decimal degrees, e.g. from Google Maps), `date`, `text` and an optional photo. |
+| `card` | The words on the printable birthday card (cover and inside). |
+| `reel` | The memory film's title and closing line, and `music`: a song you have the right to use. Without one, the garden's own music box plays. The film uses the photos you add to `memories`. |
+
+Everything she makes herself (her planted tulip, the wish jar, the sealed wish, the photo booth
+picture, which letters she has opened) stays only on her phone.
+
+For testing on any date: add `?qa=1&now=2026-11-25T08:30:00` to see the birthday morning, or
+`?qa=1&gate=1&now=2026-11-20T21:00:00` to see the gate.

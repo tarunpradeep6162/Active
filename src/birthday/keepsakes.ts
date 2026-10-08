@@ -357,3 +357,133 @@ export function savePoster(c: BirthdayContent, mine: { stars: [number, number][]
     download(new Blob([pdfFromJpegs([jpg], W, H, 1296, 1728)], { type: 'application/pdf' }), `${file}.pdf`);
   }, 'image/jpeg', 0.93);
 }
+
+/** draws the signature (your ink, or the sign‑off in handwriting) at x, y, h px tall */
+function sign(g: CanvasRenderingContext2D, c: BirthdayContent, x: number, y: number, h: number, color: string) {
+  if (c.signatureInk) {
+    const ink = c.signatureInk, k = h / ink.h;
+    g.save();
+    g.translate(x - (ink.w * k) / 2, y);
+    g.scale(k, k);
+    g.strokeStyle = color;
+    g.lineWidth = 3 / k;
+    g.lineCap = g.lineJoin = 'round';
+    for (const d of ink.strokes) g.stroke(new Path2D(d));
+    g.restore();
+  } else {
+    g.fillStyle = color;
+    g.textAlign = 'center';
+    g.font = `${Math.round(h * 0.62)}px ${HAND}`;
+    g.fillText(c.signature, x, y + h * 0.7);
+  }
+}
+
+/**
+ * The printable birthday card: an A4 sheet in landscape that folds in half into an A5 card.
+ * Page 1 is the outside (the back on the left, the cover on the right: night sky, a tulip, the
+ * words in gold); page 2 is the inside (a pressed tulip on the left, your words and signature on
+ * the right). Print both sides ("flip on short edge"), fold, done.
+ */
+export async function saveBirthdayCard(c: BirthdayContent) {
+  const W = 1754, H = 1240, half = W / 2; // A4 landscape at 150 dpi
+  const page = () => {
+    const cv = document.createElement('canvas');
+    cv.width = W;
+    cv.height = H;
+    return { cv, g: cv.getContext('2d')! };
+  };
+  // ---- outside
+  const o = page();
+  {
+    const g = o.g;
+    const sky = g.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, '#0b1020');
+    sky.addColorStop(0.65, '#1a1430');
+    sky.addColorStop(1, '#3a1a2a');
+    g.fillStyle = sky;
+    g.fillRect(0, 0, W, H);
+    for (let i = 0; i < 260; i++) {
+      const r = Math.random() < 0.08 ? 2.4 : 1.3;
+      g.fillStyle = `rgba(255, 244, 214, ${0.25 + Math.random() * 0.6})`;
+      g.beginPath();
+      g.arc(Math.random() * W, Math.random() * H * 0.8, r, 0, Math.PI * 2);
+      g.fill();
+    }
+    // back (left): small, quiet
+    g.textAlign = 'center';
+    g.fillStyle = 'rgba(243, 223, 167, .7)';
+    g.font = `22px ${MONO}`;
+    g.fillText(`M A D E   W I T H   L O V E   ·   ${c.date}`, half / 2, H - 120);
+    tulip(g, half / 2, H - 230, 1.2, 'rgba(232, 166, 181, .6)');
+    // cover (right)
+    const cx = half + half / 2;
+    const glow = g.createRadialGradient(cx, H * 0.42, 10, cx, H * 0.42, 420);
+    glow.addColorStop(0, 'rgba(243, 223, 167, .22)');
+    glow.addColorStop(1, 'rgba(243, 223, 167, 0)');
+    g.fillStyle = glow;
+    g.fillRect(half, 0, half, H);
+    tulip(g, cx, H * 0.36, 4.2, '#e8a6b5');
+    const gold = g.createLinearGradient(cx - 300, 0, cx + 300, 0);
+    gold.addColorStop(0, '#d6b46a');
+    gold.addColorStop(0.5, '#fff0c4');
+    gold.addColorStop(1, '#d6b46a');
+    g.fillStyle = gold;
+    g.font = `italic 500 112px ${SERIF}`;
+    g.fillText(c.card.cover, cx, H * 0.66);
+    g.fillStyle = '#f2c1cb';
+    g.font = `500 76px ${SERIF}`;
+    g.fillText(c.name, cx, H * 0.66 + 100);
+    g.fillStyle = 'rgba(243, 223, 167, .85)';
+    g.font = `26px ${MONO}`;
+    g.fillText(c.date.replace(/\s/g, ' '), cx, H * 0.66 + 170);
+    // fold guide
+    g.strokeStyle = 'rgba(255, 255, 255, .06)';
+    g.setLineDash([6, 10]);
+    g.beginPath();
+    g.moveTo(half, 30);
+    g.lineTo(half, H - 30);
+    g.stroke();
+  }
+  // ---- inside
+  const n = page();
+  {
+    const g = n.g;
+    const paper = g.createLinearGradient(0, 0, W, H);
+    paper.addColorStop(0, '#fbf4ea');
+    paper.addColorStop(1, '#f3e6d6');
+    g.fillStyle = paper;
+    g.fillRect(0, 0, W, H);
+    g.strokeStyle = 'rgba(214, 180, 106, .45)';
+    g.lineWidth = 2;
+    g.strokeRect(50, 50, half - 100, H - 100);
+    g.strokeRect(half + 50, 50, half - 100, H - 100);
+    // left: a pressed tulip and the date
+    tulip(g, half / 2, H * 0.44, 5, 'rgba(217, 139, 157, .55)');
+    g.textAlign = 'center';
+    g.fillStyle = '#9a6a3a';
+    g.font = `26px ${MONO}`;
+    g.fillText(c.date, half / 2, H * 0.78);
+    // right: the words
+    const cx = half + half / 2;
+    g.fillStyle = '#8a1c38';
+    g.font = `italic 500 64px ${SERIF}`;
+    g.fillText(`Dear ${c.name},`, cx, 230);
+    g.fillStyle = '#3a2226';
+    g.font = `500 40px ${SERIF}`;
+    const lines = wrap(g, c.card.inside, half - 260).slice(0, 12);
+    lines.forEach((l, i) => g.fillText(l, cx, 340 + i * 58));
+    const y = 340 + lines.length * 58 + 60;
+    g.font = `italic 500 38px ${SERIF}`;
+    g.fillText(c.letter.signoff, cx, y);
+    sign(g, c, cx, y + 30, 120, '#8a1c38');
+  }
+  const jpegs = await Promise.all([o.cv, n.cv].map((p) => new Promise<Uint8Array>((res) => p.toBlob(async (b) => res(new Uint8Array(await b!.arrayBuffer())), 'image/jpeg', 0.92))));
+  download(new Blob([pdfFromJpegs(jpegs, W, H, 841.89, 595.28)], { type: 'application/pdf' }), `a-birthday-card-for-${c.name.toLowerCase()}.pdf`);
+}
+
+/** Saves a canvas as a PNG to her device. */
+export function savePng(cv: HTMLCanvasElement, name: string) {
+  cv.toBlob((b) => b && download(b, name), 'image/png');
+}
+/** Saves any blob (a recorded film) to her device. */
+export const saveBlob = download;

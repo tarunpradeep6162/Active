@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { localMood } from '../core/clock';
 import { state, events, type SectionId } from '../core/state';
 import { rangeOf, ANCHOR } from '../world/journey';
 import { clamp, dampFactor } from '../utils/math';
@@ -188,6 +189,14 @@ export class Director {
       amt += s * 0.15;
     }
     if (sec === 'lab' && state.cakeDark > 0) amt *= 1 - state.cakeDark * 0.5;
+    // her real hour: by day the opening and the garden lean toward the light outside her window
+    if (sec === 'intro' || sec === 'manifesto' || sec === 'work') {
+      const m = localMood();
+      if (m.amt > 0) {
+        target.lerp(this.d.set(m.tint[0], m.tint[1], m.tint[2]), 0.5);
+        amt += m.amt;
+      }
+    }
     const kt = dampFactor(2, dt);
     this.tint.r += (target.x - this.tint.r) * kt;
     this.tint.g += (target.y - this.tint.g) * kt;

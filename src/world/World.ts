@@ -24,6 +24,7 @@ import type { TierSettings } from '../core/Performance';
 import { PROJECTS } from '../app/projects';
 import { CARD_W, CARD_H } from '../scenes/ProjectCards';
 import { FireflyGuide } from '../scenes/FireflyGuide';
+import { localMood } from '../core/clock';
 
 interface Palette {
   top: THREE.Color;
@@ -259,7 +260,7 @@ export class World {
     const i = ORDER.indexOf(state.section);
     let cur = PALETTES[state.section];
     if (state.section === 'work') {
-      const w = smoothstep(0.05, 0.9, state.sectionProgress);
+      const w = Math.max(smoothstep(0.05, 0.9, state.sectionProgress), localMood().warmMin * 0.8);
       for (const k of ['top', 'bottom', 'accent', 'fog', 'glowA', 'glowB'] as const) WORK_NOW[k].copy(PALETTES.work[k]).lerp(WORK_SUNSET[k], w);
       WORK_NOW.density = PALETTES.work.density;
       WORK_NOW.streaks = 0;
@@ -457,7 +458,9 @@ export class World {
     this.starSky.update(camera, state.reveal * (1 - smoothstep(-0.07, 0.02, wt)), smoothstep(0, 0.4, intro) * (1 - smoothstep(0.7, 1, intro)) + (state.section === 'intro' ? 0.6 : 0));
     // the sky behind the garden: there while the garden is, gone with it into the cake room
     const skyAmt = Math.max(smoothstep(-0.05, 0.04, wt) * (1 - workTimeline.spineDissolve(wt)), this.gardenReveal) * (1 - clamp(state.focus * 1.5));
-    this.gardenSky.update(camera, skyAmt, clamp(0.1 + wt * 0.95) * (1 - this.gardenReveal) + this.gardenReveal, state.viewport.dpr);
+    // (by day, her garden starts warmer: the moon is already turning to sun outside her window)
+    const warm = Math.max(clamp(0.1 + wt * 0.95), localMood().warmMin);
+    this.gardenSky.update(camera, skyAmt, warm * (1 - this.gardenReveal) + this.gardenReveal, state.viewport.dpr);
     // the night lake under the lanterns: there once the camera has come down into their sky
     const lp = state.section === 'portal' ? state.sectionProgress : state.section === 'outro' ? 1 : 0;
     this.portal.lake.update(camera, smoothstep(0.04, 0.16, lp) * (1 - smoothstep(0.88, 0.98, lp)), 0, state.rain);
@@ -505,6 +508,7 @@ export class World {
     this.midnight = Math.max(0, this.midnight - dt / 14);
     this.garden.grow(camera.position.y, dt, state.focus > 0.01 || this.gardenReveal > 0.01 || this.midnight > 0);
     this.garden.hold = state.wishHold;
+    this.garden.festive += ((state.festive ? 1 : 0) - this.garden.festive) * Math.min(1, dt * 0.6);
     this.garden.fireflyPx.value = 60 * state.viewport.dpr;
     // at midnight every flower opens and glows, then the garden settles back
     const bloomAll = Math.max(this.gardenReveal, smoothstep(0, 0.15, this.midnight) * 0.75);

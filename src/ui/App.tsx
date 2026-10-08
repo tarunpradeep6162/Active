@@ -7,8 +7,19 @@ import { MidnightSurprise } from './Birthday';
 import { FilmMode } from './FilmMode';
 import { PaperFlower, OpeningCredits, EndCredits, FinaleTools, Replay, WindowSeat } from './Cinema';
 import { startJournal } from './journal';
+import { Intro } from './extras/Intro';
+import { BirthdayGate } from './extras/BirthdayGate';
+import { MorningBanner, WishTimer, ShakePetals } from './extras/Moments';
+import { VoiceTulip } from './extras/VoiceTulip';
+import { startHaptics } from './extras/haptics';
+import { startPwa } from './extras/pwa';
+import { recordVisit } from './extras/local';
+import './extras/extras.css';
 
 startJournal();
+startHaptics();
+startPwa();
+recordVisit();
 import '../birthday/ui/birthday.css';
 
 export function App() {
@@ -16,6 +27,7 @@ export function App() {
   return (
     <>
       <Preloader />
+      <Intro />
       {revealed && (
         <>
           <a className="sr-only sr-only-focusable" href="#ask-input">
@@ -44,6 +56,11 @@ export function App() {
           <WindowSeat />
           <MidnightSurprise />
           <FilmMode />
+          <VoiceTulip />
+          <MorningBanner />
+          <WishTimer />
+          <ShakePetals />
+          <BirthdayGate />
         </>
       )}
       <WebGLLost />

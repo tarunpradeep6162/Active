@@ -419,6 +419,91 @@
     "closing": "Thank you for watching. Happy birthday."
   },
   "narration": [],
+  "gate": {
+    "enabled": true,
+    "title": "Not yet, Dheepika",
+    "line": "The garden is still growing. It opens at midnight, on your birthday."
+  },
+  "morning": {
+    "title": "Happy birthday",
+    "line": "Every tulip in the garden opened for you today."
+  },
+  "voiceTulip": {
+    "media": {
+      "src": "media/voice-tulip.m4a",
+      "type": "audio"
+    },
+    "line": "One tulip in this garden is humming. Tap it to listen."
+  },
+  "openWhen": [
+    {
+      "when": "you miss me",
+      "text": "[your words]"
+    },
+    {
+      "when": "you can’t sleep",
+      "text": "[your words]"
+    },
+    {
+      "when": "you’re having a bad day",
+      "text": "[your words]"
+    }
+  ],
+  "numbers": {
+    "since": "YYYY-MM-DD",
+    "items": [
+      {
+        "label": "trips together",
+        "value": 0
+      },
+      {
+        "label": "photos of us",
+        "value": 0
+      },
+      {
+        "label": "times I’ve thought about you today",
+        "value": null,
+        "suffix": "∞"
+      }
+    ]
+  },
+  "us": {
+    "her": "D",
+    "you": "[your initial]",
+    "line": "Two stars. One sky."
+  },
+  "places": [
+    {
+      "name": "Ooty",
+      "lat": 11.4102,
+      "lng": 76.695,
+      "date": "2 November",
+      "text": "Our first trip together.",
+      "media": {
+        "src": "media/ooty.jpg",
+        "type": "image"
+      }
+    },
+    {
+      "name": "[place]",
+      "lat": 0,
+      "lng": 0,
+      "date": "[date]",
+      "text": "[a line]"
+    }
+  ],
+  "card": {
+    "cover": "Happy birthday",
+    "inside": "[your words for the printed card]"
+  },
+  "reel": {
+    "title": "Our little film",
+    "line": "Different days. Different places. Same person I keep choosing.",
+    "music": {
+      "src": "media/our-song.m4a",
+      "type": "audio"
+    }
+  },
   "finale": {
     "headline": "Every flower here is yours.",
     "lastThing": "If you’ve come all the way here, through the garden, past the cake and up into the sky, then you already know. But I’ll say it anyway. You are my favourite part of every day. Thank you for being born, and thank you for letting me be part of your story. Here’s to this year, and every one after it.",

@@ -213,6 +213,52 @@ export const PLACEHOLDER: BirthdayContent = {
   },
   // your voice for the film: add short recordings here (media/…) and they play at these moments
   narration: [],
+  gate: {
+    enabled: true,
+    title: 'Not yet, Dheepika',
+    line: 'The garden is still growing. It opens at midnight, on your birthday.',
+  },
+  morning: { title: 'Happy birthday', line: 'Every tulip in the garden opened for you today.' },
+  voiceTulip: { line: 'One tulip in this garden is humming. Tap it to listen.' },
+  openWhen: [
+    {
+      when: 'you miss me',
+      text: 'Close your eyes for a second. Wherever I am right now, I’m thinking about you too, I promise. Distance is only the space between now and the next time I hold you. Call me, even if it’s late. Especially if it’s late.',
+    },
+    {
+      when: 'you can’t sleep',
+      text: 'Breathe in for four, out for six. Again. You don’t have to solve anything tonight. The world can wait until morning, and so can every worry. I’m proud of you for today, even the parts that felt small. Sleep now. I’ll be here when you wake up.',
+    },
+    {
+      when: 'you’re having a bad day',
+      text: 'Bad days don’t get to decide who you are. You are still the person who makes ordinary days feel special, still the strongest person I know. Be gentle with yourself today, and let me be gentle with you too. Tell me everything. Or nothing. I’m on your side either way.',
+    },
+    {
+      when: 'you need a laugh',
+      text: 'Remember: instead of just saying happy birthday like a normal person, I built you an entire garden with a cake, a sky full of lanterns and fireworks. That is who you chose. You’re stuck with me now 😄',
+    },
+    {
+      when: 'you’re proud of yourself',
+      text: 'Look at you. I knew you could. I always know, even on the days you don’t. Now go and celebrate, properly, and then tell me every single detail. I want to hear all of it.',
+    },
+  ],
+  numbers: {
+    // the day your story began, as YYYY-MM-DD (for "days together"); add your own numbers below
+    since: '',
+    items: [
+      { label: 'trips together', value: null },
+      { label: 'photos of us', value: null },
+      { label: 'times I’ve thought about you today', value: null, suffix: '∞' },
+    ],
+  },
+  us: { her: 'D', you: '', line: 'Two stars. One sky.' },
+  // from your timeline: add every place you've been together (name, latitude, longitude, date, a line)
+  places: [{ name: 'Ooty', lat: 11.4102, lng: 76.695, date: '2 November', text: 'Our first trip together.' }],
+  card: {
+    cover: 'Happy birthday',
+    inside: 'To the one who makes every ordinary day feel like a celebration: happy birthday. Here’s to your brightest year yet, and to every birthday after it, side by side.',
+  },
+  reel: { title: 'Our little film', line: 'Different days. Different places. Same person I keep choosing.' },
   finale: {
     // HAPPY BIRTHDAY itself is saved for the sky at the very end
     headline: 'Every flower here is yours.',

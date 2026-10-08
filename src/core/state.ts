@@ -108,6 +108,10 @@ export const state = {
   reveal: 0,
   audioLevel: 0,
   loaded: false,
+  /** > 0 while an opaque screen covers the world (the birthday gate): nothing is drawn */
+  hold: 0,
+  /** her birthday (her local date): the garden blooms in full all day */
+  festive: false,
 };
 
 export type ExperienceState = typeof state;

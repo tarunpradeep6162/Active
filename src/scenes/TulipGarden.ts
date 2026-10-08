@@ -813,6 +813,8 @@ export class TulipGarden {
   }
   /** 0…1: the wish tulip gathering light while the button is held */
   hold = 0;
+  /** 0…1 her birthday: every flower stays fully open all day (see MorningBanner) */
+  festive = 0;
 
   /** The wish: a light that travels up through the whole plant. */
   private pulseStart = -1;
@@ -889,7 +891,7 @@ export class TulipGarden {
         open = smoothstep(b.openAt - 0.08, b.openAt, p);
         glow = open * 0.4;
       }
-      open = Math.max(open, reveal);
+      open = Math.max(open, reveal, this.festive);
       glow = Math.max(glow, reveal * 0.7) + (pt >= 0 && pt <= 1.2 ? Math.exp(-Math.pow((b.pos.y - (BOTTOM + clamp(pt) * (TOP - BOTTOM))) * 1.3, 2)) * 1.2 : 0);
       this.bloomNow[f] = open;
       this.writeFlower(f, b.pos, b.up, b.scale, open);
