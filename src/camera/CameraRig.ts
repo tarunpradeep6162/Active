@@ -154,6 +154,7 @@ export class CameraRig {
 
   private updateOverlay() {
     this.overlayEdge = state.focus > 0.001 ? null : workOverlay(state.scroll.progress, this.oPos, this.oTgt);
+    state.wipe = this.overlayEdge !== null;
     if (this.overlayEdge === null) return;
     const c = this.overlayCamera;
     c.position.copy(this.oPos);

@@ -393,7 +393,8 @@ export class World {
     if (cy < ANCHOR.lab - 4.5) this.lab.group.visible = false;
     // the garden cuts straight into the cake room: from above, the room's drape and housing would
     // only show as dark shapes under the flowers, so it stays hidden until the cut
-    if (cy > ANCHOR.lab + 8) this.lab.group.visible = false;
+    // (except during the wipe, when a second camera already looks into the room)
+    if (cy > ANCHOR.lab + 8 && !state.wipe) this.lab.group.visible = false;
     // the lanterns rise high above their lake, up through the cake room and the foot of the
     // garden: keep them (and their sky) out of view until the camera is below the room's floor
     if (cy > ANCHOR.lab - 2.1) this.portal.group.visible = false;

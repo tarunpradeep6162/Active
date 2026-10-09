@@ -83,7 +83,10 @@ export class UIDriver {
     // phone: the body copy leaves early and the project list arrives by work p −0.07 (measured)
     this.set('--v-manifesto-copy', phone ? 1 - smoothstep(0.56, 0.64, man) : 1);
     const wb = phone ? band('work', -0.08, -0.065, 0.86, 0.88) : band('work', -0.045, -0.02, 0.93, 0.965);
-    this.set('--v-work', wb * (1 - state.overlay) * (1 - state.focus));
+    const vw = wb * (1 - state.overlay) * (1 - state.focus);
+    this.set('--v-work', vw);
+    // the humming tulip fades with the garden's menu
+    this.set('--v-work', vw, this.el('.vtulip'), '.vtulip--v-work');
     // from the moment the cake is framed in its cage until the camera leaves the room
     this.set('--v-lab', band('lab', 0.3, 0.48, 0.9, 0.98) * free);
     this.set('--v-sky', band('portal', 0.12, 0.3, 0.86, 0.98) * free);

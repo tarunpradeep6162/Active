@@ -99,7 +99,7 @@
 /* ---- the voice tulip (garden) ---- */
 .vtulip { position: fixed; right: calc(18px + var(--safe-right)); bottom: calc(150px + var(--safe-bottom)); z-index: 12; width: 58px; height: 58px; border-radius: 50%; padding: 0; cursor: pointer;
   border: 1px solid rgba(243, 223, 167, .45); background: radial-gradient(circle at 50% 40%, rgba(243, 223, 167, .22), rgba(9, 11, 22, .75)); box-shadow: 0 0 24px rgba(243, 223, 167, .25);
-  animation: vt-in 1.2s ease both; }
+  animation: vt-in 1.2s ease backwards; opacity: var(--v-work, 1); }
 /* the hum: a glow that breathes by opacity only (compositor‑only, no repaint per frame) */
 .vtulip::after { content: ''; position: absolute; inset: -10px; border-radius: 50%; background: radial-gradient(closest-side, rgba(243, 223, 167, .45), rgba(243, 223, 167, 0)); opacity: .25; animation: vt-hum 2.6s ease-in-out 1.2s infinite; pointer-events: none; }
 .vtulip svg { width: 26px; overflow: visible; }

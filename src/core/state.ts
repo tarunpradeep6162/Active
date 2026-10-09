@@ -112,6 +112,8 @@ export const state = {
   hold: 0,
   /** her birthday (her local date): the garden blooms in full all day */
   festive: false,
+  /** the garden → cake room wipe is on screen (a second camera already looks into the room) */
+  wipe: false,
 };
 
 export type ExperienceState = typeof state;
