@@ -108,7 +108,7 @@ export class ManorScene {
       const t = this.track(this.tex.load(`${BASE}${name}_${m}.webp`));
       t.wrapS = t.wrapT = THREE.RepeatWrapping;
       t.repeat.set(repeat, repeat);
-      t.anisotropy = 8;
+      t.anisotropy = 16; // three clamps this to the GPU maximum
       if (srgb) t.colorSpace = THREE.SRGBColorSpace;
       return t;
     };

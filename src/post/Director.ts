@@ -141,7 +141,9 @@ export class Director {
     u.uFocusR.value = f.r;
     // no depth blur, no focus pulls: the picture stays sharp everywhere (they read as haze)
     u.uFocusAmt.value = 0;
-    u.uLens.value = this.lens ? 1 : 0;
+    // no barrel distortion either: it resamples the whole frame (a half‑pixel blur nearly
+    // everywhere); every pixel now maps 1:1 to the screen
+    u.uLens.value = 0;
 
     // ---- handheld: close, emotional shots breathe; wide shots stay on sticks
     state.handheld = reduced || state.seat ? 0 : sec === 'lab' ? (state.cageOpen ? 1 : 0.5) : sec === 'portal' ? 0.7 : sec === 'outro' ? 0.4 : sec === 'intro' ? 0.3 : 0.12;

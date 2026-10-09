@@ -47,10 +47,14 @@ export function detectTier(gl: WebGL2RenderingContext | null): PerformanceTier {
 export function tierSettings(tier: PerformanceTier): TierSettings {
   const mobile = state.viewport.mobile;
   const dpr = window.devicePixelRatio || 1;
+  // desktops: the screen's own resolution (supersampled a little on 1× screens), up to a pixel
+  // budget: a 4K frame (8.3 MP) on the high tier, 5 MP on the medium tier
+  const css = Math.max(1, state.viewport.width * state.viewport.height);
+  const budget = (mp: number) => Math.sqrt((mp * 1e6) / css);
   // Reference renders at 1.5× on DPR‑1 desktop and 1.25× on DPR‑1 mobile.
   if (tier === 'high')
     return {
-      dpr: Math.min(Math.max(dpr, 1.25), 1.5),
+      dpr: Math.min(Math.max(dpr, 1.5), 2.5, budget(8.3)),
       particleScale: 1,
       bloom: true,
       bloomLevels: 5,
@@ -65,7 +69,7 @@ export function tierSettings(tier: PerformanceTier): TierSettings {
       // phones: drawn at the screen's own resolution (3× on the OnePlus 11R class) or 2.5× on the
       // mid class, with the glow passes at quarter resolution so the pixels stay affordable. The
       // governor trims it (never below 85%) only if frames start to slip.
-      dpr: mobile ? Math.min(dpr, strongPhoneGpu ? 3 : 2.5) : Math.min(dpr, 1.25),
+      dpr: mobile ? Math.min(dpr, strongPhoneGpu ? 3 : 2.5) : Math.max(1, Math.min(Math.max(dpr, 1.25), 2, budget(5))),
       particleScale: 0.6,
       bloom: true,
       bloomLevels: 4,

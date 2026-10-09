@@ -64,7 +64,8 @@ try {
 } catch {
   console.warn('sharp is not installed; photos are encrypted as they are (run npm install to enable the photo pipeline).');
 }
-const SIZES = [480, 768, 1080, 1440];
+// up to 2880 px on the long side: sharp even on a 3× phone screen held full‑bleed
+const SIZES = [480, 768, 1080, 1440, 2160, 2880];
 const PHOTO = /\.(jpe?g|png|webp|avif|heic|heif|tiff?)$/i;
 
 async function sealFile(mime, body) {

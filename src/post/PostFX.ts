@@ -104,7 +104,7 @@ in vec2 vUv; out vec4 o;
 uniform sampler2D tScene; uniform sampler2D tBloom; uniform sampler2D tBlur; uniform sampler2D tFx; uniform float uFxOn;
 uniform float uBloomStrength; uniform float uHasBloom;
 uniform float uTime; uniform vec2 uResolution; uniform float uScrollVelocity;
-uniform float uChromatic; uniform float uBlur; uniform float uDim; uniform float uExposure;
+uniform float uChromatic; uniform float uSharpen; uniform vec2 uSceneSize; uniform float uBlur; uniform float uDim; uniform float uExposure;
 uniform vec3 uGlowA; uniform vec3 uGlowB; uniform float uReveal; uniform float uLetterbox; uniform float uStreak;
 // the cinematographer (see Director.ts): focus, lens, light shafts, the hour, cuts
 uniform vec2 uFocusPt; uniform float uFocusR; uniform float uFocusAmt; uniform float uLens; uniform float uBlink;
@@ -130,12 +130,28 @@ void main(){
     uv = .5 + c * (1. + k * r2) / (1. + k * .5);
     c = uv - .5;
   }
-  // velocity‑scaled chromatic fringe, strongest at the edges
-  float ca = uChromatic * (.0005 + abs(uScrollVelocity) * .0025) * r2 * 4.;
+  // chromatic fringe only while she scrolls, faint and only toward the edges: at rest every pixel
+  // is the scene's own, exactly
+  float ca = uChromatic * min(abs(uScrollVelocity), 2.) * .0009 * r2 * 4.;
   vec3 col;
-  col.r = texture(tScene, uv + c * ca).r;
-  col.g = texture(tScene, uv).g;
-  col.b = texture(tScene, uv - c * ca).b;
+  if (ca > .00002) {
+    col.r = texture(tScene, uv + c * ca).r;
+    col.g = texture(tScene, uv).g;
+    col.b = texture(tScene, uv - c * ca).b;
+  } else col = texture(tScene, uv).rgb;
+  // clarity: contrast‑adaptive sharpening (the light, halo‑free kind used by game upscalers).
+  // Each pixel is pushed away from its four neighbours by an amount that shrinks where the local
+  // contrast is already high, so fine detail (petal veins, bark, lantern paper, text) reads crisp
+  // without ringing or grain.
+  if (uSharpen > .001) {
+    vec2 px = 1. / uSceneSize;
+    vec3 n = texture(tScene, uv + vec2(0., px.y)).rgb, s = texture(tScene, uv - vec2(0., px.y)).rgb;
+    vec3 e = texture(tScene, uv + vec2(px.x, 0.)).rgb, w = texture(tScene, uv - vec2(px.x, 0.)).rgb;
+    vec3 mn = min(col, min(min(n, s), min(e, w))), mx = max(col, max(max(n, s), max(e, w)));
+    vec3 amp = sqrt(clamp(min(mn, 2. - mx) / max(mx, 1e-4), 0., 1.));
+    vec3 wgt = -amp * uSharpen * .2;
+    col = clamp((col + (n + s + e + w) * wgt) / (1. + 4. * wgt), 0., 64.);
+  }
   if (uHasBloom > .5) {
     vec3 bl = texture(tBloom, uv).rgb;
     col += bl * uBloomStrength;
@@ -271,6 +287,8 @@ export class PostFX {
     uScrollVelocity: globalUniforms.uScrollVelocity,
     uReveal: globalUniforms.uReveal,
     uChromatic: { value: 1 },
+    uSharpen: { value: 0.6 },
+    uSceneSize: { value: new THREE.Vector2(1, 1) },
     uBlur: { value: 0 },
     uDim: { value: 0 },
     uExposure: { value: 1 },
@@ -375,6 +393,7 @@ export class PostFX {
     this.w = w;
     this.h = h;
     this.sceneRT.setSize(w, h);
+    this.composite.uniforms.uSceneSize.value.set(w, h);
     this.levels.forEach((l) => l.dispose());
     this.ups.forEach((l) => l.dispose());
     this.levels = [];

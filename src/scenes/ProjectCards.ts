@@ -64,7 +64,7 @@ export function titleTexture(p: Project) {
   });
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.NoColorSpace;
-  tex.anisotropy = 4;
+  tex.anisotropy = 16;
   tex.generateMipmaps = true;
   tex.minFilter = THREE.LinearMipmapLinearFilter;
   return tex;

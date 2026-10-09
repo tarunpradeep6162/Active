@@ -166,7 +166,7 @@ export class SecretScene extends Stage {
     });
     const map = this.track(new THREE.CanvasTexture(c));
     map.colorSpace = THREE.SRGBColorSpace;
-    map.anisotropy = 4;
+    map.anisotropy = 16;
     const glow = this.track(new THREE.CanvasTexture(e));
     return { map, glow };
   }

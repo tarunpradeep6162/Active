@@ -52,7 +52,7 @@ export class MusicScene extends Stage {
     // plinth: warm walnut with a satin finish (grain painted into a canvas)
     const wood = this.track(new THREE.CanvasTexture(this.walnut()));
     wood.colorSpace = THREE.SRGBColorSpace;
-    wood.anisotropy = 4;
+    wood.anisotropy = 16;
     const plinth = new THREE.Mesh(
       this.track(new RoundedBoxGeometry(4.6, 0.5, 3.6, 4, 0.08)),
       this.track(new THREE.MeshPhysicalMaterial({ map: wood, roughness: 0.42, clearcoat: 0.6, clearcoatRoughness: 0.25 })),
@@ -77,7 +77,7 @@ export class MusicScene extends Stage {
     this.disc.add(platter);
     const grooves = this.track(new THREE.CanvasTexture(this.grooves()));
     grooves.colorSpace = THREE.SRGBColorSpace;
-    grooves.anisotropy = 8;
+    grooves.anisotropy = 16;
     const vinyl = new THREE.Mesh(
       this.track(new THREE.CylinderGeometry(1.46, 1.46, 0.03, 128)),
       [

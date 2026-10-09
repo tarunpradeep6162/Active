@@ -127,7 +127,7 @@ export function mediaUrl(ref: MediaRef, px?: number): Promise<string> {
 /** The smallest photo variant that covers `px` device pixels (default: the screen's long edge). */
 function pickVariant(ref: MediaRef, px?: number) {
   if (!ref.variants) return ref.src;
-  const need = px ?? Math.min(1440, Math.max(innerWidth, innerHeight) * Math.min(devicePixelRatio || 1, 2) * 0.8);
+  const need = px ?? Math.min(2880, Math.max(innerWidth, innerHeight) * Math.min(devicePixelRatio || 1, 3) * 0.9);
   const sizes = Object.keys(ref.variants).map(Number).sort((a, b) => a - b);
   const size = sizes.find((s) => s >= need) ?? sizes[sizes.length - 1];
   return ref.variants[size] ?? ref.src;
