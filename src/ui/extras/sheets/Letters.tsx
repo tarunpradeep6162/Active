@@ -47,6 +47,11 @@ export function OpenWhen() {
 
 function Letter({ when, text, onClose }: { when: string; text: string; onClose: () => void }) {
   const shown = useTypewriter(text, true, 48);
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    addEventListener('keydown', esc);
+    return () => removeEventListener('keydown', esc);
+  }, [onClose]);
   return (
     <div className="ow__letter" role="dialog" aria-label={`Open when ${when}`} onClick={onClose}>
       <div className="ow__paper" onClick={(e) => e.stopPropagation()}>

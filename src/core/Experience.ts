@@ -108,6 +108,8 @@ export class Experience {
     window.addEventListener('click', (e) => this.onClick(e));
     window.addEventListener('keydown', (e) => {
       if (e.key !== 'Escape') return;
+      // a keepsake, a letter or a dialog is open on top: Escape closes only that
+      if (document.querySelector('.sheet, .lastthing, .wishseal, .midnight, .gate, .vtulip__card')) return;
       if (state.route.name === 'project') events.emit('navigate', { name: 'work' });
       else if (state.route.name === 'contact') events.emit('navigate', { name: 'home' });
     });

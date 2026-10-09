@@ -23,9 +23,10 @@ const SHEETS: Record<SheetKind, { title: string; kicker: string; Body: () => Rea
 export default function KeepsakeSheet({ kind, onClose }: { kind: SheetKind; onClose: () => void }) {
   const s = SHEETS[kind];
   const ref = useRef<HTMLDivElement>(null);
+  // focus the sheet once, when it opens (not on every render of the page behind it)
+  useEffect(() => ref.current?.focus(), []);
   useEffect(() => {
-    ref.current?.focus();
-    const esc = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && !document.querySelector('.ow__letter') && onClose();
     addEventListener('keydown', esc);
     return () => removeEventListener('keydown', esc);
   }, [onClose]);
