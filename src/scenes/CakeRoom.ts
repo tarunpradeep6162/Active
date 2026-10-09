@@ -63,6 +63,10 @@ export class CakeRoom {
         uniform float uOn, uDark, uTime; uniform vec3 uCake;
         varying vec3 vN; varying vec3 vWorldPos; varying float vDepth; varying vec2 vUv; varying vec3 vLocal;
         void main(){
+          // a camera outside the drape (the phone's way in arrives from behind it): the part of the
+          // drape between it and the cake isn't drawn, so the room is seen, not the velvet's back
+          vec2 toCam = cameraPosition.xz - uCake.xz;
+          if (dot(toCam, toCam) > 70.6 && dot(vWorldPos.xz - uCake.xz, toCam) > 0.) discard;
           vec3 N = normalize(vN); vec3 V = normalize(cameraPosition - vWorldPos);
           if (dot(N, V) < 0.) N = -N;
           vec3 L = uCake - vWorldPos; float d = length(L); L /= d;
@@ -108,12 +112,16 @@ export class CakeRoom {
       depthWrite: false,
       blending: THREE.AdditiveBlending,
       vertexShader: /* glsl */ `
-        attribute vec2 aSeed; uniform float uTime, uPx, uDark; varying float vA; varying float vRose;
+        attribute vec2 aSeed; uniform float uTime, uPx, uDark; uniform vec3 uCake; varying float vA; varying float vRose;
         void main(){
           vec4 mv = modelViewMatrix * vec4(position, 1.); gl_Position = projectionMatrix * mv;
           vA = (.65 + .35 * sin(uTime * (.8 + aSeed.x * 1.6) + aSeed.x * 40.)) * (1. - uDark * .85);
           vRose = aSeed.y;
-          gl_PointSize = uPx * 3.2 / -mv.z; }`,
+          gl_PointSize = uPx * 3.2 / -mv.z;
+          // (the strings on the near side of the drape go with it, see the drape)
+          vec2 toCam = cameraPosition.xz - uCake.xz;
+          vec4 wp = modelMatrix * vec4(position, 1.);
+          if (dot(toCam, toCam) > 70.6 && dot(wp.xz - uCake.xz, toCam) > 0.) { gl_PointSize = 0.; vA = 0.; } }`,
       fragmentShader: /* glsl */ `
         varying float vA; varying float vRose;
         void main(){ float d = length(gl_PointCoord - .5);
