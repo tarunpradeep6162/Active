@@ -70,11 +70,12 @@ export function startPwa() {
   });
   addEventListener('appinstalled', () => set({ installed: true, canPrompt: false }));
   if (!enabled) return;
-  addEventListener('load', () => {
+  const register = () =>
     navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {
       /* private mode or blocked: the site simply works online */
     });
-  });
+  if (document.readyState === 'complete') register();
+  else addEventListener('load', register);
   // once the garden is up (and again whenever she leaves the tab), keep what was loaded
   setTimeout(warmCache, 15000);
   document.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' && warmCache());

@@ -29,17 +29,18 @@ export function PhotoBooth() {
     stream.current = null;
   };
   useEffect(() => stop, []);
+  // the preview element is new each time she comes back to the camera ("Take another"):
+  // hand it the stream again
+  useEffect(() => {
+    if ((mode === 'live' || mode === 'count') && video.current && stream.current && video.current.srcObject !== stream.current) {
+      video.current.srcObject = stream.current;
+      video.current.play().catch(() => {});
+    }
+  }, [mode]);
   const start = async () => {
     try {
-      const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1440 }, height: { ideal: 1440 } }, audio: false });
-      stream.current = s;
+      stream.current = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1440 }, height: { ideal: 1440 } }, audio: false });
       setMode('live');
-      requestAnimationFrame(() => {
-        if (video.current) {
-          video.current.srcObject = s;
-          video.current.play().catch(() => {});
-        }
-      });
     } catch {
       setMode('denied');
     }

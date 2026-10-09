@@ -348,7 +348,8 @@ export class Experience {
     state.loaded = true;
     store.set({ loaded: true, loadProgress: 1 });
     // the first‑visit intro may still be playing over the loading: the garden waits for it
-    await introDone;
+    // (never longer than 14 s, whatever happens to the intro)
+    await Promise.race([introDone, new Promise((r) => setTimeout(r, 14000))]);
     this.preloaderOut = state.time;
   }
 
