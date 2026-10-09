@@ -17,7 +17,7 @@ const SHEETS: Record<SheetKind, { title: string; kicker: string; Body: () => Rea
   plant: { title: 'Your tulip', kicker: 'plant it, watch it grow', Body: PlantTulip },
   jar: { title: 'The wish jar', kicker: 'paper stars', Body: WishJar },
   booth: { title: 'Photo booth', kicker: 'a birthday picture', Body: PhotoBooth },
-  reel: { title: 'Our little film', kicker: 'your memories, as a film', Body: MemoryReel },
+  reel: { title: 'Our memory film', kicker: 'your memories, as a film', Body: MemoryReel },
 };
 
 export default function KeepsakeSheet({ kind, onClose }: { kind: SheetKind; onClose: () => void }) {
