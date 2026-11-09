@@ -201,6 +201,8 @@ export function Secret({ slug, onDone }: ChapterProps) {
   const [i, setI] = useState(0);
   const [value, setValue] = useState('');
   const [wobble, setWobble] = useState(false);
+  // the shake is brief; the hint stays until she types again, so it can actually be read
+  const [missed, setMissed] = useState(false);
   const all = solved.every(Boolean);
   const clue = c.secret.clues[i];
   // the cryptex in 3D lies along the page's code row: one engraved ring per clue
@@ -247,10 +249,12 @@ export function Secret({ slug, onDone }: ChapterProps) {
               events.emit('gardenPulse', undefined);
               setSolved(next);
               setValue('');
+              setMissed(false);
               const k = next.findIndex((v) => !v);
               if (k >= 0) setI(k);
             } else {
               setWobble(true);
+              setMissed(true);
               events.emit('sfx', 'wrong');
               window.setTimeout(() => setWobble(false), 450);
             }
@@ -262,11 +266,20 @@ export function Secret({ slug, onDone }: ChapterProps) {
           <label className="sr-only" htmlFor="bd-clue-input">
             Your answer
           </label>
-          <input id="bd-clue-input" value={value} onChange={(e) => setValue(e.target.value)} autoComplete="off" placeholder="Your answer" />
+          <input
+            id="bd-clue-input"
+            value={value}
+            onChange={(e) => {
+              setValue(e.target.value);
+              setMissed(false);
+            }}
+            autoComplete="off"
+            placeholder="Your answer"
+          />
           <button type="submit" className="bd-btn">
             Try
           </button>
-          {wobble && <p className="bd-soft">Not quite — think about us. 💭</p>}
+          {missed && <p className="bd-soft" role="status">Not quite — think about us. 💭</p>}
         </form>
       ) : (
         <Scratch onRevealed={onDone}>
