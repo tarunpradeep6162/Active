@@ -10,7 +10,6 @@ import { startJournal } from './journal';
 import { Intro } from './extras/Intro';
 import { BirthdayGate } from './extras/BirthdayGate';
 import { MorningBanner, WishTimer, ShakePetals } from './extras/Moments';
-import { VoiceTulip } from './extras/VoiceTulip';
 import { startHaptics } from './extras/haptics';
 import { startPwa } from './extras/pwa';
 import { recordVisit } from './extras/local';
@@ -56,7 +55,6 @@ export function App() {
           <WindowSeat />
           <MidnightSurprise />
           <FilmMode />
-          <VoiceTulip />
           <MorningBanner />
           <WishTimer />
           <ShakePetals />

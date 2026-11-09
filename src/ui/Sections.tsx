@@ -62,6 +62,9 @@ export function IntroHint() {
   const [tilt, setTiltOn] = useState(state.tilt.on);
   const starRef = useRef<HTMLButtonElement>(null);
   const hidden = section !== 'intro';
+  // where her name appears (7.6 s in), the love line writes itself instead
+  const love = c.loveLine ?? '';
+  const loveTyped = useTyping(love, true, 7600);
   const enter = () => {
     const r = rangeOf('manifesto');
     window.scrollTo({ top: r.start * state.scroll.max + 2, behavior: state.reducedMotion ? 'auto' : 'smooth' });
@@ -89,7 +92,14 @@ export function IntroHint() {
         <span className="opening__star-tail" />
         {wish && <span className="opening__wish">{c.opening.shootingStar}</span>}
       </button>
-      <h2 className="opening__name">{c.name}</h2>
+      {love ? (
+        <>
+          <h2 className="sr-only">{c.name}</h2>
+          <LoveLine text={love} typed={loveTyped} />
+        </>
+      ) : (
+        <h2 className="opening__name">{c.name}</h2>
+      )}
       <div className="opening__actions">
         <button type="button" className="opening__enter" tabIndex={hidden ? -1 : 0} onClick={enter}>
           {c.opening.enter} <span aria-hidden="true">↓</span>
@@ -451,18 +461,11 @@ export function FinaleSky() {
     const id = setTimeout(() => setWords((w) => w + 1), state.reducedMotion ? 600 : 2600);
     return () => clearTimeout(id);
   }, [words, c.finalWords.length]);
-  // after the closing lines, the love line writes itself, one letter at a time
+  // after the closing lines, the love line writes itself, one letter at a time (a breath first,
+  // while the last line fades)
   const love = c.loveLine ?? '';
-  const [typed, setTyped] = useState(0);
+  const typed = useTyping(love, words >= c.finalWords.length, 1100);
   const loveDone = typed >= love.length;
-  useEffect(() => {
-    if (words < c.finalWords.length || loveDone) return;
-    if (state.reducedMotion) return setTyped(love.length);
-    const ch = love[typed];
-    // a breath before the first letter (the last line fades first), and a beat at each space
-    const id = setTimeout(() => setTyped((t) => t + 1), typed === 0 ? 1100 : ch === ' ' ? 300 : 115 + Math.random() * 50);
-    return () => clearTimeout(id);
-  }, [words, typed, love, c.finalWords.length]);
   useEffect(() => {
     if (!love || !loveDone || words < c.finalWords.length) return;
     events.emit('sfx', 'star');
@@ -495,6 +498,18 @@ export function FinaleSky() {
       {open && <LastThing onClose={() => setOpen(false)} />}
     </>
   );
+}
+
+/** Letters written out one at a time once `run` turns on: `first` ms before the first, a beat at each space. */
+function useTyping(text: string, run: boolean, first: number) {
+  const [typed, setTyped] = useState(0);
+  useEffect(() => {
+    if (!run || typed >= text.length) return;
+    if (state.reducedMotion) return setTyped(text.length);
+    const id = setTimeout(() => setTyped((t) => t + 1), typed === 0 ? first : text[typed] === ' ' ? 300 : 115 + Math.random() * 50);
+    return () => clearTimeout(id);
+  }, [run, typed, text]);
+  return typed;
 }
 
 /**
@@ -542,7 +557,7 @@ function LoveLine({ text, typed }: { text: string; typed: number }) {
   );
 }
 
-/** The private ending: the voice note and the last message (behind the passcode when set). */
+/** The private ending: the last message and your signature (behind the passcode when set). */
 function LastThing({ onClose }: { onClose: () => void }) {
   const c = useContent();
   const vault = useVaultState();
@@ -561,7 +576,6 @@ function LastThing({ onClose }: { onClose: () => void }) {
         ) : (
           <>
             <p className="lastthing__kicker">One last thing</p>
-            {c.finale.voice ? <Media media={c.finale.voice} label="A voice note for you" /> : <p className="lastthing__note">[A voice note will play here]</p>}
             <p className="lastthing__text">{c.finale.lastThing}</p>
             <Signature className="lastthing__sig" color="#e8a6b5" delay={0.6} />
           </>

@@ -281,7 +281,6 @@ function MovieClip({ media, onEnded, onShape, tall = false }: { media: MediaRef;
 
 /* 14 ── For Dheepika: Door 25. Opens once chapters 1–13 are done. */
 export function Finale({ slug, onDone }: ChapterProps) {
-  const c = useContent();
   const prog = useProgress();
   const others = PROJECTS.filter((p) => p.slug !== slug);
   const doneCount = others.filter((p) => prog.done.includes(p.slug)).length;
@@ -317,10 +316,10 @@ export function Finale({ slug, onDone }: ChapterProps) {
     setOpening(false);
     setStage(1);
     const at = (ms: number, s: number) => timers.current.push(window.setTimeout(() => setStage(s), reducedMotion() ? ms / 3 : ms));
-    at(c.finale.voice ? 9000 : 2500, 2); // darkness (+ voice) → memories
-    at(c.finale.voice ? 14000 : 7500, 3); // → 25 · 11
-    at(c.finale.voice ? 19000 : 12500, 4); // → headline
-    at(c.finale.voice ? 24000 : 17500, 5); // → pull back: the whole garden, every flower in bloom
+    at(2500, 2); // darkness → memories
+    at(7500, 3); // → 25 · 11
+    at(12500, 4); // → headline
+    at(17500, 5); // → pull back: the whole garden, every flower in bloom
   };
   useEffect(() => {
     if (stage >= 5) events.emit('gardenReveal', true);
@@ -379,7 +378,6 @@ function FinaleOpen({ slug, stage, opening, allHearts, onOpen }: OpenProps) {
           Open Door 25
         </button>
       )}
-      {stage >= 1 && c.finale.voice && <Media media={c.finale.voice} label="Your voice" autoPlay className="bd-finale__voice" />}
       {stage >= 2 && (
         <div className="bd-orbit" aria-hidden="true">
           {c.memories.slice(0, 10).map((m, k) => (

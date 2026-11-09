@@ -1,4 +1,4 @@
-// QA: round 4 extras on a phone (412×915): the For you cards and every sheet, the voice tulip,
+// QA: round 4 extras on a phone (412×915): the For you cards and every sheet,
 // the birthday gate (?gate), the birthday morning (?now=…), and the manifest/service worker files.
 // Usage: RECREATION_URL=… node qa/round4.mjs [part]
 import fs from 'node:fs';
@@ -69,13 +69,10 @@ if (part === 'all' || part === 'garden') {
   });
   await page.waitForTimeout(300);
   await page.evaluate(() => { __exp.qaStep(1500, 50); __exp.qaResume(); });
-  await page.waitForSelector('.vtulip', { timeout: 60000 });
+  await page.waitForSelector('.morning', { timeout: 60000 });
   out.festive = await page.evaluate(() => __state.festive);
   out.morningBanner = !!(await page.$('.morning'));
   await shot(page, 'garden-birthday-morning');
-  await page.click('.vtulip');
-  await page.waitForTimeout(800);
-  await shot(page, 'garden-voice-tulip');
   out.gardenErrors = logs.filter((l) => /error/i.test(l)).slice(0, 5);
   await browser.close();
 }

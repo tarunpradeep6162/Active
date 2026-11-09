@@ -146,7 +146,6 @@ vault with `npm run vault`). Anything you leave out falls back to the shipped wo
 | --- | --- |
 | `gate` | Before her birthday, a sealed gate with a live countdown. She can still press and hold the seal to peek. Set `"enabled": false` to switch it off. |
 | `morning` | On the day itself every tulip stays fully open and this banner greets her in the garden. |
-| `voiceTulip.media` | Your recorded voice (an audio file in `media/`). It plays from the humming tulip in the garden. |
 | `openWhen` | "Open when…" letters: `when` finishes the sentence, `text` is the letter. |
 | `numbers.since` | The day your story began (`YYYY-MM-DD`), for "days since our story began". `items` are your own numbers; an item with `"value": null` is hidden unless it has a `suffix` (such as `∞`). |
 | `us` | The two initials for the Two Stars constellation. With `you` empty, your star is a heart. |

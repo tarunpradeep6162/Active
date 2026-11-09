@@ -141,8 +141,6 @@ export interface BirthdayContent {
   gate: { enabled: boolean; title: string; line: string };
   /** on the day itself: the garden in full bloom and a banner */
   morning: { title: string; line: string };
-  /** one tulip in the garden that plays your voice */
-  voiceTulip: { media?: MediaRef; line: string };
   /** sealed letters for later: "Open when…" */
   openWhen: { when: string; text: string }[];
   /** our year in numbers: `since` (YYYY-MM-DD) gives "days together"; items with a null value are hidden */
@@ -156,7 +154,6 @@ export interface BirthdayContent {
   /** the memory film: your photos, a title and (optionally) a song you have the right to use */
   reel: { title: string; line: string; music?: MediaRef };
   finale: {
-    voice?: MediaRef;
     headline: string;
     lastThing: string;
     /** extra ending once every hidden heart has been found */

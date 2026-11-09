@@ -220,7 +220,6 @@ export const PLACEHOLDER: BirthdayContent = {
     line: 'The garden is still growing. It opens at midnight, on your birthday.',
   },
   morning: { title: 'Happy birthday', line: 'Every tulip in the garden opened for you today.' },
-  voiceTulip: { line: 'One tulip in this garden is humming. Tap it to listen.' },
   openWhen: [
     {
       when: 'you miss me',

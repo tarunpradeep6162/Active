@@ -4,7 +4,7 @@ The old studio site is gone. What is left is one continuous, cinematic birthday 
 scroll, made only for her. **Every line of feeling is already written** (the letter, 14 reasons,
 the name letters, quiz, clues, timeline, gifts, 24 wishes, 12 lantern wishes, the last message
 and the secret ending), in a warm voice you can edit freely. Only facts that can't be invented
-stay marked, like dates, places, song titles, photos, videos and your voice note (see the
+stay marked, like dates and places (see the
 **Personal content checklist** at the end).
 
 Preview: https://meridian-field-nine.vercel.app (the Vercel project keeps its old internal name;
@@ -72,7 +72,7 @@ Without WebGL, the earlier flat versions come back.
   public site.
 - An encrypted backup of both is in git history (commit `373e08b`, `public/vault/content.bin`),
   so nothing is lost if this machine is cleared.
-- **Final build:** fill in the remaining facts (photos, song titles, voice note), then run
+- **Final build:** fill in the remaining facts (dates, places), then run
   `npm run vault -- --pass "…" --hint "…"`, build, commit `public/vault/`, and deploy.
   Passphrases are matched ignoring capital letters and extra spaces.
 - Slots still waiting for a real fact ([date], [place], song titles) are hidden on the site
@@ -188,8 +188,11 @@ Without WebGL, the earlier flat versions come back.
   phone and given back to her on her next birthday ("A year ago, you wished…").
 - **Shake for petals**: shaking the phone sends petals falling across the screen.
 
+**The love line**: *Dheepika I Love You So Much* writes itself letter by letter in the opening
+(where her name appears) and again at the sunrise, after the closing lines (`loveLine` in
+`src/content/dheepika.ts`).
+
 **Personal and keepsakes** (in For you; each opens in its own panel, loaded only when opened)
-- **Voice tulip**: a humming tulip in the garden plays your voice message (from the vault).
 - **Letters for later**: sealed "Open when…" envelopes; the letter writes itself as she reads.
 - **Our year in numbers**: animated counters, savable as a card.
 - **Two stars**: her initial and yours as constellations she joins with her finger.
@@ -338,7 +341,6 @@ None of it claims a specific memory, date, place, nickname or promise that you d
 - [ ] `timeline[]` dates for *We Met*, *Getting Closer* and *Us*, and change the texts if your story differs
 - [ ] `songs[]`: the real titles and artists (the notes are written; never paste lyrics; add `audio` only if you own the rights)
 - [ ] `movie.clips[]`: short videos you own
-- [ ] `finale.voice`: your voice note (an audio file in `media/`)
 - [ ] Optional: make the quiz answers truly yours (the `answer` index and the reactions)
 - [ ] Optional: `birthday.timezone`, only if you turn on the countdown
 
