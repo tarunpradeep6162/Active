@@ -310,6 +310,8 @@ body {
 
 /* for you */
 .foryou { background: radial-gradient(120% 90% at 50% 30%, rgba(17, 22, 42, .82), rgba(7, 9, 20, .94)); overflow-y: auto; }
+/* the open page takes touches itself (the interface layer passes them through to the 3D world), so a swipe or the wheel scrolls it */
+.foryou.is-open { pointer-events: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
 .foryou__kicker { margin: calc(96px + var(--safe-top)) 0 0; text-align: center; font: 11px var(--mono); letter-spacing: .32em; color: var(--champagne-2); }
 .foryou__title { margin: 8px 0 26px; text-align: center; font: 500 clamp(40px, 6vw, 72px)/1 var(--serif); color: var(--soft); }
 .foryou__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; max-width: 1080px; margin: 0 auto; padding: 0 20px 120px; }
