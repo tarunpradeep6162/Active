@@ -208,6 +208,17 @@ export function MemoryReel() {
     },
     [],
   );
+  // before it plays, the screen shows the film's title card (it was an empty black box)
+  useEffect(() => {
+    let live = true;
+    document.fonts.ready.then(() => {
+      const g = live && mode === 'idle' ? ref.current?.getContext('2d') : null;
+      if (g) drawReel(g, 1080, 1920, 2, [], c, { TITLE: 3.2, EACH: 3.6, END: 4.6, X: 0.7 });
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
   const run = async (record: boolean) => {
     setMode('loading');
     cancel.current = false;
