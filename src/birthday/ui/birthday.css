@@ -560,3 +560,6 @@
 /* the reel's frames are small; on a finger each one answers a taller, gap-filling area around it */
 .bd-reel__frame { position: relative; }
 .bd-reel__frame::before { content: ''; position: absolute; inset: -12px -3px; }
+/* the small text links ("Skip the game", "or blow into the mic") answer a finger-sized area */
+.bd-link { position: relative; }
+.bd-link::before { content: ''; position: absolute; inset: -10px -8px; }
