@@ -13,7 +13,7 @@ export const filled = (s?: string | null) => (s && !/^\s*\[.*\]\s*$/.test(s) ? s
 export const reducedMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** A photo / video / audio slot; missing media shows a labelled placeholder frame. */
-export function Media({ media, label, className = '', autoPlay = false, onEnded }: { media?: MediaRef; label: string; className?: string; autoPlay?: boolean; onEnded?: () => void }) {
+export function Media({ media, label, className = '', autoPlay = false, onEnded, onPlay, onPause }: { media?: MediaRef; label: string; className?: string; autoPlay?: boolean; onEnded?: () => void; onPlay?: () => void; onPause?: () => void }) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     let live = true;
@@ -32,7 +32,7 @@ export function Media({ media, label, className = '', autoPlay = false, onEnded 
   }
   if (!url) return <div className={`bd-media bd-media--loading ${className}`} aria-busy="true" />;
   if (media.type === 'video') return <video className={`bd-media ${className}`} src={url} autoPlay={autoPlay} muted={autoPlay} playsInline controls={!autoPlay} onEnded={onEnded} aria-label={media.alt ?? label} />;
-  if (media.type === 'audio') return <audio className={`bd-audio ${className}`} src={url} controls autoPlay={autoPlay} onEnded={onEnded} />;
+  if (media.type === 'audio') return <audio className={`bd-audio ${className}`} src={url} controls autoPlay={autoPlay} onEnded={onEnded} onPlay={onPlay} onPause={onPause} />;
   return <img className={`bd-media ${className}`} src={url} alt={media.alt ?? label} draggable={false} />;
 }
 

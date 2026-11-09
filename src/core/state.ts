@@ -203,8 +203,8 @@ type Events = {
   replay: void;
   /** the film's score: a musical cue for the shot (see AudioEngine.cue) */
   filmCue: 'rise' | 'hush' | 'swell' | 'end' | 'reset';
-  /** narration is speaking: the music steps back */
-  duck: boolean;
+  /** narration is speaking: the music steps back ('full': a song is playing, the score falls silent) */
+  duck: boolean | 'full';
   /** the film is about to cut: the iris closes on what the shot is about */
   filmCutStart: void;
   /** slow motion for a moment (the candles going out, her name complete) */

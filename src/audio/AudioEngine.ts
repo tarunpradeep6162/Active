@@ -75,7 +75,7 @@ export class AudioEngine {
     events.on('blowCandles', () => this.stretch());
     // the film's score: the music follows the shots, and steps back under your voice
     events.on('filmCue', (k) => this.cue(k));
-    events.on('duck', (on) => ((this.duckLevel = on ? 0.3 : 1), this.applyLevel(on ? 0.25 : 0.8)));
+    events.on('duck', (on) => ((this.duckLevel = on === 'full' ? 0 : on ? 0.3 : 1), this.applyLevel(on ? 0.25 : 0.8)));
     events.on('blowCandles', () => {
       if (this.cueLevel < 1) setTimeout(() => ((this.cueLevel = 1.1), this.applyLevel(0.5)), 1200);
     });
