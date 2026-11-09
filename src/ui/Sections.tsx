@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { events, state } from '../core/state';
 import { useStore } from './useStore';
 import { CATEGORIES, PROJECTS, type Project } from '../app/projects';
@@ -15,6 +15,7 @@ import { makePoster, recordFilm } from './Cinema';
 import { canRecord } from './recorder';
 import { Signature } from '../birthday/ui/Signature';
 import type { Memory } from '../birthday/types';
+import { buzz } from './extras/haptics';
 
 export function Preloader() {
   const progress = useStore((s) => s.loadProgress);
@@ -450,6 +451,23 @@ export function FinaleSky() {
     const id = setTimeout(() => setWords((w) => w + 1), state.reducedMotion ? 600 : 2600);
     return () => clearTimeout(id);
   }, [words, c.finalWords.length]);
+  // after the closing lines, the love line writes itself, one letter at a time
+  const love = c.loveLine ?? '';
+  const [typed, setTyped] = useState(0);
+  const loveDone = typed >= love.length;
+  useEffect(() => {
+    if (words < c.finalWords.length || loveDone) return;
+    if (state.reducedMotion) return setTyped(love.length);
+    const ch = love[typed];
+    // a breath before the first letter (the last line fades first), and a beat at each space
+    const id = setTimeout(() => setTyped((t) => t + 1), typed === 0 ? 1100 : ch === ' ' ? 300 : 115 + Math.random() * 50);
+    return () => clearTimeout(id);
+  }, [words, typed, love, c.finalWords.length]);
+  useEffect(() => {
+    if (!love || !loveDone || words < c.finalWords.length) return;
+    events.emit('sfx', 'star');
+    buzz('heart');
+  }, [loveDone, words >= c.finalWords.length]);
   const month = MONTHS[(c.birthday.month || 11) - 1];
   return (
     <>
@@ -462,18 +480,64 @@ export function FinaleSky() {
         </p>
         <div className="finale-sky__words" aria-live="polite">
           {c.finalWords.slice(0, Math.max(0, words + 1)).map((w, i) => (
-            <p key={i} className={i === Math.min(words, c.finalWords.length - 1) ? 'is-now' : ''}>
+            <p key={i} className={i === (love ? words : Math.min(words, c.finalWords.length - 1)) ? 'is-now' : ''}>
               {w}
             </p>
           ))}
+          {love && words >= c.finalWords.length && <LoveLine text={love} typed={typed} />}
         </div>
-        {words >= c.finalWords.length && (
+        {words >= c.finalWords.length && loveDone && (
           <button type="button" className="finale-sky__last" tabIndex={hidden ? -1 : 0} onClick={() => setOpen(true)}>
             One last thing
           </button>
         )}
       </section>
       {open && <LastThing onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
+/**
+ * The love line, written out letter by letter: each letter rises out of a blur with a flash of
+ * gold, a nib-like caret runs ahead, and when the line is whole a glow ripples through it and a
+ * few hearts float up. Words never break across lines; screen readers hear it once, complete.
+ */
+function LoveLine({ text, typed }: { text: string; typed: number }) {
+  const done = typed >= text.length;
+  let k = 0;
+  return (
+    <>
+      <p className={`finale-love ${done ? 'is-done' : ''}`} aria-hidden="true">
+        {text.split(' ').map((word, w) => {
+          const start = k;
+          k += word.length + 1;
+          if (start >= typed) return null;
+          return (
+            <Fragment key={w}>
+              {w > 0 && ' '}
+              <span className="finale-love__word">
+                {[...word.slice(0, typed - start)].map((ch, j) => (
+                  <span key={j} className="finale-love__ch" style={{ ['--i' as string]: start + j }}>
+                    {ch}
+                  </span>
+                ))}
+                {/* the caret rides at the end of the word being written */}
+                {!done && start + word.length >= typed && <span className="finale-love__caret" />}
+              </span>
+            </Fragment>
+          );
+        })}
+        {done && (
+          <span className="finale-love__hearts">
+            {[0, 1, 2, 3, 4, 5].map((h) => (
+              <i key={h} style={{ ['--h' as string]: h }}>
+                ♥
+              </i>
+            ))}
+          </span>
+        )}
+      </p>
+      {done && <p className="sr-only">{text}</p>}
     </>
   );
 }

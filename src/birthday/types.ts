@@ -104,6 +104,8 @@ export interface BirthdayContent {
   lanternWishes: string[];
   /** the last words after the sunrise, one per beat */
   finalWords: string[];
+  /** after the closing lines: written out letter by letter over the sunrise */
+  loveLine?: string;
   /** prompt for her message to future us */
   futurePrompt: string;
   beginning: { line: string };

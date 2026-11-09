@@ -694,3 +694,46 @@ html.is-seat #interface > :not(.seat-hint):not(.skydraw), html.is-seat .nav, htm
 .finale-sky__words p.is-now:not(:first-child) { animation-delay: .8s; }
 /* the garden's menu lines are small text; each answers a finger-sized area around it */
 .work-panel__list button::before { content: ''; position: absolute; inset: -7px -14px; }
+
+/* "Dheepika I Love You So Much": written over the sunrise, one letter at a time */
+/* (as specific as the closing lines' own rules, which would otherwise fade it out like a past line) */
+.finale-sky__words p.finale-love { grid-area: 1 / 1; position: relative; margin: 0; max-width: min(92vw, 760px); text-align: center;
+  font: 600 clamp(36px, 9.6vw, 64px)/1.08 var(--hand); color: #ffeccf; text-shadow: none; animation: none; opacity: 1; }
+.finale-love__word { display: inline-block; white-space: nowrap; }
+/* each letter's resting state is its final look; the entrance animates into it */
+.finale-love__ch { display: inline-block; transform-origin: 50% 80%;
+  text-shadow: 0 1px 2px rgba(40, 12, 22, .6), 0 0 14px rgba(40, 12, 22, .45), 0 0 26px rgba(255, 190, 140, .45);
+  animation: love-ch .9s cubic-bezier(.2, .9, .25, 1.2) backwards; }
+@keyframes love-ch {
+  0% { opacity: 0; transform: translateY(.42em) scale(.5) rotate(-10deg); filter: blur(6px); }
+  55% { opacity: 1; transform: translateY(-.08em) scale(1.14) rotate(2deg); filter: blur(0); color: #fff7e6;
+    text-shadow: 0 0 10px #fff3d6, 0 0 30px rgba(255, 206, 140, .95), 0 0 60px rgba(255, 160, 170, .6); }
+}
+/* the caret: a thin gold stroke that runs just ahead of the letters */
+.finale-love__caret { display: inline-block; width: .07em; height: .9em; margin-left: .06em; vertical-align: -.06em; border-radius: 2px;
+  background: linear-gradient(#fff3d6, #f3c27a); box-shadow: 0 0 12px rgba(255, 206, 140, .9); animation: love-caret .9s steps(1) infinite; }
+@keyframes love-caret { 50% { opacity: 0; } }
+/* once whole: a glow ripples through the line from the first letter to the last, then it breathes */
+.finale-love.is-done .finale-love__ch { animation: love-wave 1.6s ease calc(var(--i) * 55ms) both, love-breathe 4.8s ease-in-out calc(1.6s + var(--i) * 55ms) infinite; }
+@keyframes love-wave {
+  40% { transform: translateY(-.12em) scale(1.1); color: #fff9ee; text-shadow: 0 0 12px #fff3d6, 0 0 34px rgba(255, 206, 140, .95), 0 0 70px rgba(255, 150, 170, .7); }
+}
+@keyframes love-breathe { 50% { text-shadow: 0 1px 2px rgba(40, 12, 22, .6), 0 0 14px rgba(40, 12, 22, .45), 0 0 40px rgba(255, 190, 150, .75); } }
+/* and a few small hearts drift up from it */
+.finale-love__hearts { position: absolute; inset: 0; pointer-events: none; }
+.finale-love__hearts i { position: absolute; bottom: 30%; left: calc(14% + var(--h) * 14.4%); font: normal 16px/1 serif; color: #ff9fb6;
+  text-shadow: 0 0 10px rgba(255, 120, 150, .8); opacity: 0; animation: love-heart 3.4s ease-out calc(1.4s + var(--h) * .32s) both; }
+.finale-love__hearts i:nth-child(odd) { font-size: 12px; color: #ffd2a0; }
+@keyframes love-heart {
+  0% { opacity: 0; transform: translateY(0) scale(.4); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc((var(--h) - 2.5) * 6px), -110px) scale(1.15) rotate(calc((var(--h) - 2.5) * 8deg)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .finale-love__ch, .finale-love.is-done .finale-love__ch { animation: none; }
+  .finale-love__caret, .finale-love__hearts { display: none; }
+}
+/* on a phone: her name on its own line, then the words beneath it (never a lone last word) */
+@media (max-width: 700px) { .finale-love__word:first-child { display: block; } }
+/* wider screens: the finale tools keep to the left half, clear of "Back to the first star" in the middle */
+@media (min-width: 701px) { .finale-tools:not(.finale-tools--drawing) { max-width: calc(50vw - 150px); } }

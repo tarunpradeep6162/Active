@@ -34,6 +34,7 @@ export const PLACEHOLDER: BirthdayContent = {
     'Me, still beside you, a year from now.',
   ],
   finalWords: ['Another year of you.', 'Another year of memories waiting to happen.', 'Happy birthday, Dheepika.'],
+  loveLine: 'Dheepika I Love You So Much',
   futurePrompt: 'Write something we should read together next year.',
   beginning: { line: 'The day my favourite person entered this world.' },
   // captions are written to sit under any photo; add the real date and place with each photo
