@@ -108,6 +108,7 @@ export class MemoryScene extends Stage {
       if (card.url) {
         this.tex.load(card.url, (t) => {
           t.colorSpace = THREE.SRGBColorSpace;
+          t.anisotropy = 16; // three clamps this to the GPU maximum
           // cover‑fit the photo into the square window
           const img = t.image as { width: number; height: number };
           const ar = img.width / img.height;

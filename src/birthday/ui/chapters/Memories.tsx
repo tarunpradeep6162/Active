@@ -65,7 +65,7 @@ function MemoryOrbit({ onOpen, focus }: { onOpen: (k: number) => void; focus: nu
   useEffect(() => {
     let alive = true;
     (async () => {
-      const urls = await Promise.all(c.memories.map((m) => (m.media && m.media.type === 'image' ? mediaUrl(m.media, 768).catch(() => undefined) : Promise.resolve(undefined))));
+      const urls = await Promise.all(c.memories.map((m) => (m.media && m.media.type === 'image' ? mediaUrl(m.media, 1080).catch(() => undefined) : Promise.resolve(undefined))));
       const { MemoryScene } = await import('../stage/MemoryScene');
       if (!alive || !ref.current) return;
       const s = new MemoryScene(
