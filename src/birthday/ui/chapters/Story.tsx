@@ -4,6 +4,8 @@ import { PROJECTS } from '../../../app/projects';
 import { HiddenHeart, Media, ParticleText, filled, reducedMotion, useContent, useProgress, useTypewriter } from '../shared';
 import type { ChapterProps } from '../ChapterView';
 import { Backdrop, useStage } from '../stage/useStage';
+import { mediaUrl } from '../../vault';
+import type { MediaRef } from '../../types';
 
 /* 1 ── The Beginning: darkness, one star; waking it reveals the date and the line. */
 export function Beginning({ slug, onDone }: ChapterProps) {
@@ -148,7 +150,9 @@ export function Movie({ slug, onDone }: ChapterProps) {
   const clips = c.movie.clips;
   const [i, setI] = useState(-1);
   const [end, setEnd] = useState(false);
-  const count = Math.max(clips.length, 5);
+  // her clips, or five leader frames until they're added
+  const count = clips.length || 5;
+  const [tall, setTall] = useState(false);
   // the cinema in 3D: its screen lies under the page's screen box, which holds her clips
   const box = useRef<HTMLDivElement>(null);
   const [parting, setParting] = useState(false);
@@ -192,11 +196,13 @@ export function Movie({ slug, onDone }: ChapterProps) {
     <div className={`bd-movie ${end ? 'is-end' : ''}`} data-live={scene.live}>
       <Backdrop canvas={scene.ref} />
       <div ref={box} className="bd-movie__screen">
-        {i >= 0 && !end && (
+        {i >= 0 && !end && clips[i]?.type !== 'video' && (
           <div className="bd-movie__frame" key={i}>
             <Media media={clips[i]} label={`Clip ${i + 1} — photo or video`} className="bd-movie__media" autoPlay onEnded={next} />
           </div>
         )}
+        {/* a portrait clip plays tall, in front of the cinema, instead of shrunk onto its wide screen */}
+        {i >= 0 && !end && clips[i]?.type === 'video' && <MovieClip key={i} media={clips[i]} onEnded={next} onShape={setTall} tall={tall} />}
         {end && <p className="bd-movie__line">{c.movie.line}</p>}
       </div>
       {i < 0 && !parting && (
@@ -204,8 +210,71 @@ export function Movie({ slug, onDone }: ChapterProps) {
           ▶ Play
         </button>
       )}
-      {i >= 0 && !end && <p className="bd-movie__caption">{c.movie.line}</p>}
+      {i >= 0 && !end && !(tall && clips[i]?.type === 'video') && <p className="bd-movie__caption">{c.movie.line}</p>}
       <HiddenHeart slug={slug} style={{ right: '3%', top: '4%' }} />
+    </div>
+  );
+}
+
+/**
+ * One of her video clips, with its own sound: the garden's score falls silent while it plays.
+ * If the phone refuses to start it with sound, it plays muted and offers a tap for sound.
+ * Tapping the picture pauses and resumes it.
+ */
+function MovieClip({ media, onEnded, onShape, tall = false }: { media: MediaRef; onEnded: () => void; onShape: (tall: boolean) => void; tall?: boolean }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [muted, setMuted] = useState(false);
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    let live = true;
+    mediaUrl(media).then((u) => live && setUrl(u)).catch(() => live && onEnded());
+    return () => {
+      live = false;
+      events.emit('duck', false);
+    };
+  }, [media.src]);
+  useEffect(() => {
+    const v = ref.current;
+    if (!url || !v) return;
+    v.play().catch(() => {
+      v.muted = true;
+      setMuted(true);
+      v.play().catch(() => {});
+    });
+  }, [url]);
+  return (
+    <div className={`bd-movie__frame bd-movie__frame--video ${tall ? 'is-tall' : ''}`}>
+      {url ? (
+        <video
+          ref={ref}
+          className="bd-movie__video"
+          src={url}
+          playsInline
+          aria-label={media.alt ?? 'A clip from our little movie'}
+          onLoadedMetadata={(e) => onShape(e.currentTarget.videoHeight > e.currentTarget.videoWidth)}
+          onPlay={(e) => !e.currentTarget.muted && events.emit('duck', 'full')}
+          onPause={() => events.emit('duck', false)}
+          onEnded={() => (events.emit('duck', false), onEnded())}
+          onClick={(e) => (e.currentTarget.paused ? e.currentTarget.play().catch(() => {}) : e.currentTarget.pause())}
+        />
+      ) : (
+        <div className="bd-media bd-media--loading" aria-busy="true" />
+      )}
+      {muted && (
+        <button
+          type="button"
+          className="bd-btn bd-movie__sound"
+          onClick={() => {
+            const v = ref.current;
+            if (!v) return;
+            v.muted = false;
+            setMuted(false);
+            events.emit('duck', 'full');
+          }}
+        >
+          🔊 Tap for sound
+        </button>
+      )}
     </div>
   );
 }
