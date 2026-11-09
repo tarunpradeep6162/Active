@@ -30,7 +30,8 @@
 @keyframes bd-burst { 0% { opacity: 0; scale: .2; } 30% { opacity: 1; } 100% { opacity: 0; scale: 1.2; } }
 .bd-chapter__head { text-align: center; }
 .bd-chapter__title { font: 500 clamp(28px, 5vw, 64px)/1 var(--serif); letter-spacing: .01em; margin: 6px 0 0; text-shadow: 0 0 24px rgba(255, 216, 154, .25); }
-.bd-chapter__stage { position: relative; min-height: 0; overflow: auto; display: grid; place-items: center; padding: 12px 0; }
+/* centred while it fits; taller content starts at the top instead of spilling above it, out of reach */
+.bd-chapter__stage { position: relative; min-height: 0; overflow: auto; display: grid; place-items: safe center center; padding: 12px 0; }
 .bd-chapter__foot { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; justify-content: center; padding-top: 10px; }
 .bd-preview { color: var(--bd-gold); }
 
@@ -358,6 +359,8 @@
 /* let taps fall through the empty stage onto the orbit; the page's own controls stay live */
 .bd-chapter__stage:has(.bd-cosmos__canvas--interactive) { pointer-events: none; }
 .bd-chapter__stage:has(.bd-cosmos__canvas--interactive) :is(button, a, input, .bd-lightbox, .bd-tabs) { pointer-events: auto; }
+/* the open letter takes touches too, so it can be scrolled (they used to fall through to the stars) */
+.bd-chapter__stage:has(.bd-cosmos__canvas--interactive) :is(.bd-paper, .bd-letter__after, .bd-letter__sky) { pointer-events: auto; }
 .bd-orbit__hint { position: absolute; left: 0; right: 0; bottom: 4%; font: italic 500 clamp(17px, 1.9vw, 21px) var(--serif); color: rgba(248, 241, 232, .8); pointer-events: none; }
 .bd-memories { position: relative; min-height: 100%; }
 
@@ -374,7 +377,7 @@
 
 /* 3 · The Letter — the envelope in candlelight; the paper rises over it once opened */
 .bd-letter[data-live="true"] { min-height: 100%; align-content: end; }
-.bd-letter[data-live="true"][data-phase="open"] { align-content: center; }
+.bd-letter[data-live="true"][data-phase="open"] { align-content: safe center; }
 .bd-letter__hint { font: italic 500 clamp(17px, 1.9vw, 21px) var(--serif); color: rgba(248, 241, 232, .8); }
 .bd-letter[data-live="true"] .bd-paper { animation: bd-paper-rise 1.2s cubic-bezier(.2, .8, .2, 1) both; box-shadow: 0 40px 90px rgba(0, 0, 0, .55), 0 0 60px rgba(255, 200, 140, .18); }
 @keyframes bd-paper-rise { from { opacity: 0; transform: translateY(40px) scale(.97); } to { opacity: 1; transform: none; } }
