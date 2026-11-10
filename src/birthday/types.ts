@@ -53,8 +53,12 @@ export interface Song {
 export interface TimelineStop {
   label: string;
   date?: string;
+  /** where it happened (shown under the date) */
+  place?: string;
   text: string;
   media?: MediaRef;
+  /** several photos for one date: a gilt-framed gallery she swipes through */
+  gallery?: MediaRef[];
 }
 
 export interface Gift {

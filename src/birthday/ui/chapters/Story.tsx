@@ -126,14 +126,19 @@ export function Timeline({ slug, onDone }: ChapterProps) {
         ) : (
           <>
             {filled(s.date) && <TimelineDate date={s.date!} />}
+            {s.place && <p className="bd-tl-place">{s.place}</p>}
             <span className="bd-tl-rule" aria-hidden="true">
               <i />
             </span>
             <h3>{s.label}</h3>
-            {s.media && (
-              <figure className="bd-tl-photo">
-                <Media media={s.media} label={`${s.label} — photo or clip`} className="bd-timeline__media" />
-              </figure>
+            {s.gallery && s.gallery.length > 1 ? (
+              <TimelineGallery photos={s.gallery} label={s.label} />
+            ) : (
+              (s.gallery?.[0] ?? s.media) && (
+                <figure className="bd-tl-photo">
+                  <Media media={(s.gallery?.[0] ?? s.media)!} label={`${s.label} — photo or clip`} className="bd-timeline__media" />
+                </figure>
+              )
             )}
             <p className="bd-timeline__lines">
               {s.text.split('\n').map((line, n) => (
@@ -289,6 +294,54 @@ function MovieClip({ media, onEnded, onShape, tall = false }: { media: MediaRef;
           🔊 Tap for sound
         </button>
       )}
+    </div>
+  );
+}
+
+/**
+ * Several photos for one date: gilt-framed, side by side, swiped one to the next (each snaps to
+ * the centre, the next one peeking in); gold diamonds below show which one she's on and take
+ * her to any of them.
+ */
+function TimelineGallery({ photos, label }: { photos: MediaRef[]; label: string }) {
+  const row = useRef<HTMLDivElement>(null);
+  const [at, setAt] = useState(0);
+  const onScroll = () => {
+    const r = row.current;
+    if (!r) return;
+    const items = [...r.children] as HTMLElement[];
+    const mid = r.scrollLeft + r.clientWidth / 2;
+    let best = 0;
+    items.forEach((el, k) => {
+      if (Math.abs(el.offsetLeft + el.clientWidth / 2 - mid) < Math.abs(items[best].offsetLeft + items[best].clientWidth / 2 - mid)) best = k;
+    });
+    // at either end of the row, the photo at that end is the one she's on
+    if (r.scrollLeft >= r.scrollWidth - r.clientWidth - 2) best = items.length - 1;
+    else if (r.scrollLeft <= 2) best = 0;
+    setAt(best);
+  };
+  const go = (k: number) => {
+    const r = row.current;
+    const el = r?.children[k] as HTMLElement | undefined;
+    setAt(k);
+    if (r && el) r.scrollTo({ left: el.offsetLeft - (r.clientWidth - el.clientWidth) / 2, behavior: state.reducedMotion ? 'auto' : 'smooth' });
+  };
+  return (
+    <div className="bd-tl-gallery" role="group" aria-label={`${label}: ${photos.length} photos`}>
+      <div className="bd-tl-gallery__row" ref={row} onScroll={onScroll}>
+        {photos.map((m, k) => (
+          <figure key={k} className="bd-tl-photo" aria-current={k === at}>
+            <Media media={m} label={`${label} — photo ${k + 1} of ${photos.length}`} className="bd-timeline__media" />
+          </figure>
+        ))}
+      </div>
+      <div className="bd-tl-gallery__dots">
+        {photos.map((_, k) => (
+          <button key={k} type="button" aria-label={`Photo ${k + 1} of ${photos.length}`} aria-current={k === at} onClick={() => go(k)}>
+            <i />
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
