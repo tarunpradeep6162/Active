@@ -576,3 +576,75 @@
 @keyframes bd-await-3d { from { opacity: 0; } to { opacity: 1; } }
 @keyframes bd-live-in { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .bd-chapter__stage [data-live="true"] { animation: none; } }
+
+/* ───────────── 9 · Our Timeline, dressed for the occasion ─────────────
+   gold diamonds on the track; every date an engraved card in smoked glass with a double gilt
+   border, corner flourishes, a numeral medallion, the date in gold, a diamond rule, the title
+   in gold leaf (a sheen passes over it once) and, when there is one, the photo in a gilt frame */
+.bd-timeline { --tl-gold: #e9c98c; --tl-gold-deep: #b98a44; --tl-ink: #fbf3e6; }
+.bd-timeline__track { border-bottom: 0; padding-bottom: 12px; scrollbar-width: none; }
+.bd-timeline__track::-webkit-scrollbar { display: none; }
+.bd-timeline__track button { color: rgba(243, 223, 167, .5); font: 500 10px var(--mono); letter-spacing: .22em; gap: 9px; transition: color .4s ease; }
+.bd-timeline__track button[aria-current='true'] { color: #fff1d0; }
+.bd-timeline .bd-dot { width: 9px; height: 9px; border-radius: 1px; transform: rotate(45deg); background: rgba(10, 8, 16, .9); border: 1px solid rgba(233, 201, 140, .55); transition: transform .5s cubic-bezier(.2, .9, .3, 1.3), background .4s, box-shadow .4s; }
+.bd-timeline__track li[data-passed="true"] .bd-dot { background: linear-gradient(135deg, #fff3d6, var(--tl-gold) 45%, var(--tl-gold-deep)); border-color: transparent; box-shadow: 0 0 8px rgba(255, 210, 150, .55); }
+.bd-timeline__track button[aria-current="true"] .bd-dot { transform: rotate(45deg) scale(1.45); background: linear-gradient(135deg, #fffaf0, #f3d9a0 40%, #c99a52); border-color: transparent;
+  box-shadow: 0 0 0 4px rgba(233, 201, 140, .14), 0 0 18px rgba(255, 214, 150, .95); }
+.bd-timeline__track li::after { top: 14px; height: 1px; background: linear-gradient(90deg, rgba(233, 201, 140, .22), rgba(233, 201, 140, .12)); }
+.bd-timeline__track li[data-passed="true"]::after { background: linear-gradient(90deg, #f3d9a0, rgba(233, 201, 140, .6)); box-shadow: 0 0 6px rgba(255, 210, 150, .5); }
+
+/* the card */
+.bd-timeline__stop.bd-tl-card { position: relative; justify-self: center; width: min(560px, 100%); box-sizing: border-box; gap: 10px; padding: 40px clamp(20px, 6vw, 44px) 32px; margin-top: 12px;
+  background: radial-gradient(120% 80% at 50% 0%, rgba(58, 40, 30, .55), transparent 60%), linear-gradient(180deg, rgba(20, 14, 24, .86), rgba(10, 8, 15, .92));
+  border: 1px solid rgba(233, 201, 140, .6); border-radius: 3px;
+  box-shadow: 0 34px 90px rgba(0, 0, 0, .6), 0 0 70px rgba(255, 200, 140, .07), inset 0 1px 0 rgba(255, 240, 210, .12);
+  animation: tl-card-in .9s cubic-bezier(.2, .8, .2, 1) both; }
+.bd-timeline__stop.bd-tl-card::before { content: ''; position: absolute; inset: 7px; border: 1px solid rgba(233, 201, 140, .26); border-radius: 2px; pointer-events: none; }
+@keyframes tl-card-in { from { opacity: 0; transform: translateY(18px) scale(.985); filter: blur(3px); } to { opacity: 1; transform: none; filter: none; } }
+.bd-timeline[data-live="true"] .bd-timeline__stop.bd-tl-card { padding-top: 40px; margin-top: clamp(16px, 9vh, 120px); }
+.bd-timeline[data-live="true"] .bd-tl-card :is(h3, .bd-tl-date b) { text-shadow: none; }
+/* corner flourishes */
+.bd-corners { position: absolute; inset: 0; pointer-events: none; }
+.bd-corner { position: absolute; width: 30px; height: 30px; fill: none; stroke: var(--tl-gold, #e9c98c); stroke-width: 1.3; opacity: .85; }
+.bd-corner circle { fill: var(--tl-gold, #e9c98c); stroke: none; }
+.bd-corner--0 { left: 3px; top: 3px; }
+.bd-corner--1 { right: 3px; top: 3px; transform: scaleX(-1); }
+.bd-corner--2 { left: 3px; bottom: 3px; transform: scaleY(-1); }
+.bd-corner--3 { right: 3px; bottom: 3px; transform: scale(-1, -1); }
+/* the numeral medallion, sitting on the top edge */
+.bd-tl-card__num { position: absolute; top: -17px; left: 50%; translate: -50% 0; display: grid; place-items: center; min-width: 34px; height: 34px; padding: 0 6px; box-sizing: border-box; border-radius: 999px;
+  background: radial-gradient(circle at 35% 30%, #2a1d22, #0c0910); border: 1px solid var(--tl-gold); color: #f6dfab; font: italic 600 14px/1 var(--serif); letter-spacing: .04em;
+  box-shadow: 0 0 0 3px rgba(10, 8, 15, .9), 0 0 18px rgba(255, 205, 140, .35); }
+/* the date, engraved */
+.bd-tl-date { display: flex; align-items: baseline; justify-content: center; gap: 12px; margin: 0; }
+.bd-tl-date b { font: 500 clamp(46px, 13vw, 68px)/.95 var(--serif); letter-spacing: .01em;
+  background: linear-gradient(180deg, #fff6e2 0%, #f3d9a0 38%, #c99a52 70%, #f6e2b4 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 2px 10px rgba(255, 190, 120, .25)); }
+.bd-tl-date span { font: 500 11px var(--mono); letter-spacing: .44em; text-transform: uppercase; color: rgba(246, 223, 171, .88); }
+/* the diamond rule */
+.bd-tl-rule { display: flex; align-items: center; gap: 10px; width: min(240px, 62%); margin: 2px auto 0; }
+.bd-tl-rule::before, .bd-tl-rule::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(233, 201, 140, .85)); }
+.bd-tl-rule::after { background: linear-gradient(270deg, transparent, rgba(233, 201, 140, .85)); }
+.bd-tl-rule i { width: 7px; height: 7px; transform: rotate(45deg); background: linear-gradient(135deg, #fff3d6, #c99a52); box-shadow: 0 0 10px rgba(255, 210, 150, .7); }
+/* the title in gold leaf, with one sheen of light */
+.bd-tl-card h3 { font: italic 500 clamp(30px, 8vw, 46px)/1.1 var(--serif); letter-spacing: .01em; padding: 0 .1em;
+  background: linear-gradient(105deg, #e8c27e 0%, #f6dfab 30%, #fffaf0 46%, #f3d9a0 54%, #c99a52 78%, #f0d49c 100%); background-size: 260% 100%; background-position: 100% 0;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: bd-title 1.4s cubic-bezier(.2, .7, .2, 1) .2s both, tl-sheen 2.6s ease-in-out 1s both; }
+@keyframes tl-sheen { from { background-position: 100% 0; } to { background-position: 0% 0; } }
+/* the story */
+.bd-tl-card .bd-timeline__lines { margin: 4px auto 0; font: italic 500 clamp(17px, 4.4vw, 21px)/1.65 var(--serif) !important; color: rgba(251, 243, 230, .92) !important; }
+/* the photo in a gilt frame */
+.bd-tl-photo { margin: 8px auto 10px; width: min(420px, 100%); padding: 5px; box-sizing: border-box; border-radius: 3px;
+  background: linear-gradient(135deg, #f8e6bd 0%, #c99a52 30%, #f3d9a0 52%, #9e7136 76%, #edd29b 100%);
+  box-shadow: 0 26px 60px rgba(0, 0, 0, .65), 0 0 40px rgba(255, 200, 140, .12); animation: tl-photo-in 1.1s cubic-bezier(.2, .8, .2, 1) .15s both; }
+.bd-tl-photo .bd-timeline__media { display: block; width: 100%; height: auto; max-height: 44vh; aspect-ratio: auto; object-fit: cover; border-radius: 1px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .35); }
+@keyframes tl-photo-in { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: none; } }
+/* the ending: an ornate empty frame waiting for the next memory */
+.bd-tl-card .bd-timeline__outro { margin-bottom: 18px; color: rgba(251, 243, 230, .92); }
+.bd-emptyframe__frame { position: relative; display: grid; place-items: center; width: min(260px, 62vw); aspect-ratio: 5 / 4; border: 1px solid rgba(233, 201, 140, .75); border-radius: 3px;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 214, 160, .14), transparent 65%), rgba(10, 8, 15, .5);
+  box-shadow: 0 0 0 6px rgba(10, 8, 15, .6), 0 0 0 7px rgba(233, 201, 140, .3), 0 0 50px rgba(255, 200, 140, .18); animation: bd-glow 3.6s ease-in-out infinite; }
+.bd-emptyframe__heart { font: 300 34px var(--serif); color: rgba(246, 223, 171, .8); text-shadow: 0 0 18px rgba(255, 200, 140, .6); }
+.bd-emptyframe p { font: italic 500 18px var(--serif) !important; color: var(--tl-gold) !important; letter-spacing: .02em; }
+@media (prefers-reduced-motion: reduce) { .bd-tl-card, .bd-tl-card h3, .bd-tl-photo { animation: none !important; } .bd-tl-card h3 { background-position: 50% 0; } }

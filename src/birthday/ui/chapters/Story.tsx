@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { events } from '../../../core/state';
+import { events, state } from '../../../core/state';
 import { PROJECTS } from '../../../app/projects';
 import { HiddenHeart, Media, ParticleText, filled, reducedMotion, useContent, useProgress, useTypewriter } from '../shared';
 import type { ChapterProps } from '../ChapterView';
@@ -83,6 +83,9 @@ export function Timeline({ slug, onDone }: ChapterProps) {
   useEffect(() => scene.stage.current?.go(i), [i, scene.live]);
   useEffect(() => {
     if (i === stops.length - 1) onDone();
+    // each date opens at the top of its card (the chapter may have been scrolled down the last one)
+    const stage = track.current?.closest<HTMLElement>('.bd-chapter__stage');
+    if (stage && stage.scrollTop > 0) stage.scrollTo({ top: 0, behavior: state.reducedMotion ? 'auto' : 'smooth' });
     // keep the current date in view on narrow screens (the strip scrolls sideways)
     const el = track.current?.children[i] as HTMLElement | undefined;
     const t = track.current;
@@ -102,26 +105,36 @@ export function Timeline({ slug, onDone }: ChapterProps) {
           </li>
         ))}
       </ol>
-      <article className="bd-timeline__stop" key={i}>
+      {/* every date is an engraved card: a numeral medallion, the date in gold, a diamond rule,
+          the title in gold leaf, the story, and (when there is one) the photo in a gilt frame */}
+      <article className="bd-timeline__stop bd-tl-card" key={i}>
+        <Corners />
+        <span className="bd-tl-card__num" aria-hidden="true">
+          {'empty' in s ? '∞' : NUMERALS[i] ?? i + 1}
+        </span>
         {'empty' in s ? (
           <>
             {c.timelineStory?.outro && <p className="bd-timeline__outro">{c.timelineStory.outro}</p>}
             <div className="bd-emptyframe">
-              <div className="bd-emptyframe__frame" aria-hidden="true" />
+              <div className="bd-emptyframe__frame" aria-hidden="true">
+                <Corners />
+                <span className="bd-emptyframe__heart">♡</span>
+              </div>
               <p>{s.text}</p>
             </div>
           </>
         ) : (
           <>
-            {/* a date without a photo simply tells the story */}
-            {s.media && <Media media={s.media} label={`${s.label} — photo or clip`} className="bd-timeline__media" />}
-            {/* a title card for every date: the date between two lines of light, then the moment */}
-            {filled(s.date) && (
-              <p className="bd-timeline__kicker">
-                <span>{s.date}</span>
-              </p>
-            )}
+            {filled(s.date) && <TimelineDate date={s.date!} />}
+            <span className="bd-tl-rule" aria-hidden="true">
+              <i />
+            </span>
             <h3>{s.label}</h3>
+            {s.media && (
+              <figure className="bd-tl-photo">
+                <Media media={s.media} label={`${s.label} — photo or clip`} className="bd-timeline__media" />
+              </figure>
+            )}
             <p className="bd-timeline__lines">
               {s.text.split('\n').map((line, n) => (
                 <span key={n} style={{ ['--n' as string]: n }}>
@@ -277,6 +290,39 @@ function MovieClip({ media, onEnded, onShape, tall = false }: { media: MediaRef;
         </button>
       )}
     </div>
+  );
+}
+
+/** The date as an engraving: the day in large gold numerals, the month in spaced capitals. */
+function TimelineDate({ date }: { date: string }) {
+  const m = date.match(/^([\d\s&–-]+?)\s+([A-Za-z].*)$/);
+  return (
+    <p className="bd-tl-date">
+      {m ? (
+        <>
+          <b>{m[1]}</b>
+          <span>{m[2]}</span>
+        </>
+      ) : (
+        <span>{date}</span>
+      )}
+    </p>
+  );
+}
+
+/** Four small gilt flourishes for a card's corners. */
+function Corners() {
+  return (
+    <span className="bd-corners" aria-hidden="true">
+      {[0, 1, 2, 3].map((k) => (
+        <svg key={k} viewBox="0 0 40 40" className={`bd-corner bd-corner--${k}`}>
+          <path d="M2 30 V8 Q2 2 8 2 H30" />
+          <path d="M8 22 V12 Q8 8 12 8 H22" />
+          <circle cx="2" cy="34" r="1.6" />
+          <circle cx="34" cy="2" r="1.6" />
+        </svg>
+      ))}
+    </span>
   );
 }
 
