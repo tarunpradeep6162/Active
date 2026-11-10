@@ -656,7 +656,9 @@
 .bd-tl-gallery__row::-webkit-scrollbar { display: none; }
 .bd-tl-gallery .bd-tl-photo { flex: 0 0 100%; box-sizing: border-box; margin: 0; scroll-snap-align: center; scroll-snap-stop: always; transition: transform .45s ease, opacity .45s ease; opacity: .55; transform: scale(.93); }
 .bd-tl-gallery .bd-tl-photo[aria-current="true"] { opacity: 1; transform: none; }
-.bd-tl-gallery .bd-timeline__media { height: auto; aspect-ratio: 3 / 4; max-height: 58vh; object-fit: cover; }
+/* each photo keeps its own shape (a landscape one stays landscape), centred in the row */
+.bd-tl-gallery .bd-timeline__media { height: auto; aspect-ratio: auto; max-height: 58vh; object-fit: cover; }
+.bd-tl-gallery__row { align-items: center; }
 .bd-tl-gallery__dots { display: flex; justify-content: center; gap: 4px; }
 .bd-tl-gallery__dots button { display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; background: none; cursor: pointer; }
 .bd-tl-gallery__dots i { width: 7px; height: 7px; transform: rotate(45deg); border: 1px solid rgba(233, 201, 140, .7); transition: transform .35s ease, background .35s ease, box-shadow .35s ease; }
