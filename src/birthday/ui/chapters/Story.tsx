@@ -68,7 +68,15 @@ export function Beginning({ slug, onDone }: ChapterProps) {
 
 /* 9 ── Timeline: Before Us → … → What Comes Next, ending on the empty frame. */
 /** each lantern on the river carries its number; the date itself is on the page's title card */
-const NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+/** Roman numerals for the timeline's medallions (any number of dates) */
+const roman = (n: number) =>
+  ([[1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']] as const).reduce(
+    (out, [v, r]) => {
+      while (n >= v) (out += r), (n -= v);
+      return out;
+    },
+    '',
+  );
 
 export function Timeline({ slug, onDone }: ChapterProps) {
   const c = useContent();
@@ -78,7 +86,7 @@ export function Timeline({ slug, onDone }: ChapterProps) {
   const track = useRef<HTMLOListElement>(null);
   // the river of light in 3D: one lantern per date; moving through the story travels along it
   const scene = useStage(() =>
-    import('../stage/TimelineScene').then(({ TimelineScene }) => (cv: HTMLCanvasElement) => new TimelineScene(cv, stops.map((t, k) => ('empty' in t ? '…' : k === 0 && c.timelineStory?.intro ? '' : NUMERALS[k] ?? String(k + 1))))),
+    import('../stage/TimelineScene').then(({ TimelineScene }) => (cv: HTMLCanvasElement) => new TimelineScene(cv, stops.map((t, k) => ('empty' in t ? '…' : k === 0 && c.timelineStory?.intro ? '' : roman(k + 1))))),
   );
   useEffect(() => scene.stage.current?.go(i), [i, scene.live]);
   useEffect(() => {
@@ -110,7 +118,7 @@ export function Timeline({ slug, onDone }: ChapterProps) {
       <article className="bd-timeline__stop bd-tl-card" key={i}>
         <Corners />
         <span className="bd-tl-card__num" aria-hidden="true">
-          {'empty' in s ? '∞' : NUMERALS[i] ?? i + 1}
+          {'empty' in s ? '∞' : roman(i + 1)}
         </span>
         {'empty' in s ? (
           <>
