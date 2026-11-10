@@ -617,7 +617,7 @@
   box-shadow: 0 0 0 3px rgba(10, 8, 15, .9), 0 0 18px rgba(255, 205, 140, .35); }
 /* the date, engraved */
 .bd-tl-date { display: flex; align-items: baseline; justify-content: center; gap: 12px; margin: 0; }
-.bd-tl-date b { font: 500 clamp(46px, 13vw, 68px)/.95 var(--serif); letter-spacing: .01em;
+.bd-tl-date b { font: 500 clamp(46px, 13vw, 68px)/.95 var(--serif); letter-spacing: .01em; font-variant-numeric: lining-nums; font-feature-settings: 'lnum' 1;
   background: linear-gradient(180deg, #fff6e2 0%, #f3d9a0 38%, #c99a52 70%, #f6e2b4 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
   filter: drop-shadow(0 2px 10px rgba(255, 190, 120, .25)); }
 .bd-tl-date span { font: 500 11px var(--mono); letter-spacing: .44em; text-transform: uppercase; color: rgba(246, 223, 171, .88); }
