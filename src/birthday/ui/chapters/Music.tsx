@@ -55,7 +55,7 @@ export function MusicRoom({ slug, onDone }: ChapterProps) {
     return () => cancelAnimationFrame(raf);
   }, [i]);
   return (
-    <div className="bd-music" data-live={scene.live}>
+    <div className="bd-music" data-live={scene.attr}>
       <Backdrop canvas={scene.ref} />
       <div ref={record} className={`bd-record ${s ? 'is-playing' : ''}`} aria-hidden="true">
         <div className="bd-record__disc">

@@ -568,3 +568,11 @@
 @media (max-width: 700px), (orientation: portrait) {
   .bd-memories:has(.bd-lightbox) .bd-tabs { opacity: 0; pointer-events: none; transition: opacity .4s ease; }
 }
+/* A chapter whose 3D is still loading waits unseen, rather than flashing its flat version first
+   (the old picture that used to pop up); it fades in once the 3D is live, or after 2.5 s shows
+   the flat version anyway ('off': no 3D on this device, shown at once). */
+.bd-chapter__stage [data-live="false"] { animation: bd-await-3d 2.5s steps(1, end) both; }
+.bd-chapter__stage [data-live="true"] { animation: bd-live-in .6s ease both; }
+@keyframes bd-await-3d { from { opacity: 0; } to { opacity: 1; } }
+@keyframes bd-live-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .bd-chapter__stage [data-live="true"] { animation: none; } }

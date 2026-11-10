@@ -3,7 +3,7 @@ import { events } from '../../../core/state';
 import { PROJECTS } from '../../../app/projects';
 import { HiddenHeart, Media, ParticleText, filled, reducedMotion, useContent, useProgress, useTypewriter } from '../shared';
 import type { ChapterProps } from '../ChapterView';
-import { Backdrop, useStage } from '../stage/useStage';
+import { Backdrop, liveAttr, useStage } from '../stage/useStage';
 import { mediaUrl } from '../../vault';
 import type { MediaRef } from '../../types';
 
@@ -14,6 +14,7 @@ export function Beginning({ slug, onDone }: ChapterProps) {
   const ref = useRef<HTMLCanvasElement>(null);
   const stage = useRef<{ wake(l: number): void; dispose(): void } | null>(null);
   const [live, setLive] = useState(false);
+  const [failed, setFailed] = useState(false);
   // the words follow the stars: they begin once the date has gathered (at once without 3D)
   const [ready, setReady] = useState(false);
   const line = useTypewriter(c.beginning.line, ready, 26);
@@ -28,7 +29,7 @@ export function Beginning({ slug, onDone }: ChapterProps) {
         stage.current = new BeginningScene(ref.current, c.date);
         setLive(true);
       })
-      .catch(() => {});
+      .catch(() => alive && setFailed(true));
     return () => {
       alive = false;
       stage.current?.dispose();
@@ -48,7 +49,7 @@ export function Beginning({ slug, onDone }: ChapterProps) {
     stage.current?.wake(next);
   };
   return (
-    <div className="bd-beginning" data-awake={awake} data-live={live}>
+    <div className="bd-beginning" data-awake={awake} data-live={liveAttr(live, failed)}>
       <div className="bd-cosmos" aria-hidden="true">
         <canvas ref={ref} className="bd-cosmos__canvas" />
       </div>
@@ -88,7 +89,7 @@ export function Timeline({ slug, onDone }: ChapterProps) {
     if (el && t && t.scrollWidth > t.clientWidth) t.scrollTo({ left: el.offsetLeft - t.clientWidth / 2 + el.clientWidth / 2, behavior: 'smooth' });
   }, [i]);
   return (
-    <div className="bd-timeline" data-live={scene.live}>
+    <div className="bd-timeline" data-live={scene.attr}>
       <Backdrop canvas={scene.ref} />
       {c.timelineStory?.intro && i === 0 && <p className="bd-timeline__intro">{c.timelineStory.intro}</p>}
       <ol className="bd-timeline__track" aria-label="Our timeline" ref={track}>
@@ -193,7 +194,7 @@ export function Movie({ slug, onDone }: ChapterProps) {
     } else setI(i + 1);
   };
   return (
-    <div className={`bd-movie ${end ? 'is-end' : ''}`} data-live={scene.live}>
+    <div className={`bd-movie ${end ? 'is-end' : ''}`} data-live={scene.attr}>
       <Backdrop canvas={scene.ref} />
       <div ref={box} className="bd-movie__screen">
         {i >= 0 && !end && clips[i]?.type !== 'video' && (
@@ -334,7 +335,7 @@ export function Finale({ slug, onDone }: ChapterProps) {
     <>
       <Backdrop canvas={scene.ref} className={stage >= 5 ? 'bd-cosmos--gone' : ''} />
       {locked ? (
-        <FinaleLocked slug={slug} live={scene.live} doneCount={doneCount} others={others} done={prog.done} />
+        <FinaleLocked slug={slug} live={scene.live} attr={scene.attr} doneCount={doneCount} others={others} done={prog.done} />
       ) : (
         <FinaleOpen slug={slug} stage={stage} opening={opening} allHearts={allHearts} onOpen={openDoor} />
       )}
@@ -342,10 +343,10 @@ export function Finale({ slug, onDone }: ChapterProps) {
   );
 }
 
-type LockedProps = { slug: string; live: boolean; doneCount: number; others: typeof PROJECTS; done: string[] };
-function FinaleLocked({ slug, live, doneCount, others, done }: LockedProps) {
+type LockedProps = { slug: string; live: boolean; attr: string; doneCount: number; others: typeof PROJECTS; done: string[] };
+function FinaleLocked({ slug, live, attr, doneCount, others, done }: LockedProps) {
   return (
-    <div className="bd-door" data-live={live}>
+    <div className="bd-door" data-live={attr}>
       {!live && (
         <div className="bd-door__frame" aria-hidden="true">
           <span>25</span>

@@ -134,7 +134,7 @@ export function CatchGame({ slug, onDone }: ChapterProps) {
     };
   }, [state]);
   return (
-    <div className="bd-game" data-live={scene.live} data-state={state} ref={box}>
+    <div className="bd-game" data-live={scene.attr} data-state={state} ref={box}>
       <Backdrop canvas={scene.ref} />
       <canvas ref={ref} className="bd-game__canvas" aria-label="Catch the falling hearts; move with the pointer or the arrow keys" />
       <div className="bd-game__hud">

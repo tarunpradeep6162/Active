@@ -62,8 +62,11 @@ function MemoryOrbit({ onOpen, focus }: { onOpen: (k: number) => void; focus: nu
   const ref = useRef<HTMLCanvasElement>(null);
   const stage = useRef<{ open(i: number): void; release(): void; dispose(): void } | null>(null);
   const [live, setLive] = useState(false);
+  // the flat floating photos are only for when 3D can't run: never flashed while it loads
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
     let alive = true;
+    const slow = window.setTimeout(() => alive && setFailed(true), 6000);
     (async () => {
       const urls = await Promise.all(c.memories.map((m) => (m.media && m.media.type === 'image' ? mediaUrl(m.media, 1080).catch(() => undefined) : Promise.resolve(undefined))));
       const { MemoryScene } = await import('../stage/MemoryScene');
@@ -75,9 +78,10 @@ function MemoryOrbit({ onOpen, focus }: { onOpen: (k: number) => void; focus: nu
       s.onOpen = onOpen;
       stage.current = s;
       setLive(true);
-    })().catch(() => {});
+    })().catch(() => alive && setFailed(true));
     return () => {
       alive = false;
+      window.clearTimeout(slow);
       stage.current?.dispose();
       stage.current = null;
     };
@@ -104,7 +108,7 @@ function MemoryOrbit({ onOpen, focus }: { onOpen: (k: number) => void; focus: nu
             ))}
           </ul>
         </>
-      ) : (
+      ) : failed ? (
         <div className="bd-float">
           {c.memories.map((mem, k) => (
             <button key={k} type="button" className="bd-float__item" style={ellipse(k, c.memories.length)} onClick={() => onOpen(k)} aria-label={`Open memory ${k + 1}`}>
@@ -112,7 +116,7 @@ function MemoryOrbit({ onOpen, focus }: { onOpen: (k: number) => void; focus: nu
             </button>
           ))}
         </div>
-      )}
+      ) : null}
     </>
   );
 }
@@ -227,7 +231,7 @@ export function Secret({ slug, onDone }: ChapterProps) {
     if (wobble) scene.stage.current?.shake();
   }, [wobble]);
   return (
-    <div className="bd-secret" data-live={scene.live}>
+    <div className="bd-secret" data-live={scene.attr}>
       <Backdrop canvas={scene.ref} />
       <p className="bd-hint">{c.secret.intro}</p>
       <div className="bd-code" aria-label="The code so far" ref={code}>

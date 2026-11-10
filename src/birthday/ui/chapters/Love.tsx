@@ -3,7 +3,7 @@ import { events, state } from '../../../core/state';
 import { HiddenHeart, ParticleText, useContent, useTypewriter } from '../shared';
 import type { ChapterProps } from '../ChapterView';
 import { saveLetterPdf } from '../../keepsakes';
-import { Backdrop, useStage } from '../stage/useStage';
+import { Backdrop, liveAttr, useStage } from '../stage/useStage';
 import { Signature } from '../Signature';
 import { letterToStars } from '../letterToStars';
 import { note } from '../../../ui/journal';
@@ -20,6 +20,7 @@ export function Letter({ slug, onDone }: ChapterProps) {
   const ref = useRef<HTMLCanvasElement>(null);
   const stage = useRef<{ open(): void; dispose(): void } | null>(null);
   const [live, setLive] = useState(false);
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
     if (open && text.length === full.length) onDone();
   }, [open, text]);
@@ -33,7 +34,7 @@ export function Letter({ slug, onDone }: ChapterProps) {
         stage.current = s;
         setLive(true);
       })
-      .catch(() => {});
+      .catch(() => alive && setFailed(true));
     return () => {
       alive = false;
       stage.current?.dispose();
@@ -69,7 +70,7 @@ export function Letter({ slug, onDone }: ChapterProps) {
     return () => clearTimeout(id);
   }, [phase]);
   return (
-    <div className="bd-letter" data-live={live} data-phase={phase} data-sky={sky}>
+    <div className="bd-letter" data-live={liveAttr(live, failed)} data-phase={phase} data-sky={sky}>
       <div className="bd-cosmos" aria-hidden="true" onClick={breakSeal}>
         <canvas ref={ref} className="bd-cosmos__canvas bd-cosmos__canvas--interactive" />
       </div>
@@ -161,6 +162,7 @@ export function Reasons({ slug, onDone }: ChapterProps) {
   const ref = useRef<HTMLCanvasElement>(null);
   const stage = useRef<{ setStars(p: { x: number; y: number }[], s: boolean[]): void; flare(i: number): void; complete(): void; dispose(): void } | null>(null);
   const [live, setLive] = useState(false);
+  const [failed, setFailed] = useState(false);
   const seenRef = useRef(seen);
   seenRef.current = seen;
   useEffect(() => {
@@ -182,7 +184,7 @@ export function Reasons({ slug, onDone }: ChapterProps) {
         };
         tick();
       })
-      .catch(() => {});
+      .catch(() => alive && setFailed(true));
     return () => {
       alive = false;
       cancelAnimationFrame(raf);
@@ -195,7 +197,7 @@ export function Reasons({ slug, onDone }: ChapterProps) {
     if (all) stage.current?.complete();
   }, [all, live]);
   return (
-    <div className={`bd-reasons ${all ? 'is-constellation' : ''}`} ref={root} data-live={live}>
+    <div className={`bd-reasons ${all ? 'is-constellation' : ''}`} ref={root} data-live={liveAttr(live, failed)}>
       <div className="bd-cosmos" aria-hidden="true">
         <canvas ref={ref} className="bd-cosmos__canvas" />
       </div>
@@ -342,7 +344,7 @@ export function Wish({ slug, onDone }: ChapterProps) {
     }
   };
   return (
-    <div className="bd-wish" data-stage={stage} data-live={scene.live} style={{ ['--hold' as string]: hold }}>
+    <div className="bd-wish" data-stage={stage} data-live={scene.attr} style={{ ['--hold' as string]: hold }}>
       <Backdrop canvas={scene.ref} />
       {!scene.live && (
         <div className="bd-candle" style={{ ['--hold' as string]: hold }}>
