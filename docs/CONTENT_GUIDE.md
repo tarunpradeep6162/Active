@@ -147,9 +147,6 @@ vault with `npm run vault`). Anything you leave out falls back to the shipped wo
 | `gate` | Before her birthday, a sealed gate with a live countdown. She can still press and hold the seal to peek. Set `"enabled": false` to switch it off. |
 | `morning` | On the day itself every tulip stays fully open and this banner greets her in the garden. |
 | `openWhen` | "Open when…" letters: `when` finishes the sentence, `text` is the letter. |
-| `numbers.since` | The day your story began (`YYYY-MM-DD`), for "days since our story began". `items` are your own numbers; an item with `"value": null` is hidden unless it has a `suffix` (such as `∞`). |
-| `us` | The two initials for the Two Stars constellation. With `you` empty, your star is a heart. |
-| `places` | The Map of Us: `name`, `lat`, `lng` (decimal degrees, e.g. from Google Maps), `date`, `text` and an optional photo. |
 | `card` | The words on the printable birthday card (cover and inside). |
 | `reel` | The memory film's title and closing line, and `music`: a song you have the right to use. Without one, the garden's own music box plays. The film uses the photos you add to `memories`. |
 

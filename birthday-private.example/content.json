@@ -442,49 +442,6 @@
       "text": "[your words]"
     }
   ],
-  "numbers": {
-    "since": "YYYY-MM-DD",
-    "items": [
-      {
-        "label": "trips together",
-        "value": 0
-      },
-      {
-        "label": "photos of us",
-        "value": 0
-      },
-      {
-        "label": "times I’ve thought about you today",
-        "value": null,
-        "suffix": "∞"
-      }
-    ]
-  },
-  "us": {
-    "her": "D",
-    "you": "[your initial]",
-    "line": "Two stars. One sky."
-  },
-  "places": [
-    {
-      "name": "Ooty",
-      "lat": 11.4102,
-      "lng": 76.695,
-      "date": "2 November",
-      "text": "Our first trip together.",
-      "media": {
-        "src": "media/ooty.jpg",
-        "type": "image"
-      }
-    },
-    {
-      "name": "[place]",
-      "lat": 0,
-      "lng": 0,
-      "date": "[date]",
-      "text": "[a line]"
-    }
-  ],
   "card": {
     "cover": "Happy birthday",
     "inside": "[your words for the printed card]"

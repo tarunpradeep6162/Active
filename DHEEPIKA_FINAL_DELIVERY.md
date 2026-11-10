@@ -194,9 +194,6 @@ Without WebGL, the earlier flat versions come back.
 
 **Personal and keepsakes** (in For you; each opens in its own panel, loaded only when opened)
 - **Letters for later**: sealed "Open when…" envelopes; the letter writes itself as she reads.
-- **Our year in numbers**: animated counters, savable as a card.
-- **Two stars**: her initial and yours as constellations she joins with her finger.
-- **Map of us**: your places as glowing points on a night map (no map service, nothing fetched).
 - **Your tulip**: she plants one; it grows a stage with each day she comes back.
 - **The wish jar**: wishes fold into paper stars that fill a glass jar.
 - **A birthday card**: a print‑ready PDF (A4, folds to A5): night‑sky cover, your words and

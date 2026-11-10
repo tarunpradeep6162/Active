@@ -11,9 +11,6 @@ const KeepsakeSheet = lazy(() => import('./Keepsakes'));
 const CARDS: { kind: SheetKind; icon: string; title: string; note: string; cta: string }[] = [
   { kind: 'openWhen', icon: '✉', title: 'Letters for later', note: 'Sealed envelopes: open when you miss me, when you can’t sleep, on a bad day…', cta: 'Open the letters' },
   { kind: 'reel', icon: '▶', title: 'Our memory film', note: 'Your memories, one after another, with music: a film to keep on your phone.', cta: 'Play the film' },
-  { kind: 'numbers', icon: '✶', title: 'Our year in numbers', note: 'Everything counted, and saved as a card if you like.', cta: 'Count them' },
-  { kind: 'twoStars', icon: '✦', title: 'Two stars', note: 'Your initial and mine, as constellations. Join the stars with your finger.', cta: 'Draw the stars' },
-  { kind: 'map', icon: '⌖', title: 'Map of us', note: 'The places we’ve been, glowing on a night map.', cta: 'Open the map' },
   { kind: 'plant', icon: '❀', title: 'Your tulip', note: 'Plant a tulip of your own. It grows a little every day you come back.', cta: 'Visit your tulip' },
   { kind: 'jar', icon: '✧', title: 'The wish jar', note: 'Write a wish; it folds into a paper star and fills the jar.', cta: 'Open the jar' },
   { kind: 'booth', icon: '◉', title: 'Photo booth', note: 'A birthday selfie in a golden frame. It stays on your phone.', cta: 'Take a photo' },

@@ -68,7 +68,7 @@ await forYou.click({ timeout: 20000 }).then(() => step('clicked For you')).catch
 await page.waitForSelector('.foryou.is-open', { timeout: 30000 }).then(() => step('For you open')).catch(() => step('For you NOT open'));
 await page.waitForTimeout(2500);
 await shot('05-foryou');
-for (const cta of ['Open the letters', 'Play the film', 'Count them', 'Draw the stars', 'Open the map', 'Visit your tulip', 'Open the jar', 'Take a photo']) {
+for (const cta of ['Open the letters', 'Play the film', 'Visit your tulip', 'Open the jar', 'Take a photo']) {
   const b = page.locator(`.foryou__card--new button:text-is("${cta}")`);
   if (!(await b.count())) { step(`no card: ${cta}`); continue; }
   await b.scrollIntoViewIfNeeded();

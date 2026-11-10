@@ -242,18 +242,6 @@ export const PLACEHOLDER: BirthdayContent = {
       text: 'Look at you. I knew you could. I always know, even on the days you don’t. Now go and celebrate, properly, and then tell me every single detail. I want to hear all of it.',
     },
   ],
-  numbers: {
-    // the day your story began, as YYYY-MM-DD (for "days together"); add your own numbers below
-    since: '',
-    items: [
-      { label: 'trips together', value: null },
-      { label: 'photos of us', value: null },
-      { label: 'times I’ve thought about you today', value: null, suffix: '∞' },
-    ],
-  },
-  us: { her: 'D', you: '', line: 'Two stars. One sky.' },
-  // from your timeline: add every place you've been together (name, latitude, longitude, date, a line)
-  places: [{ name: 'Ooty', lat: 11.4102, lng: 76.695, date: '2 November', text: 'Our first trip together.' }],
   card: {
     cover: 'Happy birthday',
     inside: 'To the one who makes every ordinary day feel like a celebration: happy birthday. Here’s to your brightest year yet, and to every birthday after it, side by side.',

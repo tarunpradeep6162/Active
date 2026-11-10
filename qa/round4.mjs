@@ -23,7 +23,7 @@ if (part === 'all' || part === 'foryou') {
   await page.evaluate(() => document.querySelector('.foryou__card--new')?.scrollIntoView({ block: 'start' }));
   await page.waitForTimeout(800);
   await shot(page, 'foryou-cards');
-  for (const [cta, name] of [['Open the letters', 'openwhen'], ['Count them', 'numbers'], ['Draw the stars', 'twostars'], ['Open the map', 'map'], ['Visit your tulip', 'plant'], ['Open the jar', 'jar'], ['Play the film', 'reel']]) {
+  for (const [cta, name] of [['Open the letters', 'openwhen'], ['Visit your tulip', 'plant'], ['Open the jar', 'jar'], ['Play the film', 'reel']]) {
     await page.click(`.foryou__card--new button:text-is("${cta}")`);
     await page.waitForSelector('.sheet__panel', { timeout: 30000 });
     await page.waitForTimeout(1800);
